@@ -23,7 +23,7 @@ class IdlInterpreter : public InterpreterShell
 public:
    SETTING_PTR(DLL, IdlInterpreter, Filename);
    SETTING(Version, IdlInterpreter, std::string, std::string());
-   SETTING(Modules, IdlInterpreter, std::vector<std::string>, std::vector<std::string>());
+   SETTING(Modules, IdlInterpreter, std::vector<Filename*>, std::vector<Filename*>());
 
    IdlInterpreter();
    virtual ~IdlInterpreter();
