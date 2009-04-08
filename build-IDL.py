@@ -98,13 +98,14 @@ class Builder:
             extension_dep = open(extension_dep_file, "w")
             extension_dep.write("!depV1 { deployment: { "\
                 "AppHomePath: $E(OPTICKS_HOME), "\
+                "AdditionalDefaultPath: ../../../../Release/DefaultSettings, "\
                 "UserConfigPath: ../../ApplicationUserSettings, "\
                 "PlugInPath: ../PlugIns } } ")
             extension_dep.close()
             if self.verbosity > 1:
                 print "Done creating IDL.dep file"
 
-        app_setting_dir = join("Build", "ApplicationUserSettings")
+        app_setting_dir = join("Code", "Build", "ApplicationUserSettings")
         if not os.path.exists(app_setting_dir):
             if self.verbosity > 1:
                 print "Creating ApplicationUserSettings folder at %s..." % \
@@ -135,7 +136,7 @@ class WindowsBuilder(Builder):
             arch = "32"
         elif self.platform == "x64":
             arch = "64"
-        build_dir = os.path.abspath("Build")
+        build_dir = os.path.join(os.path.abspath("Code"), "Build")
         return os.path.abspath(join(build_dir,
             "Binaries-%s-%s" % (self.platform, self.mode)))
 
@@ -216,7 +217,7 @@ class SolarisBuilder(Builder):
             "Binaries-solaris-sparc-%s" % (self.mode), "PlugIns"))
 
     def get_binaries_dir(self):
-        return os.path.abspath(join("Build",
+        return os.path.abspath(join("Code", "Build",
             "Binaries-solaris-sparc-%s" % (self.mode)))
 
     def prep_to_run(self):
