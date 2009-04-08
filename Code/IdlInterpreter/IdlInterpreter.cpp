@@ -6,6 +6,7 @@
  * http://www.gnu.org/licenses/lgpl.html
  */
 
+#include "AppConfig.h"
 #include "AppVerify.h"
 #include "DynamicModule.h"
 #include "External.h"
@@ -83,7 +84,7 @@ bool IdlInterpreter::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgLi
    /***
     * We only need to run one of the dlls.  All the dlls 'execute_idl'
     * command call the same IDL dll which has one list of commands
-    * registered by all the dlls.  The last dll is used because it was
+    * registered by all the .ds.  The last dll is used because it was
     * the last one to push an output function into IDL's output function
     * stack. IDL will only run the last output function so we need to
     * run the dll with that output function.
@@ -279,33 +280,37 @@ bool IdlInterpreter::startIdl()
    if (pDll != NULL)
    {
       idlDll = pDll->getFullPathAndName();
+#if defined(WIN_API)
+      for (std::string::size_type pos = idlDll.find("/"); pos != std::string::npos; pos = idlDll.find("/"))
+      {
+         idlDll[pos] = '\\';
+      }
+#endif
    }
 
    std::string idlVersion = IdlInterpreter::getSettingVersion();
 
-   std::string idlPostfix = idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".dll";
-   std::vector<std::string> idlModules = IdlInterpreter::getSettingModules();
+#if defined(WIN_API)
+   std::string idlPostfix = (idlVersion.size() < 3) ? ".dll" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".dll");
+#else
+   std::string idlPostfix = (idlVersion.size() < 3) ? ".so" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".so");
+#endif
+   std::vector<Filename*> idlModules = IdlInterpreter::getSettingModules();
 
-   for (std::vector<std::string>::size_type i = 0; i < idlModules.size(); ++i)
+   for (std::vector<Filename*>::size_type i = 0; i < idlModules.size(); ++i)
    {
-      std::string startDll = idlModules[i];
+      std::string startDll = idlModules[i]->getFullPathAndName();
       startDll += idlPostfix;
 
       DynamicModule* pModule = Service<PlugInManagerServices>()->getDynamicModule(startDll);
       if (pModule != NULL)
       {
-         bool(*modInitialize)(External*) =
-            reinterpret_cast<bool(*)(External*)>(pModule->getProcedureAddress("initialize"));
-         if (modInitialize != NULL)
+         External* pExternal = ModuleManager::instance()->getService();
+         bool(*start_idl)(const char*, External*) =
+            reinterpret_cast<bool(*)(const char*, External*)>(pModule->getProcedureAddress("start_idl"));
+         if (start_idl != NULL && start_idl(idlDll.c_str(), pExternal) != 0)
          {
             mModules.push_back(pModule);
-            External* pExternal = ModuleManager::instance()->getService();
-            VERIFY(modInitialize(pExternal) != 0);
-
-            bool(*start_idl)(const char*, External*) =
-               reinterpret_cast<bool(*)(const char*, External*)>(pModule->getProcedureAddress("start_idl"));
-            VERIFY(start_idl);
-            VERIFY(start_idl(idlDll.c_str(), pExternal) != 0);
             mIdlRunning = true;
          }
       }
