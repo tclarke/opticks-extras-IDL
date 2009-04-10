@@ -1,35 +1,380 @@
-<VisualStudioProject Name="IdlInterpreter" ProjectGUID="{7EEEFB55-3F81-4113-9A52-887068CDF961}" ProjectType="Visual C++" RootNamespace="IdlInterpreter" Version="8.00">
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="IdlInterpreter"
+	ProjectGUID="{7EEEFB55-3F81-4113-9A52-887068CDF961}"
+	RootNamespace="IdlInterpreter"
+	>
 	<Platforms>
-		<Platform Name="Win32" />
-		<Platform Name="x64" />
+		<Platform
+			Name="Win32"
+		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
 	<Configurations>
-		<Configuration ATLMinimizesCRunTimeLibraryUsage="false" CharacterSet="2" ConfigurationType="2" InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\32bitSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Release.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Release-32bit.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Release.vsprops" Name="Release|Win32" UseOfMFC="0">
-			<Tool Culture="1033" Name="VCResourceCompilerTool" PreprocessorDefinitions="NDEBUG" />
-			<Tool AdditionalLibraryDirectories="" GenerateDebugInformation="true" GenerateMapFile="true" IgnoreDefaultLibraryNames="" MapExports="true" MapFileName="$(OutDir)\$(TargetName).map" Name="VCLinkerTool" ProgramDatabaseFile="$(OutDir)\$(ProjectName).pdb" Version="" />
+		<Configuration
+			Name="Release|Win32"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\32bitSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Release.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Release-32bit.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Release.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				Version=""
+				AdditionalLibraryDirectories=""
+				IgnoreDefaultLibraryNames=""
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)\$(ProjectName).pdb"
+				GenerateMapFile="true"
+				MapFileName="$(OutDir)\$(TargetName).map"
+				MapExports="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
-		<Configuration ATLMinimizesCRunTimeLibraryUsage="false" CharacterSet="2" ConfigurationType="2" InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Release.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Release-64bit.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\64bitSettings.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Release.vsprops" Name="Release|x64" UseOfMFC="0">
-			<Tool Culture="1033" Name="VCResourceCompilerTool" PreprocessorDefinitions="NDEBUG" />
-			<Tool AdditionalLibraryDirectories="" GenerateDebugInformation="true" GenerateMapFile="true" IgnoreDefaultLibraryNames="" MapExports="true" MapFileName="$(OutDir)\$(TargetName).map" Name="VCLinkerTool" ProgramDatabaseFile="$(OutDir)\$(ProjectName).pdb" Version="" />
+		<Configuration
+			Name="Release|x64"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Release.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Release-64bit.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\64bitSettings.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Release.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				Version=""
+				AdditionalLibraryDirectories=""
+				IgnoreDefaultLibraryNames=""
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(OutDir)\$(ProjectName).pdb"
+				GenerateMapFile="true"
+				MapFileName="$(OutDir)\$(TargetName).map"
+				MapExports="true"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
-		<Configuration ATLMinimizesCRunTimeLibraryUsage="false" CharacterSet="2" ConfigurationType="2" InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\32bitSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Debug.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Debug-32bit.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Debug.vsprops" Name="Debug|Win32" UseOfMFC="0">
-			<Tool Culture="1033" Name="VCResourceCompilerTool" PreprocessorDefinitions="_DEBUG" />
+		<Configuration
+			Name="Debug|Win32"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\32bitSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Debug.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Debug-32bit.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Debug.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
-		<Configuration ATLMinimizesCRunTimeLibraryUsage="false" CharacterSet="2" ConfigurationType="2" InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Debug.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Debug-64bit.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\64bitSettings.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Debug.vsprops" Name="Debug|x64" UseOfMFC="0">
-			<Tool Culture="1033" Name="VCResourceCompilerTool" PreprocessorDefinitions="_DEBUG" />
+		<Configuration
+			Name="Debug|x64"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(OPTICKS_CODE_DIR)\application\CompileSettings\PlugInCommonSettings.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Qt-Debug.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\AllCommonSettings-Debug-64bit.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\64bitSettings.vsprops;..\CompileSettings\IDLMacros.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\boost.vsprops;$(OPTICKS_CODE_DIR)\application\CompileSettings\Xerces-Debug.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
 	</References>
 	<Files>
-		<Filter Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat" Name="Source Files">
-			<File RelativePath=".\ModuleManager.cpp">
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
+			<File
+				RelativePath="IdlInterpreter.cpp"
+				>
 			</File>
-		<File RelativePath="IdlInterpreter.cpp" /></Filter>
-		<Filter Filter="h;hpp;hxx;hm;inl" Name="Header Files">
-		<File RelativePath="IdlInterpreter.h" /></Filter>
+			<File
+				RelativePath=".\IdlInterpreterOptions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModuleManager.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl"
+			>
+			<File
+				RelativePath="IdlInterpreter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IdlInterpreterOptions.h"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h...&quot;"
+						CommandLine="&quot;$(QTBIN)\moc.exe&quot; &quot;$(InputPath)&quot; -o &quot;$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp&quot;"
+						Outputs="$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h...&quot;"
+						CommandLine="&quot;$(QTBIN)\moc.exe&quot; &quot;$(InputPath)&quot; -o &quot;$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp&quot;"
+						Outputs="$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h...&quot;"
+						CommandLine="&quot;$(QTBIN)\moc.exe&quot; &quot;$(InputPath)&quot; -o &quot;$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp&quot;"
+						Outputs="$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h...&quot;"
+						CommandLine="&quot;$(QTBIN)\moc.exe&quot; &quot;$(InputPath)&quot; -o &quot;$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp&quot;"
+						Outputs="$(BuildDir)\Moc\$(ProjectName)\moc_$(InputName).cpp"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="moc"
+			>
+			<File
+				RelativePath="$(BuildDir)\Moc\$(ProjectName)\moc_IdlInterpreterOptions.cpp"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>
