@@ -40,11 +40,6 @@ namespace IdlFunctions
    Layer* getLayerByRaster(RasterElement* pElement);
    Layer* getLayerByIndex(const std::string& windowName, int index);
    View* getViewByWindowName(const std::string& windowName);
-   //bool setBandInfo(RasterElement* pElement, int bands);
-   //bool setColumnInfo(RasterElement* pElement, int columns);
-   //bool setRowInfo(RasterElement* pElement, int rows);
-   //bool createSpectralCube(RasterElement* pElement, void* pData, EncodingType encodingType, InterleaveFormatType iType,
-   //   unsigned int numRows, unsigned int numCols, unsigned int numBands);
 
    RasterElement* createRasterElement(void* pData, const std::string& datasetName,
       const std::string& newName, EncodingType datatype, InterleaveFormatType iType,
