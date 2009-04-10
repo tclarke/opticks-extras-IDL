@@ -9,8 +9,6 @@
 #ifndef IDLINTERPRETER_H__
 #define IDLINTERPRETER_H__
 
-#include "ConfigurationSettings.h"
-#include "Filename.h"
 #include "InterpreterShell.h"
 
 #include <string>
@@ -21,10 +19,6 @@ class PlugInManagerServices;
 class IdlInterpreter : public InterpreterShell
 {
 public:
-   SETTING_PTR(DLL, IdlInterpreter, Filename);
-   SETTING(Version, IdlInterpreter, std::string, std::string());
-   SETTING(Modules, IdlInterpreter, std::vector<Filename*>, std::vector<Filename*>());
-
    IdlInterpreter();
    virtual ~IdlInterpreter();
    virtual bool getInputSpecification(PlugInArgList*& pArgList);

@@ -312,11 +312,43 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath=".\AnimationCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArrayCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GpuCommands.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\IdlFunctions.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\IdlStart.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LayerCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MetadataCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MiscCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VisualizationCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\WindowCommands.cpp"
 				>
 			</File>
 		</Filter>
@@ -325,11 +357,43 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
+				RelativePath=".\AnimationCommands.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArrayCommands.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GpuCommands.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IdlFunctions.h"
 				>
 			</File>
 			<File
 				RelativePath=".\IdlStart.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LayerCommands.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MetadataCommands.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MiscCommands.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VisualizationCommands.h"
+				>
+			</File>
+			<File
+				RelativePath=".\WindowCommands.h"
 				>
 			</File>
 		</Filter>
