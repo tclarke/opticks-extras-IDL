@@ -7,6 +7,9 @@
  * http://www.gnu.org/licenses/lgpl.html
  */
 
+#include "DataVariant.h"
+#include "DynamicObject.h"
+#include "Filename.h"
 #include "IdlFunctions.h"
 #include "MetadataCommands.h"
 
@@ -15,7 +18,17 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
-#if 0
+namespace
+{
+   template<typename T>
+   IDL_VPTR vector_to_idl(const DataVariant& value, int idlType)
+   {
+      std::vector<T> vec = dv_cast<std::vector<T> >(value);
+      IDL_MEMINT pDims[] = {vec.size()};
+      return IDL_ImportArray(1, pDims, idlType, reinterpret_cast<UCHAR*>(&vec.front()), NULL, NULL);
+   }
+}
+
 IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -67,23 +80,22 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       wizard = 1;
    }
 
-   std::string strType;
-   void* pValue = NULL;
+   DataVariant value;
    if (!wizard)
    {
-      RasterElement* pSensor = IdlFunctions::getDataset(filename);
+      RasterElement* pElement = IdlFunctions::getDataset(filename);
 
-      if (pSensor == NULL)
+      if (pElement == NULL)
       {
          std::string msg = "Error could not find array.";
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg);
          return IDL_StrToSTRING("");
       }
       //not a wizard, so we use the dynamic object functions to get data
-      pObject = (pSensor->getMetadata();
-      pValue = IdlFunctions::getDynamicObjectValue(pObject, element, strType);
+      pObject = pElement->getMetadata();
+      value = pObject->getAttributeByPath(element);
    }
-   else
+   /*else
    {
       //this is a wizard, so get the wizard object and use it to get a value
       WizardObject* pWizard = IdlFunctions::getWizardObject(wizardName);
@@ -101,217 +113,150 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       {
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to find wizard file.");
       }
-   }
+   }*/
 
-   //setup the vectors to pass
    int type = IDL_TYP_UNDEF;
-   std::vector<unsigned char> charValue;
-   std::vector<int> intValue;
-   std::vector<unsigned int> uIntValue;
-   std::vector<float> floatValue;
-   std::vector<double> doubleValue;
-   std::vector<short> shortValue;
-   std::vector<unsigned short> uShortValue;
-   std::vector<std::string> stringValueA;
-   std::vector<Filename*> fileValue;
-   void* pArrayValue = NULL;
-   IDL_MEMINT total = 0;
-   std::string strValue;
-
-   int i = 0;
-   //for each datatype, populate the type std::string and build a vector if necessary
-   if (strType == "unsigned char" || strType == "bool" || strType == "char")
+   std::string valType = value.getTypeName();
+   if (valType == "unsigned char")
    {
       idlPtr = IDL_Gettmp();
-      idlPtr->value.c = *reinterpret_cast<unsigned char*>(pValue);
-      idlPtr->value.sc = *reinterpret_cast<char*>(pValue);
+      idlPtr->value.c = dv_cast<unsigned char>(value);
       idlPtr->type = IDL_TYP_BYTE;
    }
-   else if (strType == "vector<unsigned char>" || strType == "vector<bool>" || strType == "vector<char>")
-   {
-      bArray = true;
-      type = IDL_TYP_BYTE;
-      charValue = *reinterpret_cast<std::vector<unsigned char>*>(pValue);
-      total = static_cast<int>(charValue.size());
-      char* pCharArrayValue = new char[total];
-      for (i = 0; i < total; i++)
-      {
-         pCharArrayValue[i] = charValue[i];
-      }
-      pArrayValue = pCharArrayValue;
-   }
-   else if (strType == "short")
-   {
-      idlPtr = IDL_GettmpInt(*reinterpret_cast<short*>(pValue));
-   }
-   else if (strType == "vector<short>")
-   {
-      bArray = true;
-      type = IDL_TYP_INT;
-      shortValue = *reinterpret_cast<std::vector<short>*>(pValue);
-      total = static_cast<int>(shortValue.size());
-      short* pShortArrayValue = new short[total];
-      for (i = 0; i < total; i++)
-      {
-         pShortArrayValue[i] = shortValue[i];
-      }
-   }
-   else if (strType == "unsigned short")
-   {
-      idlPtr = IDL_GettmpUInt(*(unsigned short*)value);
-   }
-   else if (strType == "vector<unsigned short>")
-   {
-      bArray = true;
-      type= IDL_TYP_UINT;
-      uShortValue = *(std::vector<unsigned short>*)value;
-      total = static_cast<int>(uShortValue.size());
-      arrayValue = malloc(sizeof(unsigned short)*total);
-      for (i = 0; i < total; i++)
-      {
-         unsigned short* ushortptr = (unsigned short*)value;
-         ((unsigned short*)arrayValue)[i] = uShortValue[i];
-      }
-   }
-   else if (strType == "int")
-   {
-      idlPtr = IDL_GettmpLong(*reinterpret_cast<int*>(value);
-   }
-   else if (strType == "vector<int>")
-   {
-      bArray = true;
-      type = IDL_TYP_LONG;
-      intValue = *(std::vector<int>*)value;
-      total = static_cast<int>(intValue.size());
-      arrayValue = malloc(sizeof(int)*total);
-      for (i = 0; i < total; i++)
-      {
-         (reinterpret_cast<int*>(arrayValue)[i] = intValue[i];
-      }
-   }
-   else if (strType == "unsigned int")
-   {
-      idlPtr = IDL_GettmpLong(*(unsigned int*)value);
-   }
-   else if (strType == "vector<unsigned int>")
-   {
-      bArray = true;
-      type = IDL_TYP_ULONG;
-      uIntValue = *(std::vector<unsigned int>*)value;
-      total = static_cast<int>(uIntValue.size());
-      arrayValue = malloc(sizeof(unsigned int)*total);
-      for (i = 0; i < total; i++)
-      {
-         ((unsigned int*)arrayValue)[i] = uIntValue[i];
-      }
-   }
-   else if (strType == "float")
+   else if (valType == "char")
    {
       idlPtr = IDL_Gettmp();
-      idlPtr->value.f = *(float*)value;
+      idlPtr->value.sc = dv_cast<char>(value);
+      idlPtr->type = IDL_TYP_BYTE;
+   }
+   else if (valType == "bool")
+   {
+      idlPtr = IDL_Gettmp();
+      idlPtr->value.sc = dv_cast<bool>(value) ? 1 : 0;
+      idlPtr->type = IDL_TYP_BYTE;
+   }
+   else if (valType == "vector<unsigned char>")
+   {
+      idlPtr = vector_to_idl<unsigned char>(value, IDL_TYP_BYTE);
+   }
+   else if (valType == "vector<char>")
+   {
+      idlPtr = vector_to_idl<char>(value, IDL_TYP_BYTE);
+   }
+   else if (valType == "vector<bool>")
+   {
+      std::vector<bool> vec = dv_cast<std::vector<bool> >(value);
+      std::vector<unsigned char> copyvec;
+      copyvec.reserve(vec.size());
+      for (std::vector<bool>::const_iterator val = vec.begin(); val != vec.end(); ++val)
+      {
+         copyvec.push_back((*val) ? 1 : 0);
+      }
+      IDL_MEMINT dims[] = {copyvec.size()};
+      idlPtr = IDL_ImportArray(1, dims, IDL_TYP_BYTE, &copyvec.front(), NULL, NULL);
+   }
+   else if (valType == "short")
+   {
+      idlPtr = IDL_GettmpInt(dv_cast<short>(value));
+   }
+   else if (valType == "vector<short>")
+   {
+      idlPtr = vector_to_idl<short>(value, IDL_TYP_INT);
+   }
+   else if (valType == "unsigned short")
+   {
+      idlPtr = IDL_GettmpUInt(dv_cast<unsigned short>(value));
+   }
+   else if (valType == "vector<unsigned short>")
+   {
+      idlPtr = vector_to_idl<unsigned short>(value, IDL_TYP_UINT);
+   }
+   else if (valType == "int")
+   {
+      idlPtr = IDL_GettmpLong(dv_cast<int>(value));
+   }
+   else if (valType == "vector<int>")
+   {
+      idlPtr = vector_to_idl<int>(value, IDL_TYP_LONG);
+   }
+   else if (valType == "unsigned int")
+   {
+      idlPtr = IDL_GettmpLong(dv_cast<unsigned int>(value));
+   }
+   else if (valType == "vector<unsigned int>")
+   {
+      idlPtr = vector_to_idl<unsigned int>(value, IDL_TYP_ULONG);
+   }
+   else if (valType == "float")
+   {
+      idlPtr = IDL_Gettmp();
+      idlPtr->value.f = dv_cast<float>(value);
       idlPtr->type = IDL_TYP_FLOAT;
    }
-   else if (strType == "vector<float>")
+   else if (valType == "vector<float>")
    {
-      bArray = true;
-      type = IDL_TYP_FLOAT;
-      floatValue = *(std::vector<float>*)value;
-      total = static_cast<int>(floatValue.size());
-      arrayValue = malloc(sizeof(float)*total);
-      for (i = 0; i < total; i++)
-      {
-         ((float*)arrayValue)[i] = floatValue[i];
-      }
+      idlPtr = vector_to_idl<float>(value, IDL_TYP_FLOAT);
    }
-   else if (strType == "double")
+   else if (valType == "double")
    {
       idlPtr = IDL_Gettmp();
-      idlPtr->value.d = *(double*)value;
+      idlPtr->value.d = dv_cast<double>(value);
       idlPtr->type = IDL_TYP_DOUBLE;
    }
-   else if (strType == "vector<double>")
+   else if (valType == "vector<double>")
    {
-      bArray = true;
-      type = IDL_TYP_DOUBLE;
-      doubleValue = *(std::vector<double>*)value;
-      total = static_cast<int>(doubleValue.size());
-      arrayValue = malloc(sizeof(double)*total);
-      for (i = 0; i < total; i++)
+      idlPtr = vector_to_idl<double>(value, IDL_TYP_DOUBLE);
+   }
+   else if (valType == "Filename")
+   {
+      idlPtr = IDL_StrToSTRING(const_cast<char*>(dv_cast<Filename>(value).getFullPathAndName().c_str()));
+   }
+   else if (valType == "vector<Filename>")
+   {
+      std::vector<Filename*> vec = dv_cast<std::vector<Filename*> >(value);
+      IDL_STRING* pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(vec.size() * sizeof(IDL_STRING), NULL, 0));
+      for (size_t idx = 0; idx < vec.size(); ++idx)
       {
-         ((double*)arrayValue)[i] = doubleValue[i];
+         IDL_StrStore(&(pStrarr[idx]), const_cast<char*>(vec[idx]->getFullPathAndName().c_str()));
       }
+      IDL_MEMINT pDims[] = {vec.size()};
+      idlPtr = IDL_ImportArray(1, pDims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr), NULL, NULL);
    }
-   else if (strType == "Filename")
+   else if (valType == "string")
    {
-      idlPtr = IDL_StrToSTRING(const_cast<char*>(((reinterpret_cast<Filename*>(value))->getFullPathAndName())));
+      idlPtr = IDL_StrToSTRING(const_cast<char*>(dv_cast<std::string>(value).c_str()));
    }
-   else if (strType == "vector<Filename>")
+   else if (valType == "vector<string>")
    {
-      bArray = true;
-      type = IDL_TYP_STRING;
-      fileValue = *(std::vector<Filename*>*)value;
-      total = static_cast<int>(fileValue.size());
-      // Make the IDL std::string array variable
-      IDL_STRING* strarr = NULL;
-      strarr = (IDL_STRING*)IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0);
-      for (i=0; i < total; i++)
+      std::vector<std::string> vec = dv_cast<std::vector<std::string> >(value);
+      IDL_STRING* pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(vec.size() * sizeof(IDL_STRING), NULL, 0));
+      for (size_t idx = 0; idx < vec.size(); ++idx)
       {
-         IDL_StrStore(&(strarr[i]), reinterpret_cast<char*>(fileValue[i]->getFullPathAndName());
+         IDL_StrStore(&(pStrarr[idx]), const_cast<char*>(vec[idx].c_str()));
       }
-      arrayValue = strarr;
-   }
-   else if (strType == "std::string")
-   {
-      idlPtr = IDL_StrToSTRING(reinterpret_cast<char*>((((std::string*)value)->c_str()));
-   }
-   else if (strType == "Filename")
-   {
-      idlPtr = IDL_StrToSTRING(reinterpret_cast<char*>(((((Filename*)value)->getFullPathAndName())));
-   }
-   else if (strType == "vector<Filename>")
-   {
-      bArray = true;
-      type = IDL_TYP_STRING;
-      fileValue = *(std::vector<Filename*>*)value;
-      total = static_cast<int>(fileValue.size());
-      // Make the IDL std::string array variable
-      IDL_STRING* strarr = NULL;
-      strarr = (IDL_STRING*)IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0);
-      for (i=0; i < total; i++)
-      {
-         IDL_StrStore(&(strarr[i]), reinterpret_cast<char*>(fileValue[i]->getFullPathAndName());
-      }
-      arrayValue = strarr;
-   }
-   else if (strType == "vector<std::string>")
-   {
-      bArray = true;
-      type = IDL_TYP_STRING;
-      stringValueA = *(vector<std::string>*)value;
-      total = static_cast<int>(stringValueA.size());
-      // Make the IDL std::string array variable
-      IDL_STRING* strarr = NULL;
-      strarr = (IDL_STRING*)IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0);
-      for (i=0; i < total; i++)
-      {
-         IDL_StrStore(&(strarr[i]), reinterpret_cast<char*>(stringValueA[i]);
-      }
-      arrayValue = strarr;
+      IDL_MEMINT pDims[] = {vec.size()};
+      idlPtr = IDL_ImportArray(1, pDims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr), NULL, NULL);
    }
    else
    {
-      idlPtr = IDL_GettmpInt(0);
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to determine type.");
-   }
-   if (bArray)
-   {
-      IDL_MEMINT dims[] = { total};
-      idlPtr = IDL_ImportArray(1, dims, type, (unsigned char*)arrayValue, NULL, NULL);
+      DataVariant::Status status;
+      std::string val = value.toDisplayString(&status);
+      if (status == DataVariant::SUCCESS)
+      {
+         idlPtr = IDL_StrToSTRING(const_cast<char*>(val.c_str()));
+      }
+      else
+      {
+         idlPtr = IDL_GettmpInt(0);
+         std::string msg = "unable to convert data of type " + valType + ".";
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
+      }
    }
    IDL_KW_FREE;
 
    return idlPtr;
 }
+#if 0
 
 /**
 *    SET_METADATA
@@ -701,7 +646,7 @@ IDL_VPTR copy_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
 //   {reinterpret_cast<IDL_SYSRTN_GENERIC>(copy_metadata), "COPY_METADATA",0,2,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-//   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_metadata), "GET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_metadata), "GET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
 //   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_metadata), "SET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
