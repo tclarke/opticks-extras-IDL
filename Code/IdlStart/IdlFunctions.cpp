@@ -112,7 +112,7 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
    RasterElement* pElement = NULL;
    if (name.empty())
    {
-      ViewResource<SpatialDataView> pView(name);
+      ViewResource<SpatialDataView> pView(name, true);
       if (pView.get() == NULL)
       {
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "No spatial data window selected.");
@@ -120,6 +120,7 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
       }
       LayerList* pList = pView->getLayerList();
       pElement = (pList == NULL) ? NULL : pList->getPrimaryRasterElement();
+      pView.release();
    }
    else
    {

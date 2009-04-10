@@ -12,6 +12,7 @@
 #include "External.h"
 #include "IDLVersion.h"
 #include "IdlInterpreter.h"
+#include "IdlInterpreterOptions.h"
 #include "ModuleManager.h"
 #include "PlugInArgList.h"
 #include "PlugInFactory.h"
@@ -276,7 +277,7 @@ bool IdlInterpreter::startIdl()
    // figure out which version of IDL to use
    std::string idlDll;
 
-   const Filename* pDll = IdlInterpreter::getSettingDLL();
+   const Filename* pDll = IdlInterpreterOptions::getSettingDLL();
    if (pDll != NULL)
    {
       idlDll = pDll->getFullPathAndName();
@@ -288,14 +289,14 @@ bool IdlInterpreter::startIdl()
 #endif
    }
 
-   std::string idlVersion = IdlInterpreter::getSettingVersion();
+   std::string idlVersion = IdlInterpreterOptions::getSettingVersion();
 
 #if defined(WIN_API)
    std::string idlPostfix = (idlVersion.size() < 3) ? ".dll" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".dll");
 #else
    std::string idlPostfix = (idlVersion.size() < 3) ? ".so" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".so");
 #endif
-   std::vector<Filename*> idlModules = IdlInterpreter::getSettingModules();
+   std::vector<Filename*> idlModules = IdlInterpreterOptions::getSettingModules();
 
    for (std::vector<Filename*>::size_type i = 0; i < idlModules.size(); ++i)
    {
