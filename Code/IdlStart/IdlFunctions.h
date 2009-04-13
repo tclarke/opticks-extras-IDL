@@ -12,6 +12,7 @@
 #include "DataAccessor.h"
 #include "DataAccessorImpl.h"
 #include "DataRequest.h"
+#include "DataVariant.h"
 #include "ObjectResource.h"
 #include "RasterUtilities.h"
 #include "TypesFile.h"
@@ -34,8 +35,8 @@ namespace IdlFunctions
 {
    RasterElement* getDataset(const std::string& name = "");
    WizardObject* getWizardObject(const std::string& wizardName);
-   bool setWizardObjectValue(WizardObject* pObject, const std::string& name, const std::string& type, void* pValue);
-   void* getWizardObjectValue(const WizardObject* pObject, const std::string& name, std::string& type);
+   bool setWizardObjectValue(WizardObject* pObject, const std::string& name, const DataVariant& value);
+   DataVariant getWizardObjectValue(const WizardObject* pObject, const std::string& name);
    Layer* getLayerByName(const std::string& windowName, const std::string& layerName, bool onlyTopmostRaster = false);
    Layer* getLayerByRaster(RasterElement* pElement);
    Layer* getLayerByIndex(const std::string& windowName, int index);
