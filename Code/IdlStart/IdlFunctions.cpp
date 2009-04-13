@@ -156,124 +156,79 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
    return pElement;
 }
 
-bool IdlFunctions::setWizardObjectValue(WizardObject* pObject, const std::string& name,
-                                        const std::string& type, void* pValue)
+bool IdlFunctions::setWizardObjectValue(WizardObject* pObject, const std::string& name, const DataVariant& value)
 {
-   if (pObject != NULL)
+   if (pObject == NULL)
    {
-      std::vector<std::string> parts = StringUtilities::split(name, '/');
-      if (parts.size() != 2)
+      return false;
+   }
+   std::vector<std::string> parts = StringUtilities::split(name, '/');
+   if (parts.size() != 2)
+   {
+      return false;
+   }
+   std::string itemName = parts[0];
+   std::string nodeName = parts[1];
+
+   const std::vector<WizardItem*>& items = pObject->getItems();
+   for (std::vector<WizardItem*>::const_iterator item = items.begin(); item != items.end(); ++item)
+   {
+      if ((*item)->getName() == itemName)
       {
-         return false;
-      }
-
-      std::string wizardItemName = parts[0];
-      std::string wizardNodeName = parts[1];
-
-      const std::vector<WizardItem*>& items = pObject->getItems();
-
-      WizardItem* pItem = NULL;
-      //traverse the list of items, looking for the one that matches the item name
-      for (std::vector<WizardItem*>::const_iterator iter = items.begin(); iter != items.end(); ++iter)
-      {
-         pItem = *iter;
-         if (pItem != NULL)
+         WizardNode* pNode = (*item)->getOutputNode(nodeName, value.getTypeName());
+         if (pNode != NULL)
          {
-            if (pItem->getName() == wizardItemName)
+            pNode->setValue(value.getPointerToValueAsVoid());
+            return true;
+         }
+         else if (value.getTypeName() == TypeConverter::toString<std::string>())
+         {
+            pNode = (*item)->getOutputNode(nodeName, TypeConverter::toString<Filename>());
+            if (pNode != NULL)
             {
-               //get the specific node and set the value
-               WizardNode* pNode = pItem->getOutputNode(wizardNodeName, type);
-               if (pNode == NULL && type == TypeConverter::toString<std::string>())
-               {
-                  pNode = pItem->getOutputNode(wizardNodeName, TypeConverter::toString<Filename>());
-                  if (pNode != NULL)
-                  {
-                     FactoryResource<Filename> pFilename;
-                     std::string* pStr = reinterpret_cast<std::string*>(pValue);
-                     pFilename->setFullPathAndName(*pStr);
-                     pNode->setValue(pFilename.release());
-                     return true;
-                  }
-               }
-               else if (pNode != NULL)
-               {
-                  pNode->setValue(pValue);
-                  return true;
-               }
+               FactoryResource<Filename> pFilename;
+               pFilename->setFullPathAndName(dv_cast<std::string>(value));
+               pNode->setValue(pFilename.release());
+               return true;
             }
          }
+         break;
       }
    }
    return false;
 }
 
-/**
-*  sets the value of a wizard node, the item it is associated with should precede the
-*  name of the node with a '/' to separate them.
-*
-*  @return  
-*
-*/
-void* IdlFunctions::getWizardObjectValue(const WizardObject* pObject, const std::string& name,
-                                         std::string& type)
+DataVariant IdlFunctions::getWizardObjectValue(const WizardObject* pObject, const std::string& name)
 {
-   void* value = NULL;
-   if (pObject != NULL)
+   if (pObject == NULL)
    {
-      unsigned int size = strlen(name.c_str());
-      char* tmpName = (char*)malloc(size);
-      strcpy(tmpName, name.c_str());
+      return DataVariant();
+   }
+   std::vector<std::string> parts = StringUtilities::split(name, '/');
+   if (parts.size() != 2)
+   {
+      return DataVariant();
+   }
+   std::string itemName = parts[0];
+   std::string nodeName = parts[1];
 
-      //break the name into two token's separated by '/', with the first being the wizard
-      //item, and the second being the wizard node 
-      char* p = strstr(tmpName, "/");
-      if (p != NULL)
+   const std::vector<WizardItem*>& items = pObject->getItems();
+   for (std::vector<WizardItem*>::const_iterator item = items.begin(); item != items.end(); ++item)
+   {
+      if ((*item)->getName() == itemName)
       {
-         //insert a NULL at location of p to end the string so we can compare the found item
-         *p = NULL;
-
-         //increment the pointer to the string by the size of the separator
-         p += 1;
-         std::string wizardItemName = std::string(tmpName);
-         std::string wizardNodeName = std::string(p);
-
-         const std::vector<WizardItem*>& items = pObject->getItems();
-
-         std::vector<WizardItem*>::const_iterator iter;
-         WizardItem* pItem = NULL;
-         const char* t = "";
-
-         //traverse the list of items, looking for the one that matches the item name
-         for (iter = items.begin(); iter != items.end(); ++iter)
+         std::vector<WizardNode*> nodes = (*item)->getOutputNodes();
+         for (std::vector<WizardNode*>::const_iterator node = nodes.begin(); node != nodes.end(); ++node)
          {
-            pItem = *iter;
-            if (pItem != NULL)
+            if ((*node)->getName() == nodeName)
             {
-               if (pItem->getName() == wizardItemName)
-               {
-                  std::vector<WizardNode*> nodes = pItem->getOutputNodes();
-                  std::vector<WizardNode*>::const_iterator iter2;
-                  for (iter2 = nodes.begin(); iter2 != nodes.end(); ++iter2)
-                  {
-                     WizardNode* pNode = *iter2;
-                     if (pNode != NULL)
-                     {
-                        //get the specific node and get the value and type
-                        if (pNode->getName() == wizardNodeName)
-                        {
-                           value = pNode->getValue();
-                           type = pNode->getType();
-                           break;
-                        }
-                     }
-                  }
-               }
+               return DataVariant((*node)->getType(), (*node)->getValue());
             }
          }
       }
    }
 
-   return value;
+   return DataVariant();
 }
 
 RasterElement* IdlFunctions::createRasterElement(void* pData, const std::string& datasetName, const std::string& newName, EncodingType datatype, 

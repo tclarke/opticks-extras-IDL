@@ -27,6 +27,44 @@ namespace
       IDL_MEMINT pDims[] = {vec.size()};
       return IDL_ImportArray(1, pDims, idlType, reinterpret_cast<UCHAR*>(&vec.front()), NULL, NULL);
    }
+
+   template<typename T>
+   DataVariant idl_to_DataVariant(int total, char* pValue)
+   {
+      T* pValReal = reinterpret_cast<T*>(pValue);
+      if (total == 1)
+      {
+         return DataVariant(pValReal[0]);
+      }
+      else
+      {
+         std::vector<T> tmpVal;
+         for (int i = 0; i < total; ++i)
+         {
+            tmpVal.push_back(pValReal[i]);
+         }
+         return DataVariant(tmpVal);
+      }
+   }
+
+   template<>
+   DataVariant idl_to_DataVariant<bool>(int total, char* pValue)
+   {
+      // special case since bool isn't always 1 byte
+      if (total == 1)
+      {
+         return DataVariant((pValue[0] == 0) ? false : true);
+      }
+      else
+      {
+         std::vector<bool> tmpVal;
+         for (int i = 0; i < total; ++i)
+         {
+            tmpVal.push_back((pValue[i] == 0) ? false : true);
+         }
+         return DataVariant(tmpVal);
+      }
+   }
 }
 
 IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -95,15 +133,15 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       pObject = pElement->getMetadata();
       value = pObject->getAttributeByPath(element);
    }
-   /*else
+   else
    {
       //this is a wizard, so get the wizard object and use it to get a value
       WizardObject* pWizard = IdlFunctions::getWizardObject(wizardName);
 
       if (pWizard != NULL)
       {
-         pValue = IdlFunctions::getWizardObjectValue(pWizard, element, strType);
-         if (pValue == NULL)
+         value = IdlFunctions::getWizardObjectValue(pWizard, element);
+         if (!value.isValid())
          {
             IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to find wizard item.");
             return IDL_StrToSTRING("");
@@ -113,7 +151,7 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       {
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to find wizard file.");
       }
-   }*/
+   }
 
    int type = IDL_TYP_UNDEF;
    std::string valType = value.getTypeName();
@@ -256,42 +294,13 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    return idlPtr;
 }
-#if 0
 
-/**
-*    SET_METADATA
-*
-*    Method for setting information is support areas of Opticks, such as the
-*    metadata or wizard objects.  The first parameter,
-*    element specifies what should be updated.  Its a single std::string, so layers of
-*    objects are separated by '/', so the value of an element used to update a
-*    Value type named 'Red' in a wizard object would be, "Value - Red/Red".
-*
-*    @param element
-*           Looks for a meta data item with the given name, for
-*           Objects within the other objects, the name of each is
-*           separated by '/'.
-*    @param value
-*           The value to place in the metadata
-*    @param BOOL - keyword
-*           a keyword boolean specifying the value should be set as a boolean, values
-*           for 1 are true, and 0 are false
-*    @param WIZARD - keyword
-*           a keyword std::string specifying if the meta data object to set values for
-*           is from a wizard.  The std::string should contain the full path and name
-*           of the wizard file to load and alter
-*    @param DATASET - keyword
-*           a keyword specifying which dataset should be altered.
-*    @return
-*           returns, "success" or "failure"
-*
-*/
 IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
-   if (argc>5 || argc<2)
+   if (argc > 5 || argc < 2)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "SET_METADATA takes a std::string noting which "
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "SET_METADATA takes a string noting which "
          "piece of metadata to set, and a value to set, it also takes a 'wizard' name as keywords.");
       return IDL_StrToSTRING("failure");
    }
@@ -311,47 +320,38 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
    //flags, a boolean whether the value was populated and finally the value itself
-   static IDL_KW_PAR kw_pars[] = {IDL_KW_FAST_SCAN,
-   {"BOOL", IDL_TYP_INT, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(boolExists),
-   reinterpret_cast<char*>(IDL_KW_OFFSETOF(useBool)},
-   {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists),
-   reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName)},
-   {"FILENAME", IDL_TYP_INT, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(filenameExists),
-   reinterpret_cast<char*>(IDL_KW_OFFSETOF(useFilename)},
-   {"WIZARD", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(wizardExists),
-   reinterpret_cast<char*>(IDL_KW_OFFSETOF(wizardName)},
-   {NULL}};
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"BOOL", IDL_TYP_INT, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(boolExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(useBool))},
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {"FILENAME", IDL_TYP_INT, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(filenameExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(useFilename))},
+      {"WIZARD", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(wizardExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(wizardName))},
+      {NULL}
+   };
 
    IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   std::string elementName = IDL_VarGetString(pArgv[0]);
+
+   IDL_MEMINT total;
+   char* pValue = NULL;
+   IDL_VarGetData(pArgv[1], &total, &pValue, 0);
+   bool isVector = (total > 1);
 
    std::string filename;
-   int wizard = 0;
-   IDL_MEMINT total;
-   //the element
-   std::string element = IDL_VarGetString(pArgv[0]);
-   char* value = NULL;
-   std::string strType;
-   std::string wizardName;
-   bool bUseFilename = false;
-   bool bUseBool = false;
-   DynamicObject* pObject = NULL;
-   //the value
-   IDL_VarGetData(pArgv[1], &total, &value, 0);
-
-   //if there is more than one value in the variable, then make a vector
-   if (total > 1)
-   {
-      strType = "vector<";
-   }
    if (kw.datasetExists)
    {
       filename = IDL_STRING_STR(&kw.datasetName);
    }
+   std::string wizardName;
    if (kw.wizardExists)
    {
       wizardName = IDL_STRING_STR(&kw.wizardName);
-      wizard = 1;
    }
+   bool bUseBool = false;
    if (kw.boolExists)
    {
       if (kw.useBool != 0)
@@ -359,6 +359,7 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          bUseBool = true;
       }
    }
+   bool bUseFilename = false;
    if (kw.filenameExists)
    {
       if (kw.useFilename != 0)
@@ -366,57 +367,39 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          bUseFilename = true;
       }
    }
-   //setup the vectors to pass
-   int type = pArgv[1]->type;
-   std::vector<bool> boolValue;
-   std::vector<unsigned char> charValue;
-   std::vector<int> intValue;
-   std::vector<unsigned int> uIntValue;
-   std::vector<float> floatValue;
-   std::vector<double> doubleValue;
-   std::vector<short> shortValue;
-   std::vector<unsigned short> uShortValue;
-   std::vector<std::string> stringValueA;
-   std::vector<Filename*> fileValue;
-   void* arrayValue = NULL;
-   std::string strValue;
-   bool bSuccess = false;
 
-   int i = 0;
+   DataVariant value;
+   int type = pArgv[1]->type;
+   bool bSuccess = false;
    if (bUseBool)
    {
-      strType = strType + "bool";
-      for (i = 0; i < total; i++)
-      {
-         boolValue.push_back((bool)value[i]);
-      }
-      arrayValue = &boolValue;
+      value = idl_to_DataVariant<bool>(total, pValue);
    }
    else if (bUseFilename)
    {
-      strType = strType + "Filename";
       if (total == 1)
       {
          //if there is just one, get the contents of the variable as a std::string
-         strValue = IDL_VarGetString(pArgv[1]);
          FactoryResource<Filename> pFilename;
-         pFilename->setFullPathAndName(strValue);
-         value = reinterpret_cast<char*>(pFilename.release();
+         pFilename->setFullPathAndName(reinterpret_cast<char*>(IDL_VarGetString(pArgv[1])));
+         value = DataVariant(*(pFilename.release()));
       }
       else
       {
-         UCHAR* arrptr  = pArgv[1]->value.arr->data;
-         for (i=0; i < total; i++)
+         std::vector<Filename*> tmpVal;
+         UCHAR* pArrptr  = pArgv[1]->value.arr->data;
+         for (int i = 0; i < total; ++i)
          {
-            if (((IDL_STRING*)arrptr)->s != NULL)
+            if (reinterpret_cast<IDL_STRING*>(pArrptr)->s != NULL)
             {
                FactoryResource<Filename> pFilename;
-               pFilename->setFullPathAndName(std::string(((IDL_STRING*)arrptr)->s));
-               fileValue.push_back(pFilename.release());
+               std::string tmpName(reinterpret_cast<IDL_STRING*>(pArrptr)->s);
+               pFilename->setFullPathAndName(tmpName);
+               tmpVal.push_back(pFilename.release());
             }
-            arrptr += sizeof(IDL_STRING);
+            pArrptr += sizeof(IDL_STRING);
          }
-         arrayValue = &fileValue;
+         value = DataVariant(tmpVal);
       }
    }
    else
@@ -424,88 +407,43 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       //for each datatype, populate the type std::string and build a vector if necessary
       switch (type)
       {
-      case IDL_TYP_BYTE :
-         strType = strType + "unsigned char";
-         for (i = 0; i < total; i++)
-         {
-            charValue.push_back(value[i]);
-         }
-         arrayValue = &charValue;
+      case IDL_TYP_BYTE:
+         value = idl_to_DataVariant<char>(total, pValue);
          break;
-      case IDL_TYP_INT :
-         strType = strType + "short";
-         for (i = 0; i < total; i++)
-         {
-            short* shortptr = (short*)value;
-            shortValue.push_back(shortptr[i]);
-         }
-         arrayValue = &shortValue;
+      case IDL_TYP_INT:
+         value = idl_to_DataVariant<short>(total, pValue);
          break;
-      case IDL_TYP_UINT :
-         strType = strType + "unsigned short";
-         for (i = 0; i < total; i++)
-         {
-            unsigned short* ushortptr = (unsigned short*)value;
-            uShortValue.push_back(ushortptr[i]);
-         }
-         arrayValue = &uShortValue;
+      case IDL_TYP_UINT:
+         value = idl_to_DataVariant<unsigned short>(total, pValue);
          break;
-      case IDL_TYP_LONG :
-         strType = strType + "int";
-         for (i = 0; i < total; i++)
-         {
-            int* intptr = reinterpret_cast<int*>(value;
-            intValue.push_back(intptr[i]);
-         }
-         arrayValue = &intValue;
+      case IDL_TYP_LONG:
+         value = idl_to_DataVariant<int>(total, pValue);
          break;
-      case IDL_TYP_ULONG :
-         strType = strType + "unsigned int";
-         for (i = 0; i < total; i++)
-         {
-            unsigned int* uintptr = (unsigned int*)value;
-            uIntValue.push_back(uintptr[i]);
-         }
-         arrayValue = &uIntValue;
+      case IDL_TYP_ULONG:
+         value = idl_to_DataVariant<unsigned int>(total, pValue);
          break;
-      case IDL_TYP_FLOAT :
-         strType = strType + "float";
-         for (i = 0; i < total; i++)
-         {
-            float* floatptr = (float*)value;
-            floatValue.push_back(floatptr[i]);
-         }
-         arrayValue = &floatValue;
+      case IDL_TYP_FLOAT:
+         value = idl_to_DataVariant<float>(total, pValue);
          break;
-      case IDL_TYP_DOUBLE :
-         strType = strType + "double";
-         for (i = 0; i < total; i++)
-         {
-            double* doubleptr = (double*)value;
-            doubleValue.push_back(doubleptr[i]);
-         }
-         arrayValue = &doubleValue;
+      case IDL_TYP_DOUBLE:
+         value = idl_to_DataVariant<double>(total, pValue);
          break;
-      case IDL_TYP_STRING :
-         strType = "std::string";
+      case IDL_TYP_STRING:
+         // need to handle string conversion differently
          if (total == 1)
          {
-            //if there is just one, get the contents of the variable as a std::string
-            strValue = IDL_VarGetString(pArgv[1]);
-            value = reinterpret_cast<char*>(&strValue;
+            std::string tmpStr(reinterpret_cast<char*>(IDL_VarGetString(pArgv[1])));
+            value = DataVariant(tmpStr);
          }
          else
          {
-            UCHAR* arrptr  = pArgv[1]->value.arr->data;
-            for (i=0; i < total; i++)
+            std::vector<std::string> tmpVal;
+            IDL_STRING* pArrptr = reinterpret_cast<IDL_STRING*>(pArgv[1]->value.arr->data);
+            for (int i = 0; i < total && pArrptr[i].s != NULL; ++i)
             {
-               if (((IDL_STRING*)arrptr)->s != NULL)
-               {
-                  stringValueA.push_back(std::string(((IDL_STRING*)arrptr)->s));
-               }
-               arrptr += sizeof(IDL_STRING);
+               tmpVal.push_back(std::string(reinterpret_cast<char*>(pArrptr[i].s)));
             }
-            arrayValue = &stringValueA;
+            value = DataVariant(tmpVal);
          }
          break;
       case IDL_TYP_UNDEF :
@@ -513,26 +451,16 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          break;
       }
    }
-   if (total > 1)
+   if (wizardName.empty())
    {
-      strType = strType + ">";
-      value = reinterpret_cast<char*>(arrayValue;
-   }
-
-   if (!wizard)
-   {
-      RasterElement* pSensor = (IdlFunctions::getDataset(filename));
-
-      if (pSensor == NULL)
+      RasterElement* pElement = IdlFunctions::getDataset(filename);
+      if (pElement == NULL)
       {
-         std::string msg = "Error could not find array.";
-         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg);
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error: could not find data.");
          return IDL_StrToSTRING("");
       }
-      //this is not a wizard, so use the DynamicObject setting code
-      pObject = (DynamicObject*)(pSensor->getMetadata());
-      IdlFunctions::setDynamicObjectValue(pObject, element, strType, (void*)value);
-      bSuccess = true;
+      DynamicObject* pObject = pElement->getMetadata();
+      bSuccess = pObject->setAttributeByPath(elementName, value);
    }
    else
    {
@@ -541,7 +469,7 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 
       if (pWizard != NULL)
       {
-         if (!IdlFunctions::setWizardObjectValue(pWizard, element, strType, (void*)value))
+         if (!IdlFunctions::setWizardObjectValue(pWizard, elementName, value))
          {
             IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to find item in wizard file.");
          }
@@ -568,22 +496,9 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
-/**
-*    COPY_METADATA
-*
-*    Method for copying all the metadata from one data element, to another data
-*    element.
-*
-*    @param source_element
-*           The element whose metadata should be copied.
-*    @param dest_element
-*           The element to where the metadata will be copied.
-*    @return
-*           returns, "success" or "failure"
-*/
 IDL_VPTR copy_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
-   if (argc<2)
+   if (argc < 2)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "COPY_METADATA takes a source "
          "element, it also takes a destination element.");
@@ -593,61 +508,41 @@ IDL_VPTR copy_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    const std::string sourceElementName = IDL_VarGetString(pArgv[0]);
    const std::string destElementName = IDL_VarGetString(pArgv[1]);
 
-   const RasterElement* const pSourceElement =
-      IdlFunctions::getDataset(sourceElementName);
-   if (NULL == pSourceElement)
+   const RasterElement* pSourceElement = IdlFunctions::getDataset(sourceElementName);
+   if (pSourceElement == NULL)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to locate source element.");
       return IDL_StrToSTRING("failure");
    }
-   RasterElement* const pDestElement =
-      IdlFunctions::getDataset(destElementName);
-   if (NULL == pDestElement)
+   RasterElement* pDestElement = IdlFunctions::getDataset(destElementName);
+   if (pDestElement == NULL)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to locate destination element.");
       return IDL_StrToSTRING("failure");
    }
 
-   const DynamicObject* const pSourceMetadata = pSourceElement->getMetadata();
-   if (NULL == pSourceMetadata)
+   const DynamicObject* pSourceMetadata = pSourceElement->getMetadata();
+   if (pSourceMetadata == NULL)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to locate metadata "
          "source element.");
       return IDL_StrToSTRING("failure");
    }
-   DynamicObject* const pDestMetadata = pDestElement->getMetadata();
-   if (NULL == pSourceMetadata)
+   DynamicObject* pDestMetadata = pDestElement->getMetadata();
+   if (pDestMetadata == NULL)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to locate metadata "
          "destination element.");
       return IDL_StrToSTRING("failure");
    }
-
-   std::vector<std::string> attributeNames;
-   pSourceMetadata->getAttributeNames(attributeNames);
-   for (std::vector<std::string>::const_iterator attributeNamesIter = attributeNames.begin();
-      attributeNamesIter != attributeNames.end();
-      ++attributeNamesIter)
-   {
-      const std::string attributeName = *attributeNamesIter;
-      const DataVariant& attribute = pSourceMetadata->getAttribute(attributeName);
-      if (!pDestMetadata->setAttribute(attributeName, attribute))
-      {
-         const std::string message = std::string("unable to copy attribute: ")
-            + attributeName;
-         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, message);
-         return IDL_StrToSTRING("failure");
-      }
-   }
-
+   pDestMetadata->merge(pSourceMetadata);
    return IDL_StrToSTRING("success");
 }
-#endif
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
-//   {reinterpret_cast<IDL_SYSRTN_GENERIC>(copy_metadata), "COPY_METADATA",0,2,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(copy_metadata), "COPY_METADATA",0,2,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_metadata), "GET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-//   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_metadata), "SET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_metadata), "SET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
 
