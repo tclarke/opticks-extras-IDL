@@ -4,11 +4,11 @@
 
 <urn:aebl:install-manifest>
    aebl:id "idl@extras.ballforge.net" ;
-   aebl:name "IDL" ;
-   aebl:version "0.1" ;
    aebl:type "2" ;
-   aebl:description "IDL interpreter extension." ;
    aebl:targetApplication [
       aebl:id "opticks@ballforge.net" ;
       aebl:minVersion "4.2.5" ;
-      aebl:maxVersion "4.2.*" ] .
+      aebl:maxVersion "4.2.*" ] ;
+   opticks:helpEntry [
+      opticks:name "IDL Command Help" ;
+      opticks:url "aeb:///Help/IDL/html/index.html" ] .

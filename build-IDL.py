@@ -7,6 +7,7 @@ from os.path import join
 import optparse
 import traceback
 import shutil
+import zipfile
 
 def execute_process(args, bufsize=0, executable=None, preexec_fn=None,
       close_fds=None, shell=False, cwd=None, env=None,
@@ -155,6 +156,62 @@ class Builder:
             if self.verbosity > 1:
                 print "Done compressing Doxygen"
 
+    def __read_version_h(self):
+        version_path = join("Code", "Include", "IDLVersion.h")
+        version_info = open(version_path, "rt").readlines()
+        rdata = {}
+        for vline in version_info:
+            fields = vline.strip().split()
+            if len(fields) >=3 and fields[0] == "#define":
+                rdata[fields[1]] = " ".join(fields[2:])
+        return rdata
+
+    def build_installer(self):
+        import raptor
+        PF_AEBL = "urn:2008:03:aebl-syntax-ns#"
+        PF_OPTICKS = "urn:2008:03:opticks-aebl-extension-ns#"
+
+        if self.verbosity > 1:
+            print "Loading metadata template..."
+        parser = raptor.RaptorParser()
+        parser.set_feature(raptor.RAPTOR_FEATURE_NO_NET)
+        installer_path = os.path.abspath("Installer")
+        parser.parse_file(join(installer_path, "install.n3"))
+        metadata = parser.statements()
+        parser.cleanup()
+
+        manifest = metadata["urn:aebl:install-manifest"]
+        version_info = self.__read_version_h()
+        manifest[PF_AEBL + "version"] = [version_info["IDL_VERSION_NUMBER"]]
+        manifest[PF_AEBL + "name"] = [version_info["IDL_NAME"]]
+        manifest[PF_AEBL + "description"] = [version_info["IDL_NAME_LONG"]]
+
+        out_path = os.path.abspath(join("Code", "Build", "Installer"))
+        if os.path.exists(out_path):
+            shutil.rmtree(out_path, True)
+        os.makedirs(out_path)
+        if self.verbosity > 1:
+            print "Saving updated metadata to AEB..."
+        serializer = raptor.RaptorSerializer("rdfxml-abbrev")
+        serializer.statements(metadata)
+        serializer.serialize_to_file(join(out_path, "install.rdf"))
+        serializer.cleanup()
+
+        if self.verbosity > 1:
+            print "Building installation tree..."
+        zfile = zipfile.ZipFile(join(out_path, "IDL.aeb"), "w", zipfile.ZIP_DEFLATED)
+
+        copy_file_to_zip(out_path, "", "install.rdf", zfile)
+        extension_plugin_path = join(self.get_binaries_dir(), "PlugIns")
+        target_plugin_path = join("content", "PlugIns")
+        copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlInterpreter.dll", zfile)
+        copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart.dll", zfile)
+
+        extension_settings_dir = join(os.path.abspath("Release"), "DefaultSettings")
+        copy_files_in_dir_to_zip(extension_settings_dir, join("content", "DefaultSettings"), zfile, [".cfg"], ["_svn", ".svn"])
+        doc_path = os.path.abspath(join("Code", "Build", "DoxygenOutput"))
+        copy_files_in_dir_to_zip(doc_path, join("content", "Help", "IDL"), zfile)
+        zfile.close()
 
 class WindowsBuilder(Builder):
     def __init__(self, dependencies, build_in_debug,
@@ -327,6 +384,29 @@ def copy_file(src_dir, dst_dir, filename):
     shutil.copy2(join(src_dir, filename),
                  dst_file)
 
+def copy_files_in_dir_to_zip(src_dir, dst_dir, zfile, suffixes_to_match=None, entries_to_skip=None):
+    for entry in os.listdir(src_dir):
+        if entries_to_skip is not None and entry in entries_to_skip:
+            continue
+        src_path = join(src_dir, entry)
+        if os.path.isfile(src_path):
+            matches = False
+            if suffixes_to_match is None or len(suffixes_to_match) == 0:
+                matches = True
+            else:
+                for suffix in suffixes_to_match:
+                    if entry.endswith(suffix):
+                        matches = True
+            if matches:
+                copy_file_to_zip(src_dir, dst_dir, entry, zfile)
+        elif os.path.isdir(src_path):
+            dst_path = join(dst_dir, entry)
+            copy_files_in_dir_to_zip(src_path, dst_path, zfile, suffixes_to_match, entries_to_skip)
+
+def copy_file_to_zip(src_dir, dst_dir, filename, zfile):
+    dst_file = join(dst_dir, filename)
+    zfile.writestr(dst_file, open(join(src_dir, filename), "rb").read())
+
 def main(args):
     #chdir to the directory where the script resides
     os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
@@ -349,6 +429,7 @@ def main(args):
     options.add_option("--build-extension", dest="build_extension",
         action="store", type="choice", choices=["all","none"])
     options.add_option("--prep", dest="prep", action="store_true")
+    options.add_option("--build-installer", dest="build_installer", action="store_true")
     options.add_option("--concurrency", dest="concurrency", action="store")
     options.add_option("--build-doxygen", dest="build_doxygen")
     options.add_option("-q", "--quiet", help="Print fewer messages",
@@ -357,7 +438,7 @@ def main(args):
         action="store_const", dest="verbosity", const=2)
     options.set_defaults(mode="release", clean=False,
         build_extension="none", build_doxygen="none",
-        prep=False, concurrency=1, verbosity=1)
+        build_installer=False, prep=False, concurrency=1, verbosity=1)
     options = options.parse_args(args[1:])[0]
 
     builder = None
@@ -425,6 +506,13 @@ def main(args):
             builder.prep_to_run()
             if options.verbosity > 1:
                 print "Done prepping to run"
+
+        if options.build_installer:
+            if options.verbosity > 1:
+                print "Building AEB installation extension..."
+            builder.build_installer()
+            if options.verbosity > 1:
+                print "Done building installer"
 
     except Exception, e:
         print "--------------------------"

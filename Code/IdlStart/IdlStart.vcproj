@@ -56,7 +56,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="idl.lib idl_callproxy.lib"
+				AdditionalDependencies="idl_callproxy.lib"
 				Version=""
 				AdditionalLibraryDirectories="C:\Program Files (x86)\ITT\IDL64\bin\bin.x86"
 				IgnoreDefaultLibraryNames="PlugInLib.lib"
@@ -131,6 +131,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="idl_callproxy.lib"
 				Version=""
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="PlugInLib.lib"
@@ -275,6 +276,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="idl_callproxy.lib"
 				IgnoreDefaultLibraryNames="PlugInLib.lib"
 				ModuleDefinitionFile=""
 			/>
