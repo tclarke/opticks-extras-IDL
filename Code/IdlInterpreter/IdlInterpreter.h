@@ -10,6 +10,7 @@
 #define IDLINTERPRETER_H__
 
 #include "InterpreterShell.h"
+#include "WizardShell.h"
 
 #include <string>
 #include <vector>
@@ -29,12 +30,23 @@ public:
    virtual void getUserDefinedTypes(std::vector<std::string>& list) const ;
    virtual bool getTypeDescription(const std::string& type, std::string& description) const ;
 
+   bool processCommand(const std::string& command, std::string& returnText, Progress* pProgress);
+
 private:
    bool startIdl();
 
-   std::string mCommand;
    bool mIdlRunning;
    std::vector<DynamicModule*> mModules;
+};
+
+class IdlInterpreterWizardItem : public WizardShell
+{
+public:
+   IdlInterpreterWizardItem();
+   virtual ~IdlInterpreterWizardItem();
+   virtual bool getInputSpecification(PlugInArgList*& pArgList);
+   virtual bool getOutputSpecification(PlugInArgList*& pArgList);
+   virtual bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
 };
 
 #endif
