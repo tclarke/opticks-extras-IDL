@@ -1,0 +1,55 @@
+/**
+@mainpage Opticks IDL Integration
+
+\section overview Overview
+The IDL Interface to Opticks provides access to Opticks data and functionality through a defined set of IDL commands.
+This interface supports interaction with data loaded in Opticks through both the IDL command line and IDL scripts.
+Additionally, the IDL Interface provides functions to view and modify metadata, manipulate layers, and adjust some visualization parameters.
+The interface is accessed through the scripting window in Opticks, which accepts IDL commands and displays IDL output in the same manner as the command line interface in the IDL Developer's Environment.
+The IDL Interface also supports batch processing through the Opticks Wizard functionality.
+This capability allows users to run Opticks plug-ins from IDL and run IDL scripts from Opticks.
+
+The IDL Interface is designed to provide a mechanism for rapidly prototyping new algorithms in IDL while leveraging Opticks functionality.
+This interface supports seamlessly executing proven R&D IDL algorithms via Opticks while awaiting formal software implementation.
+It can also be useful for validating Opticks implementations of algorithms against IDL counterparts.
+Introductory material on IDL use is beyond the scope of this document which assumes at least a basic familiarity with the IDL language.
+
+\section setup Setup
+The <tt>Scripting/IDL Interpreter</tt> options page contains two configuration options which need to be set before use.
+The <tt>IDL Installation Location</tt> option locates the IDL installation directory.
+Browse to and select the <tt>idl.dll</tt> file in the IDL installation directory.
+It usually resides in the <tt>bin/bin.x86</tt> subdirectory.
+The <tt>IDL Version</tt> selection allows the user to select the version of IDL which was selected in the <tt>IDL Installation Location</tt> option.
+The version entry may be blank if only one version of the IDL support plug-ins has been installed.
+In addition to these options, a configuration file only option is available for plug-in developers wishing to install additional IDL method files.
+An additional method file must contain the following functions:
+\code
+#ifdef WIN32
+#define IDLSTART_EXPORT extern "C" __declspec(dllexport)
+#else
+#define IDLSTART_EXPORT 
+#endif
+
+IDLSTART_EXPORT int start_idl(const char* pLocation, External* pServices);
+IDLSTART_EXPORT const char* execute_idl(const char* pCommand, Progress* pProgress);
+IDLSTART_EXPORT int close_idl();
+\endcode
+The method file must be linked against the same version of IDL as the main support plug-in.
+The filename should match the naming convention of the installed support plug-in which is usually in the <tt>PlugIns</tt> directory and begins with <tt>IdlStart</tt>
+If the filename is <tt>IdlStart.dll</tt> a method file should be named <tt>MyIdlMethods.dll</tt>.
+If the filename is <tt>IdlStart6.3.dll</tt> a method file should be named <tt>MyIdlMethods6.3.dll</tt>.
+This corresponds to the version selected in the options dialog.
+
+The <tt>IdlInterpreter/Modules</tt> configuration option should be overridden in a default configuration file.
+The <tt>IdlStart</tt> entry should remain and additional method files added after the <tt>IdlStart</tt> entry.
+Look in <tt>DefaultSettings/45-IDL.cfg</tt> for the configuration format.
+
+\section conventions Documentation Conventions
+This documentation is broken into modules which group the functionality of various IDL functions.
+Parameter names for functions will be either the name of a keyword parameter or will indicate the number of the positional parameter starting with 1.
+<tt>[1]</tt> indicates the first positional parameter.
+
+A parameter name followed by <b>(opt)</b> indicates an optional parameter.
+The default value, if appropriate, will be listed in the description.
+The data type, if not obvious, will be mentioned in the description
+*/

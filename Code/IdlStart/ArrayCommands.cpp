@@ -24,14 +24,46 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/**
+ * \defgroup arraycommands Array Commands
+ */
+/*@{*/
+
+/**
+ * Make raster data available to IDL.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @param[out] BANDS_OUT @opt
+ *             Returns the number of active bands.
+ * @param[out] HEIGHT_OUT @opt
+ *             Returns the number of active rows.
+ * @param[out] WIDTH_OUT @opt
+ *             Returns the number of active columns.
+ * @param[in] BANDS_START @opt
+ *            The starting band in active band numbers. Defaults to 0.
+ * @param[in] BANDS_END @opt
+ *            The end band in active band numbers. Defaults to the last band.
+ * @param[in] HEIGHT_START @opt
+ *            The starting row in active row numbers. Defaults to 0.
+ * @param[in] HEIGHT_END @opt
+ *            The end row in active row numbers. Defaults to the last row.
+ * @param[in] WIDTH_START @opt
+ *            The starting column in active column numbers. Defaults to 0.
+ * @param[in] WIDTH_END @opt
+ *            The end column in active column numbers. Defaults to the last column.
+ * @return An array containing the requested data.
+ * @usage data = array_to_idl(BANDS_START=1, BANDS_END=2)
+ * @endusage
+ */
 IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    if (argc<0)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "ARRAY_TO_IDL takes a 'dataset' name or a 'matrix' name as keywords,"
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "ARRAY_TO_IDL takes a 'dataset' name as a keyword,"
          "if used with on disk data, you can also use, 'bands_start', 'bands_end', 'height_start', 'height_end', "
-         "'width_start', 'width_end' as keywords. If you don't know the dimesions of the array, the keywords 'bands', "
-         "'height', and 'width' will return them so you can reform the array to the appropriate dimensions");
+         "'width_start', 'width_end' as keywords.");
    }
    typedef struct
    {
@@ -80,8 +112,6 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(height))},
       {"HEIGHT_START", IDL_TYP_LONG, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(startyheightExists)),
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(startyheight))},
-      {"MATRIX", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(matrixExists)),
-         reinterpret_cast<char*>(IDL_KW_OFFSETOF(matrixName))},
       {"WIDTH_END", IDL_TYP_LONG, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(endxwidthExists)),
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(endxwidth))},
       {"WIDTH_OUT", IDL_TYP_LONG, 1, IDL_KW_OUT, reinterpret_cast<int*>(IDL_KW_OFFSETOF(widthExists)),
@@ -94,14 +124,9 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
 
    std::string filename;
-   std::string matrixName;
    if (kw.datasetExists)
    {
       filename = IDL_STRING_STR(&kw.datasetName);
-   }
-   if (kw.matrixExists)
-   {
-      matrixName = IDL_STRING_STR(&kw.matrixName);
    }
    RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
 
@@ -123,97 +148,72 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
    int dimensions = 3;
    RasterElement* pMatrix = NULL;
 
-   if (!kw.matrixExists)
+   pRawData = reinterpret_cast<unsigned char*>(pData->getRawData());
+   if (pRawData == NULL || kw.startyheightExists || kw.endyheightExists || kw.startxwidthExists ||
+      kw.endxwidthExists || kw.bandstartExists || kw.bandendExists)
    {
-      pRawData = reinterpret_cast<unsigned char*>(pData->getRawData());
-      if (pRawData == NULL || kw.startyheightExists || kw.endyheightExists || kw.startxwidthExists ||
-          kw.endxwidthExists || kw.bandstartExists || kw.bandendExists)
+      pRawData = NULL;
+      // can't get rawdata pointer or subcube selected, have to copy
+      if (pData != NULL)
       {
-         pRawData = NULL;
-         // can't get rawdata pointer or subcube selected, have to copy
-         if (pData != NULL)
+         const RasterDataDescriptor* pDesc = dynamic_cast<const RasterDataDescriptor*>(pData->getDataDescriptor());
+         if (pDesc != NULL)
          {
-            const RasterDataDescriptor* pDesc = dynamic_cast<const RasterDataDescriptor*>(pData->getDataDescriptor());
-            if (pDesc != NULL)
+            iType = pDesc->getInterleaveFormat();
+            unsigned int heightStart = 0;
+            unsigned int heightEnd = pDesc->getRowCount()-1;
+            unsigned int widthStart= 0;
+            unsigned int widthEnd = pDesc->getColumnCount()-1;
+            unsigned int bandStart= 0;
+            unsigned int bandEnd = pDesc->getBandCount()-1;
+            encoding = pDesc->getDataType();
+            if (kw.startyheightExists)
             {
-               iType = pDesc->getInterleaveFormat();
-               unsigned int heightStart = 0;
-               unsigned int heightEnd = pDesc->getRowCount()-1;
-               unsigned int widthStart= 0;
-               unsigned int widthEnd = pDesc->getColumnCount()-1;
-               unsigned int bandStart= 0;
-               unsigned int bandEnd = pDesc->getBandCount()-1;
-               encoding = pDesc->getDataType();
-               if (kw.startyheightExists)
-               {
-                  heightStart = kw.startyheight;
-               }
-               if (kw.endyheightExists)
-               {
-                  heightEnd = kw.endyheight;
-               }
-               if (kw.startxwidthExists)
-               {
-                  widthStart = kw.startxwidth;
-               }
-               if (kw.endxwidthExists)
-               {
-                  widthEnd = kw.endxwidth;
-               }
-               if (kw.bandstartExists)
-               {
-                  bandStart = kw.bandstart;
-               }
-               if (kw.bandendExists)
-               {
-                  bandEnd = kw.bandend;
-               }
-               column = widthEnd - widthStart+1;
-               row = heightEnd - heightStart+1;
-               band = bandEnd - bandStart+1;
-               //copy the subcube, determine the type
-               switchOnComplexEncoding(encoding, IdlFunctions::copySubcube, pRawData, pData,
-                     heightStart, heightEnd, widthStart, widthEnd, bandStart, bandEnd);
+               heightStart = kw.startyheight;
             }
+            if (kw.endyheightExists)
+            {
+               heightEnd = kw.endyheight;
+            }
+            if (kw.startxwidthExists)
+            {
+               widthStart = kw.startxwidth;
+            }
+            if (kw.endxwidthExists)
+            {
+               widthEnd = kw.endxwidth;
+            }
+            if (kw.bandstartExists)
+            {
+               bandStart = kw.bandstart;
+            }
+            if (kw.bandendExists)
+            {
+               bandEnd = kw.bandend;
+            }
+            column = widthEnd - widthStart+1;
+            row = heightEnd - heightStart+1;
+            band = bandEnd - bandStart+1;
+            //copy the subcube, determine the type
+            switchOnComplexEncoding(encoding, IdlFunctions::copySubcube, pRawData, pData,
+               heightStart, heightEnd, widthStart, widthEnd, bandStart, bandEnd);
          }
-      }
-      else
-      {
-         RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
-         if (pDesc == NULL)
-         {
-            return IDL_StrToSTRING("failure");
-         }
-
-         iType = pDesc->getInterleaveFormat();
-
-         row = pDesc->getRowCount();
-         column = pDesc->getColumnCount();
-         band = pDesc->getBandCount();
-         encoding = pDesc->getDataType();
       }
    }
    else
    {
-      //the user specified a ResultsMatrix to get data from
-      pMatrix = dynamic_cast<RasterElement*>(Service<ModelServices>()->getElement(
-         matrixName, TypeConverter::toString<RasterElement>(), pData));
-      if (pMatrix == NULL)
+      RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+      if (pDesc == NULL)
       {
-         std::string msg = "Error could not find array.";
-         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg);
-         return IDL_StrToSTRING("");
+         return IDL_StrToSTRING("failure");
       }
-      const RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pMatrix->getDataDescriptor());
-      if (pDesc != NULL)
-      {
-         iType = pDesc->getInterleaveFormat();
-         row = pDesc->getRowCount();
-         column = pDesc->getRowCount();
-         band = pDesc->getBandCount();
-         encoding = pDesc->getDataType();
-         pRawData = reinterpret_cast<unsigned char*>(pMatrix->getRawData());
-      }
+
+      iType = pDesc->getInterleaveFormat();
+
+      row = pDesc->getRowCount();
+      column = pDesc->getColumnCount();
+      band = pDesc->getBandCount();
+      encoding = pDesc->getDataType();
    }
 
    //set the datatype based on the encoding
@@ -303,6 +303,48 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
    return IDL_ImportArray(dimensions, dims, type, pRawData, NULL, NULL);
 }
 
+/**
+ * Turn an IDL array into a raster element.
+ *
+ * @param[in] [1]
+ *            A one dimensional IDL array containing the data. The Opticks
+ *            data type will be inferred from the IDL data type.
+ * @param[in] [2]
+ *            The name of the raster element.
+ * @param[in] BANDS_END
+ *            The number of bands in the array.
+ * @param[in] HEIGHT_END
+ *            The number of rows in the array.
+ * @param[in] WIDTH_END
+ *            The number of columns in the array.
+ * @param[in] DATASET @opt
+ *            The name of the data set which will be the parent of the raster element.
+ *            Defaults to no parent.
+ * @param[in] INTERLEAVE @opt
+ *            The interleave of the data. Defaults to BSQ.
+ * @param[in] NEW_WINDOW @opt
+ *            If this flag is true, a new window is created for the data. If it is
+ *            false, a new layer in the active window is created.
+ * @param[in] UNITS @opt
+ *            The name of the units represented by the data. Defaults to no units.
+ * @param[in] OVERWITE @opt
+ *            If this flag is true and the target raster element exists, the data will be
+ *            overwritten. If the raster element does not exist or the \p NEW_WINDOW flag
+ *            is true, this flag is ignored.
+ * @param[in] BANDS_START @opt
+ *            The starting band in active band numbers if the \p OVERWRITE flag is specified.
+ *            Defaults to 0.
+ * @param[in] HEIGHT_START @opt
+ *            The starting row in active row numbers if the \p OVERWRITE flag is specified.
+ *            Defaults to 0.
+ * @param[in] WIDTH_START @opt
+ *            The starting column in active column numbers if the \p OVERWRITE flag is specified.
+ *            Defaults to 0.
+ * @rsof
+ * @usage array = indgen(20000,/FLOAT)
+ * print,array_to_opticks(array, "new", BANDS_END=2, HEIGHT_END=100, WIDTH_END=100, /NEW_WINDOW)
+ * @endusage
+ */
 IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -610,6 +652,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    return idlPtr;
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(array_to_idl), "ARRAY_TO_IDL",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},

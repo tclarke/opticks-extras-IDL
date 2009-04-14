@@ -27,6 +27,36 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/**
+ * \defgroup animationcommands Animation Commands
+ */
+/*@{*/
+
+/**
+ * Create a new animation.
+ * Create a time or frame based animation and attach it to a raster layer.
+ *
+ * @param[in] DATASET
+ *        The name of the RasterElement which will be animated.
+ * @param[in] CONTROLLER_NAME @opt
+ *        The name of the animation controller. A new one will
+ *        be created if necessary. The default creates a name based on an
+ *        increasing integer.
+ * @param[in] COPY_DATASET @opt
+ *        If specified, the named dataset is retrieved. The default animation
+ *        controller associated with the first RasterLayer containing this dataset
+ *        is cloned and used as the basis for the new animation. The default is
+ *        not to clone a controller.
+ * @param[in] FRAMES @opt
+ *        If specified, this is an int array of frame numbers for the new animation. The default is to use
+ *        the active frame numbers in DATASET.
+ * @param[in] TIMES @opt
+ *        If specified, this is a double array of frame times for the new animation. The default is to
+ *        create a frame based animation.
+ * @rsof
+ * @usage print,create_animation(DATASET="MyAnimationDataset")
+ * @endusage
+ */
 IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -105,7 +135,7 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
       if ((kw.frames->flags & ~IDL_V_ARR))
       {
          IDL_KW_FREE;
-         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  Times keyword must be an array.");
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  Frames keyword must be an array.");
          return IDL_StrToSTRING("failure");
       }
       else
@@ -309,6 +339,16 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
    return IDL_StrToSTRING("success");
 }
 
+/**
+ * Get the animation interval multiplier for an animation controller.
+ *
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller. Defaults to
+ *            the active animation controller.
+ * @return The current interval multiplier for the specified controller.
+ * @usage interval = get_interval_multiplier(CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR get_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -362,6 +402,21 @@ IDL_VPTR get_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Change the animation interval multiplier for an animation controller.
+ *
+ * This multiplier changes the playback rate. A multiplier of 2.0 will double
+ * the playback rate and a multiplier of 0.5 will half the playback rate.
+ *
+ * @param[in] [1]
+ *            The new interval multiplier.
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller. Defaults to
+ *            the active animation controller.
+ * @rsof
+ * @usage print,set_interval_multiplier(2.0, CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -435,6 +490,16 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Get the animation play state for an animation controller.
+ *
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller. Defaults to
+ *            the active animation controller.
+ * @return The current animation play state for the specified controller.
+ * @usage state = get_animation_state(CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR get_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -483,6 +548,18 @@ IDL_VPTR get_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Change the animation play state for an animation controller.
+ *
+ * @param[in] [1]
+ *            The new animation state.
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller. Defaults to
+ *            the active animation controller.
+ * @rsof
+ * @usage print,set_animation_state("play_forward", CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR set_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -547,6 +624,16 @@ IDL_VPTR set_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Get the animation cycle mode on an animation controller.
+ *
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller. Defaults to
+ *            the active animation controller.
+ * @return The current animation cycle mode for the specified controller.
+ * @usage cycle_mode = get_animation_cycle(CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR get_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -595,6 +682,18 @@ IDL_VPTR get_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Change the animation cycle mode on an animation controller.
+ *
+ * @param[in] [1]
+ *            The new animation cycle mode.
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller. Defaults to
+ *            the active animation controller.
+ * @rsof
+ * @usage print,set_animation_cycle("repeat", CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR set_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -659,6 +758,19 @@ IDL_VPTR set_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Enable frame dropping on an animation controller.
+ *
+ * Allows the application to skip frames if necessary to maintain
+ * the playback rate.
+ *
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller where drop frames will be
+ *            enabled. Defaults to the active animation controller.
+ * @rsof
+ * @usage print,enable_can_drop_frames(CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR enable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -716,6 +828,18 @@ IDL_VPTR enable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Disable frame dropping on an animation controller.
+ *
+ * Cause the application to play all frames even if playback needs to slow down.skip frames if necessary to maintain
+ *
+ * @param[in] CONTROLLER_NAME @opt
+ *            The name of the animation controller where drop frames will be
+ *            disabled. Defaults to the active animation controller.
+ * @rsof
+ * @usage print,disable_can_drop_frames(CONTROLLER_NAME="Controller 1")
+ * @endusage
+ */
 IDL_VPTR disable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -772,6 +896,7 @@ IDL_VPTR disable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    return idlPtr;
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(create_animation), "CREATE_ANIMATION",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
