@@ -17,6 +17,26 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/**
+ * \defgroup gpucommands GPU Commands
+ */
+/*@{*/
+
+/**
+ * Enable a named GPU filter.
+ ** Dynamic texture generation must be active for this to have any effect.
+ *
+ * @param[in] [1]
+ *            The name of the filter to enable.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer to update. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,enable_filter("Edge Detection")
+ * @endusage
+ */
 IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -92,6 +112,20 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Disable a named GPU filter.
+ *
+ * @param[in] [1]
+ *            The name of the filter to disable.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer to update. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,disable_filter("Edge Detection")
+ * @endusage
+ */
 IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -168,6 +202,17 @@ IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Disable GPU processing for a raster layer.
+ *
+ * @param[in] [1]
+ *            The name of the raster layer to update.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,disable_gpu("layer.tif")
+ * @endusage
+ */
 IDL_VPTR disable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -226,6 +271,18 @@ IDL_VPTR disable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Enable GPU processing for a raster layer.
+ * This enables dynamic texture generation and GPU filters.
+ *
+ * @param[in] [1]
+ *            The name of the raster layer to update.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,enable_gpu("layer.tif")
+ * @endusage
+ */
 IDL_VPTR enable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -284,6 +341,7 @@ IDL_VPTR enable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_KW_FREE;
    return idlPtr;
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(disable_filter), "DISABLE_FILTER",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},

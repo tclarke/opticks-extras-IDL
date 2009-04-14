@@ -24,6 +24,19 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/**
+ * \defgroup windowcommands Window Commands
+ */
+/*@{*/
+
+/**
+ * This procedure marks a RasterElement's data as having changed.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the RaseterElement to refresh. Defaults to the primary dataset for the active view.
+ * @usage refresh_display(DATASET="Dataset1.tif")
+ * @endusage
+ */
 void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -50,11 +63,11 @@ void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       dataName = IDL_STRING_STR(&kw.dataset);
    }
-   WorkspaceWindow* vData = Service<DesktopServices>()->getCurrentWorkspaceWindow();
+   WorkspaceWindow* pData = Service<DesktopServices>()->getCurrentWorkspaceWindow();
    RasterElement* pElement = NULL;
-   if (vData != NULL)
+   if (pData != NULL)
    {
-      View* pView = vData->getView();
+      View* pView = pData->getView();
       if (pView !=NULL)
       {
          if (dataName.empty())
@@ -108,7 +121,18 @@ void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
 }
 
-
+/**
+ * Close the specified window.
+ *
+ * @param[in] TYPE @opt
+ *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
+ *            Defaults to SpatialDataWindow.
+ * @param[in] WINDOW @opt
+ *            The name of the window to close. Defaults to the active window.
+ * @rsof
+ * @usage print,close_window(WINDOW="Window Name")
+ * @endusage
+ */
 IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -180,6 +204,23 @@ IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Change the name of a window.
+ *
+ * @note This changes the name of the window only and not the view nor any layers.
+ *
+ * @param[in] [1]
+ *            The new name for the window.
+ * @param[in] TYPE @opt
+ *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
+ *            The default is \p SpatialDataWindow.
+ * @param[in] WINDOW @opt
+ *            The name of the window to close.
+ *            The default is the active window.
+ * @rsof
+ * @usage print,set_window_label("New Window Name", WINDOW="Old Window Name")
+ * @endusage
+ */
 IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -265,7 +306,21 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
-
+/**
+ * Get the name of a window.
+ *
+ * @note This obtains the window name and not the name of the view nor any layers.
+ *
+ * @param[in] TYPE @opt
+ *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
+ *            The default is \p SpatialDataWindow.
+ * @param[in] WINDOW @opt
+ *            The name of the window to close.
+ *            The default is the active window.
+ * @rsof
+ * @usage window_name = get_window_label(WINDOW="Window Name")
+ * @endusage
+ */
 IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -341,6 +396,27 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Get the position of a window.
+ * This returns the position of the window in coordinates relative to the top left
+ * of the workspace.
+ *
+ * @param[out] WIN_POS_X
+ *             This will contain the \c x position of the window.
+ * @param[out] WIN_POS_Y
+ *             This will contain the \c y position of the window.
+ * @param[in] TYPE @opt
+ *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
+ *            The default is \p SpatialDataWindow.
+ * @param[in] WINDOW @opt
+ *            The name of the window to close.
+ *            The default is the active window.
+ * @rsof
+ * @usage xpos = 0
+ * ypos = 0
+ * print,get_window_position(WIN_POS_X=xpos, WIN_POS_Y=ypos, WINDOW="Window Name")
+ * @endusage
+ */
 IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -467,6 +543,27 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Set the position of a window.
+ * This moves a window to a new position in coordinates relative to the top left
+ * of the workspace.
+ *
+ * @param[out] WIN_POS_X
+ *             This is the \c x position of the window.
+ * @param[out] WIN_POS_Y
+ *             This is the \c y position of the window.
+ * @param[in] TYPE @opt
+ *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
+ *            The default is \p SpatialDataWindow.
+ * @param[in] WINDOW @opt
+ *            The name of the window to close.
+ *            The default is the active window.
+ * @rsof
+ * @usage xpos = 100
+ * ypos = 55
+ * print,set_window_position(WIN_POS_X=xpos, WIN_POS_Y=ypos, WINDOW="Window Name")
+ * @endusage
+ */
 IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -580,6 +677,7 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_KW_FREE;
    return idlPtr;
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(close_window), "CLOSE_WINDOW",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},

@@ -19,6 +19,22 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/**
+ * \defgroup misccommands Miscellaneous Commands
+ */
+/*@{*/
+
+/**
+ * Execute a wizard.
+ *
+ * @param[in] [1]
+ *            The full path name of the wizard file.
+ * @param[in] BATCH @opt
+ *            This flag runs the wizard in batch mode. Defaults to interactive mode.
+ * @rsof
+ * @usage print,execute_wizard("c:\path\to\wizard.wiz", /BATCH)
+ * @endusage
+ */
 IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr1 = IDL_StrToSTRING("success");
@@ -92,6 +108,20 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
    return *idlPtr;
 }
 
+/**
+ * This procedure reports the progress of a process.
+ *
+ * This will use the progress reporter passed in to the IDL execution plugin.
+ *
+ * @param[in] MESSAGE @opt
+ *        The message to place in the progress dialog. Defaults to "Error."
+ * @param[in] PERCENT @opt
+ *        Integer percentage completion of a process. Defaults to 0.
+ * @param[in] REPORTING_LEVEL @opt
+ *        The status of the process. Defaults to Warning.
+ * @usage report_progress(MESSAGE="Running algorithm", PERCENT=75, REPORTING_LEVEL="NORMAL")
+ * @endusage
+ */
 void report_progress(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    if (spProgress == NULL)
@@ -169,6 +199,15 @@ void report_progress(int argc, IDL_VPTR pArgv[], char* pArgk)
    spProgress->updateProgress(message, percent, reportingLevel);
 }
 
+/**
+ * Retrieve the value of a configuration setting.
+ *
+ * @param[in] [1]
+ *            The name of the configuration setting.
+ * @return The string representation of the configuration setting's value.
+ * @usage print,get_configuration_setting("General/ReleaseType")
+ * @endusage
+ */
 IDL_VPTR get_configuration_setting(int argc, IDL_VPTR pArgv[])
 {
    IDL_VPTR idlPtr;
@@ -190,6 +229,7 @@ IDL_VPTR get_configuration_setting(int argc, IDL_VPTR pArgv[])
 
    return idlPtr;
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(execute_wizard), "EXECUTE_WIZARD",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},

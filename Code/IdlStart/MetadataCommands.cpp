@@ -18,6 +18,7 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/*!@cond INTERNAL */
 namespace
 {
    template<typename T>
@@ -66,7 +67,32 @@ namespace
       }
    }
 }
+/*!@endcond*/
 
+/**
+ * \defgroup metadatacommands Metadata Commands
+ */
+/*@{*/
+
+/**
+ * Access DataElement metadata and wizard arguments.
+ *
+ * @param[in] [1]
+ *            The metadata item name. If \p DATASET is specified, this
+ *            is the name of the metadata element to access. If \p WIZARD
+ *            is specified, this specifies the "Wizard Item/Output Node".
+ * @param[in] DATASET @opt
+ *            The name of the data element. Defaults to the
+ *            primary raster element of the active window if
+ *            a wizard is not specified.
+ * @param[in] WIZARD @opt
+ *            The full path name of the wizard file. If not specified
+ *            a data element will be used.
+ * @return The metadata item's value. This will be converted to an appropriate
+ *         IDL data type.
+ * @usage print,get_metadata("NITF/File Header/FDT", DATASET="test.ntf-I1")
+ * @endusage
+ */
 IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -295,6 +321,29 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Set DataElement metadata and wizard arguments.
+ *
+ * @param[in] [1]
+ *            The metadata item name. If \p DATASET is specified, this
+ *            is the name of the metadata element to set. If \p WIZARD
+ *            is specified, this specifies the "Wizard Item/Input Node".
+ * @param[in] [2]
+ *            The new item value. IDL data types will be converted to
+ *            corresponding Opticks data types.
+ * @param[in] DATASET @opt
+ *            The name of the data element. Defaults to the
+ *            primary raster element of the active window if
+ *            a wizard is not specified.
+ * @param[in] WIZARD @opt
+ *            The full path name of the wizard file. If not specified
+ *            a data element will be used.
+ * @param[in] BOOL @opt
+ *            If this flag is present, treat \p [2] as a boolean type.
+ * @rsof
+ * @usage print,set_metadata("Value - Annotation Name/AnnotationName", "Annotation 1", WIZARD="C:\Wizards\ProcessAnnotation.wiz")
+ * @endusage
+ */
 IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -339,7 +388,6 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_MEMINT total;
    char* pValue = NULL;
    IDL_VarGetData(pArgv[1], &total, &pValue, 0);
-   bool isVector = (total > 1);
 
    std::string filename;
    if (kw.datasetExists)
@@ -496,6 +544,17 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Copy the metadata from one data element to another.
+ *
+ * @param[in] [1]
+ *            The name of the source data element.
+ * @param[in] [2]
+ *            The name of the destination data element.
+ * @rsof
+ * @usage print,copy_metadata("Dataset1", "Dataset2")
+ * @endusage
+ */
 IDL_VPTR copy_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    if (argc < 2)
@@ -538,6 +597,7 @@ IDL_VPTR copy_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    pDestMetadata->merge(pSourceMetadata);
    return IDL_StrToSTRING("success");
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(copy_metadata), "COPY_METADATA",0,2,IDL_SYSFUN_DEF_F_KEYWORDS,0},

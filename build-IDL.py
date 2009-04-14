@@ -114,6 +114,48 @@ class Builder:
             if self.verbosity > 1:
                 print "Done creating ApplicationUserSettings folder"
 
+    def build_doxygen(self, build, artifacts_dir):
+        if self.verbosity > 1:
+            print "Generating HTML..."
+        doc_path = os.path.abspath(join("Code", "Build", "DoxygenOutput"))
+        if os.path.exists(doc_path):
+            #delete any already generated documentation
+            shutil.rmtree(doc_path, True)
+        os.makedirs(doc_path)
+        doxygen_cmd = self.get_doxygen_path()
+        config_dir = os.path.abspath(join("Code", "ApiDocs"))
+        args = [doxygen_cmd, join(config_dir, "application.dox")]
+        env = os.environ
+        env["SOURCE"] = os.path.abspath("Code")
+        env["OUTPUT_DIR"] = doc_path
+        env["CONFIG_DIR"] = config_dir
+        graphviz_dir = os.path.abspath(join(self.depend_path,
+            "graphviz", "app"))
+        env["DOT_DIR"] = join(graphviz_dir, "bin")
+        self.other_doxygen_prep(build, env)
+        retcode = execute_process(args, env=env)
+        if retcode != 0:
+            raise ScriptException("Unable to run doxygen generation script")
+        if self.verbosity > 1:
+            print "Done generating HTML"
+        if artifacts_dir is not None:
+            if self.verbosity > 1:
+                print "Compressing Doxygen because --artifact-dir "\
+                    "was provided."
+            html_path = join(doc_path, "html")
+            zip_name = "doxygen.zip"
+            zip_path = os.path.abspath(join(artifacts_dir, zip_name))
+            the_zip = zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED)
+            for cur_dir, dirs, files in os.walk(html_path):
+                arc_dir = cur_dir[len(html_path):]
+                for the_file in files:
+                    the_zip.write(join(cur_dir, the_file),
+                        join(arc_dir,the_file))
+            the_zip.close()
+            if self.verbosity > 1:
+                print "Done compressing Doxygen"
+
+
 class WindowsBuilder(Builder):
     def __init__(self, dependencies, build_in_debug,
                  opticks_build_dir, visualstudio, verbosity):
@@ -139,6 +181,24 @@ class WindowsBuilder(Builder):
         build_dir = os.path.join(os.path.abspath("Code"), "Build")
         return os.path.abspath(join(build_dir,
             "Binaries-%s-%s" % (self.platform, self.mode)))
+    
+    def get_doxygen_path(self):
+        return join(self.depend_path, "doxygen", "bin", "doxygen.exe")
+
+    def other_doxygen_prep(self, build, env):
+        if build != "all":
+            return
+        if self.verbosity > 1:
+            print "Enabling CHM generation"
+        hhc_path = os.path.abspath(join(self.ms_help_compiler, "hhc.exe"))
+        if not(os.path.exists(hhc_path)):
+            raise ScriptException("MS Help Compiler path of %s is "\
+                "invalid, see --ms-help-compiler" %
+                (self.ms_help_compiler))
+        env["GENERATE_CHM"] = "YES"
+        env["MICROSOFT_HELP_COMPILER"] = hhc_path
+        chm_file = "IDL.chm"
+        env["CHM_NAME"] = chm_file
 
     def prep_to_run(self):
         self.prep_to_run_helper([".dll", ".exe"])
@@ -189,6 +249,18 @@ class SolarisBuilder(Builder):
                  opticks_build_dir, verbosity):
         Builder.__init__(self, dependencies, build_in_debug,
             opticks_build_dir, verbosity)
+
+    def get_doxygen_path(self):
+        return join(self.depend_path, "doxygen", "bin", "doxygen")
+
+    def other_doxygen_prep(self, build, env):
+        graphviz_dir = os.path.abspath(join(self.depend_path,
+            "graphviz", "app"))
+        env["GVBINDIR"] = join(graphviz_dir, "lib", "graphviz")
+        new_value = join(graphviz_dir, "lib")
+        if env.has_key("LD_LIBRARY_PATH_32"):
+            new_value = new_value + ":" + env["LD_LIBRARY_PATH_32"]
+        env["LD_LIBRARY_PATH_32"] = new_value
 
     def compile_code(self, env, clean, concurrency):
         #Build extension plugins
@@ -278,12 +350,14 @@ def main(args):
         action="store", type="choice", choices=["all","none"])
     options.add_option("--prep", dest="prep", action="store_true")
     options.add_option("--concurrency", dest="concurrency", action="store")
+    options.add_option("--build-doxygen", dest="build_doxygen")
     options.add_option("-q", "--quiet", help="Print fewer messages",
         action="store_const", dest="verbosity", const=0)
     options.add_option("-v", "--verbose", help="Print more messages",
         action="store_const", dest="verbosity", const=2)
     options.set_defaults(mode="release", clean=False,
-        build_extension="none", prep=False, concurrency=1, verbosity=1)
+        build_extension="none", build_doxygen="none",
+        prep=False, concurrency=1, verbosity=1)
     options = options.parse_args(args[1:])[0]
 
     builder = None
@@ -337,6 +411,13 @@ def main(args):
 
         builder.build_executable(options.clean, options.build_extension,
             options.concurrency)
+
+        if options.build_doxygen != "none":
+           if options.verbosity > 1:
+              print "Building doxygen..."
+           builder.build_doxygen(options.build_doxygen, None)
+           if options.verbosity > 1:
+              print "Done building doxygen"
 
         if options.prep:
             if options.verbosity > 1:
