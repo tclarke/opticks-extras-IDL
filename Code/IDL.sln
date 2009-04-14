@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart", "IdlStart\IdlSta
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlInterpreter", "IdlInterpreter\IdlInterpreter.vcproj", "{7EEEFB55-3F81-4113-9A52-887068CDF961}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApiDocs", "ApiDocs\ApiDocs.vcproj", "{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -35,6 +37,10 @@ Global
 		{7EEEFB55-3F81-4113-9A52-887068CDF961}.Release|Win32.Build.0 = Release|Win32
 		{7EEEFB55-3F81-4113-9A52-887068CDF961}.Release|x64.ActiveCfg = Release|x64
 		{7EEEFB55-3F81-4113-9A52-887068CDF961}.Release|x64.Build.0 = Release|x64
+		{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}.Debug|x64.ActiveCfg = Debug|Win32
+		{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}.Release|Win32.ActiveCfg = Release|Win32
+		{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

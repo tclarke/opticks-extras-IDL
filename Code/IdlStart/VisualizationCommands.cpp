@@ -19,6 +19,25 @@
 #include <idl_export.h>
 #include <idl_callproxy.h>
 
+/**
+ * \defgroup visualizationcommands Visualization Commands
+ */
+/*@{*/
+
+/**
+ * Set the colormap for single channel display.
+ *
+ * @param[in] [1]
+ *            Full path name to the colormap file.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,set_colormap("C:\Program Files\Opticks\SupportFiles\ColorTables\StopLight.clu")
+ * @endusage
+ */
 IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -114,6 +133,26 @@ IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
    return IDL_StrToSTRING("success");
 }
 
+/**
+ * Get the histogram stretch values for a layer.
+ *
+ * @param[out] MAX @opt
+ *             If specified, this will contain the maximum stretch value.
+ * @param[out] MIN @opt
+ *             If specified, this will contain the minimum stretch value.
+ * @param[in] CHANNEL @opt
+ *            The color channel whose stretch value is needed. Defaults to GRAY.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage maxval = 0
+ * minval = 0
+ * print,get_stretch_values(MAX=maxval, MIN=minval, CHANNEL="RED")
+ * @endusage
+ */
 IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -230,6 +269,24 @@ IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Set the histogram stretch values for a layer.
+ *
+ * @param[in] MAX
+ *             The new maximum stretch value.
+ * @param[in] MIN
+ *            The new minimum stretch value.
+ * @param[in] CHANNEL @opt
+ *            The color channel whose stretch value will be set. Defaults to GRAY.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,set_stretch_values(MAX=100, MIN=25.6)
+ * @endusage
+ */
 IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -331,6 +388,22 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Set the histogram stretch method for a layer.
+ *
+ * @param[in] [1]
+ *            The new streth method.
+ * @param[in] CHANNEL @opt
+ *            The color channel whose stretch method will be set. Defaults to GRAY.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,set_stretch_method("PERCENTILE")
+ * @endusage
+ */
 IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr;
@@ -417,6 +490,20 @@ IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Get the histogram stretch method for a layer.
+ *
+ * @param[in] CHANNEL @opt
+ *            The color channel whose stretch method is needed. Defaults to GRAY.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @return The current stretch method.
+ * @usage method = get_stretch_method()
+ * @endusage
+ */
 IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -485,6 +572,22 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
    return IDL_StrToSTRING(const_cast<char*>(method.c_str()));
 }
 
+/**
+ * Set the histogram stretch type for a layer.
+ *
+ * @param[in] [1]
+ *            The new streth type.
+ * @param[in] CHANNEL @opt
+ *            The color channel whose stretch type will be set. Defaults to GRAY.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @rsof
+ * @usage print,set_stretch_type("LINEAR")
+ * @endusage
+ */
 IDL_VPTR set_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    IDL_VPTR idlPtr = IDL_StrToSTRING("failure");
@@ -576,6 +679,20 @@ IDL_VPTR set_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
    return idlPtr;
 }
 
+/**
+ * Get the histogram stretch type for a layer.
+ *
+ * @param[in] CHANNEL @opt
+ *            The color channel whose stretch type is needed. Defaults to GRAY.
+ * @param[in] LAYER @opt
+ *            The name of the raster layer. Defaults to
+ *            the layer containing the primary raster element.
+ * @param[in] WINDOW @opt
+ *            The name of the window to update. Defaults to the active window.
+ * @return The current stretch type.
+ * @usage type = get_stretch_type()
+ * @endusage
+ */
 IDL_VPTR get_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
    typedef struct
@@ -651,6 +768,7 @@ IDL_VPTR get_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_KW_FREE;
    return IDL_StrToSTRING(const_cast<char*>(type.c_str()));
 }
+/*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_stretch_method), "GET_STRETCH_METHOD",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},

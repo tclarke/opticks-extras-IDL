@@ -31,6 +31,10 @@ class RasterLayer;
 class View;
 class WizardObject;
 
+/**
+ * These are internal support methods not used in IDL.
+ * \internal
+ */
 namespace IdlFunctions
 {
    RasterElement* getDataset(const std::string& name = "");
