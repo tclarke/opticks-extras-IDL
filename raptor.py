@@ -143,6 +143,19 @@ class RaptorSerializer(object):
 
    def serialize_to_file(self, filename):
       raptor.raptor_serialize_start_to_filename(self.serializer, filename)
+      self.__serialize_statements()
+      raptor.raptor_serialize_end(self.serializer)
+
+   def serialize_to_string(self, base_uri = ""):
+      ruri = raptor.raptor_new_uri(base_uri)
+      outstr = c_void_p()
+      outlen = c_ulong()
+      raptor.raptor_serialize_start_to_string(self.serializer, ruri, pointer(outstr), pointer(outlen))
+      self.__serialize_statements()
+      raptor.raptor_serialize_end(self.serializer)
+      return cast(outstr, c_char_p).value
+
+   def __serialize_statements(self):
       for subject in iter(self.__statements):
          for predicate in iter(self.__statements[subject]):
             for object in iter(self.__statements[subject][predicate]):
@@ -172,7 +185,6 @@ class RaptorSerializer(object):
                if triple.subject_type == RAPTOR_IDENTIFIER_TYPE_RESOURCE:
                   raptor.raptor_free_uri(triple.subject)
                raptor.raptor_free_uri(triple.predicate)
-      raptor.raptor_serialize_end(self.serializer)
 
    def statements(self, st):
       self.__statements = st
@@ -186,5 +198,7 @@ if __name__ == '__main__':
 
    r=RaptorSerializer("rdfxml-abbrev")
    r.statements(s)
-   r.serialize_to_file("install.txt")
+   s = r.serialize_to_string()
+   print type(s)
+   print s
    r.cleanup()
