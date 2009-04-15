@@ -213,7 +213,8 @@ class Builder:
         zfile.writestr("install.rdf", install_rdf)
         extension_settings_dir = join(os.path.abspath("Release"), "DefaultSettings")
         copy_files_in_dir_to_zip(extension_settings_dir, join("content", "DefaultSettings"), zfile, [".cfg"], ["_svn", ".svn"])
-        copy_file_to_zip(os.path.abspath("Release"), "license", "lgpl-2.1.txt", zfile)
+        copy_file_to_zip(os.path.abspath("Installer"), "license", "lgpl-2.1.txt", zfile)
+        copy_file_to_zip(os.path.abspath("Installer"), "icon", "idl.png", zfile)
         doc_path = os.path.abspath(join("Code", "Build", "DoxygenOutput"))
         copy_files_in_dir_to_zip(doc_path, join("content", "Help", "IDL"), zfile)
 
