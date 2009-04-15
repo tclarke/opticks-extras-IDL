@@ -22,7 +22,9 @@
 #include <string>
 #include <stdio.h>
 #include <idl_export.h>
+#if defined(WIN_API)
 #include <idl_callproxy.h>
+#endif
 
 Progress* spProgress = NULL;
 
