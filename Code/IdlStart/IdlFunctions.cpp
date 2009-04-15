@@ -30,7 +30,6 @@
 #include "xmlreader.h"
 #include <stdio.h>
 #include <idl_export.h>
-#include <idl_callproxy.h>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <string>

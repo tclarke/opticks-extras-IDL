@@ -25,7 +25,6 @@
 #include <vector>
 #include <stdio.h>
 #include <idl_export.h>
-#include <idl_callproxy.h>
 
 /**
  * \defgroup animationcommands Animation Commands

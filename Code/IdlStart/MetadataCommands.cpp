@@ -16,7 +16,6 @@
 #include <string>
 #include <stdio.h>
 #include <idl_export.h>
-#include <idl_callproxy.h>
 
 /*!@cond INTERNAL */
 namespace
@@ -30,7 +29,7 @@ namespace
    }
 
    template<typename T>
-   DataVariant idl_to_DataVariant(int total, char* pValue)
+   DataVariant idl_to_DataVariant(size_t total, char* pValue)
    {
       T* pValReal = reinterpret_cast<T*>(pValue);
       if (total == 1)
@@ -49,7 +48,7 @@ namespace
    }
 
    template<>
-   DataVariant idl_to_DataVariant<bool>(int total, char* pValue)
+   DataVariant idl_to_DataVariant<bool>(size_t total, char* pValue)
    {
       // special case since bool isn't always 1 byte
       if (total == 1)
