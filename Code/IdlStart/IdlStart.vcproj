@@ -42,14 +42,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\ITT\IDL64\external\include&quot;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -57,15 +56,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="idl_callproxy.lib"
-				Version=""
-				AdditionalLibraryDirectories="C:\Program Files (x86)\ITT\IDL64\bin\bin.x86"
-				IgnoreDefaultLibraryNames="PlugInLib.lib"
-				ModuleDefinitionFile=""
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)\$(ProjectName).pdb"
-				GenerateMapFile="true"
-				MapFileName="$(OutDir)\$(TargetName).map"
-				MapExports="true"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86&quot;"
+				IgnoreDefaultLibraryNames=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -117,14 +109,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\ITT\IDL64\external\include&quot;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -132,15 +123,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="idl_callproxy.lib"
-				Version=""
-				AdditionalLibraryDirectories=""
-				IgnoreDefaultLibraryNames="PlugInLib.lib"
-				ModuleDefinitionFile=""
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)\$(ProjectName).pdb"
-				GenerateMapFile="true"
-				MapFileName="$(OutDir)\$(TargetName).map"
-				MapExports="true"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86_64&quot;"
+				IgnoreDefaultLibraryNames=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -192,15 +176,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;C:\Program Files (x86)\ITT\IDL64\external\include&quot;"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\ITT\IDL64\external\include&quot;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -208,8 +190,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="idl_callproxy.lib"
-				AdditionalLibraryDirectories="&quot;C:\Program Files (x86)\ITT\IDL64\bin\bin.x86&quot;"
-				IgnoreDefaultLibraryNames="PlugInLib.lib"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86&quot;"
+				IgnoreDefaultLibraryNames=""
 				ModuleDefinitionFile=""
 			/>
 			<Tool
@@ -262,14 +244,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\ITT\IDL64\external\include&quot;"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -277,8 +258,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="idl_callproxy.lib"
-				IgnoreDefaultLibraryNames="PlugInLib.lib"
-				ModuleDefinitionFile=""
+				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86_64&quot;"
+				IgnoreDefaultLibraryNames=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -343,6 +324,10 @@
 			</File>
 			<File
 				RelativePath=".\MiscCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModuleManager.cpp"
 				>
 			</File>
 			<File
