@@ -39,7 +39,7 @@ namespace
       else
       {
          std::vector<T> tmpVal;
-         for (int i = 0; i < total; ++i)
+         for (size_t i = 0; i < total; ++i)
          {
             tmpVal.push_back(pValReal[i]);
          }
@@ -58,7 +58,7 @@ namespace
       else
       {
          std::vector<bool> tmpVal;
-         for (int i = 0; i < total; ++i)
+         for (size_t i = 0; i < total; ++i)
          {
             tmpVal.push_back((pValue[i] == 0) ? false : true);
          }

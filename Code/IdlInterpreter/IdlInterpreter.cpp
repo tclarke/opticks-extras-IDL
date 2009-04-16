@@ -77,26 +77,42 @@ bool IdlInterpreter::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgLi
    }
    Progress* pProgress = pInArgList->getPlugInArgValue<Progress>(ProgressArg());
    std::string returnText;
-   if (!processCommand(command, returnText, pProgress))
+   std::string errorText;
+   if (!processCommand(command, returnText, errorText, pProgress))
    {
-      return false;
+      std::string returnType("Error");
+      returnText += "\n" + errorText;
+      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
+      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &returnText));
+      return true;
    }
    // Populate the output arg list
-   std::string returnType("Output");
-   VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
-   VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &returnText));
+   if (errorText.empty())
+   {
+      std::string returnType("Output");
+      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
+      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &returnText));
+   }
+   else
+   {
+      std::string returnType("Error");
+      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
+      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &errorText));
+   }
 
    return true;
 }
 
-bool IdlInterpreter::processCommand(const std::string& command, std::string& returnText, Progress* pProgress)
+bool IdlInterpreter::processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress)
 {
    if (!mIdlRunning && !startIdl())
    {
+      returnText = "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
       return false;
    }
    if (mModules.empty())
    {
+      returnText = "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
       return false;
    }
 
@@ -116,12 +132,22 @@ bool IdlInterpreter::processCommand(const std::string& command, std::string& ret
    VERIFY(pMod != NULL);
 
    //get the location of the function that will call the IDL
-   const char*(*execute_idl)(const char*, Progress*) =
-      reinterpret_cast<const char*(*)(const char*, Progress*)>(*pMod->getProcedureAddress("execute_idl"));
+   void (*execute_idl)(const char*, const char**, const char**, Progress*) =
+      reinterpret_cast<void (*)(const char*, const char**, const char**, Progress*)>(*pMod->getProcedureAddress("execute_idl"));
    VERIFY(execute_idl);
 
    //execute the function and capture the output
-   returnText = execute_idl(command.c_str(), pProgress);
+   const char* pOutput = NULL;
+   const char* pErrorOutput = NULL;
+   execute_idl(command.c_str(), &pOutput, &pErrorOutput, pProgress);
+   if (pOutput != NULL)
+   {
+      returnText = pOutput;
+   }
+   if (pErrorOutput != NULL)
+   {
+      errorText = pErrorOutput;
+   }
 
    return true;
 }
@@ -390,15 +416,25 @@ bool IdlInterpreterWizardItem::execute(PlugInArgList* pInArgList, PlugInArgList*
 
    progress.report("Executing IDL command.", 1, NORMAL);
    std::string returnText;
-   if (!pInterp->processCommand(command, returnText, progress.getCurrentProgress()))
+   std::string errorText;
+   if (!pInterp->processCommand(command, returnText, errorText, progress.getCurrentProgress()))
    {
       progress.report("Error executing IDL command.", 0, ERRORS, true);
       return false;
    }
    // Populate the output arg list
-   std::string returnType("Output");
-   VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
-   VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &returnText));
+   if (errorText.empty())
+   {
+      std::string returnType("Output");
+      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
+      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &returnText));
+   }
+   else
+   {
+      std::string returnType("Error");
+      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
+      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &errorText));
+   }
 
    progress.report("Executing IDL command.", 100, NORMAL);
    progress.upALevel();
