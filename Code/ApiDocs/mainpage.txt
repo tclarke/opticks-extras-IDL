@@ -32,7 +32,7 @@ An additional method file must contain the following functions:
 #endif
 
 IDLSTART_EXPORT int start_idl(const char* pLocation, External* pServices);
-IDLSTART_EXPORT const char* execute_idl(const char* pCommand, Progress* pProgress);
+IDLSTART_EXPORT void execute_idl(const char* pCommand, const char*, const char*, Progress* pProgress);
 IDLSTART_EXPORT int close_idl();
 \endcode
 The method file must be linked against the same version of IDL as the main support plug-in.

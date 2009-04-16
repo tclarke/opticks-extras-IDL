@@ -31,32 +31,30 @@ Progress* spProgress = NULL;
 namespace
 {
 std::string output;
+std::string errorOutput;
 bool success = true;
 
 void OutFunc(int flags, char* pBuf, int n)
 {
+   std::string& out = (flags & IDL_TOUT_F_STDERR) ? errorOutput : output;
    // If there is a message, save it
    if (n != 0)
    {
-      unsigned int n = output.max_size();
-      if (output.size() < n && success)
+      unsigned int n = out.max_size();
+      if (out.size() < n && success)
       {
          try
          {
-            if (output.empty())
+            out += pBuf;
+            if (flags & IDL_TOUT_F_NLPOST)
             {
-               output += pBuf;
-            }
-            else
-            {
-               output += "\n";
-               output += pBuf;
+               out += "\n";
             }
          }
          catch(...)
          {
-            output.clear();
-            output = "could not generate output\n";
+            errorOutput.clear();
+            errorOutput = "could not generate output\n";
             success = false;
          }
       }
@@ -68,6 +66,7 @@ IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
+   IDL_CallProxyDebug(IDL_CPDEBUG_ALL);
    if (IDL_CallProxyInit(const_cast<char*>(pLocation)) == 0)
    {
       return 0;
@@ -99,15 +98,23 @@ IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal)
    return success ? 1 : 0;
 }
 
-IDLSTART_EXPORT const char* execute_idl(const char* pCommand, Progress* pProgress)
+IDLSTART_EXPORT void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress)
 {
    spProgress = pProgress;
    success = true;
    output.clear();
+   errorOutput.clear();
    //the idl command to execute the contents of the passed in std::string
    IDL_ExecuteStr(const_cast<char*>(pCommand));
    spProgress = NULL;
-   return output.c_str();
+   if (pOutput != NULL)
+   {
+      *pOutput = output.c_str();
+   }
+   if (pErrorOutput != NULL)
+   {
+      *pErrorOutput = errorOutput.c_str();
+   }
 }
 
 IDLSTART_EXPORT int close_idl()
