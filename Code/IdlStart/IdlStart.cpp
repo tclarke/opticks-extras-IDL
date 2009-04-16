@@ -66,7 +66,6 @@ IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
-   IDL_CallProxyDebug(IDL_CPDEBUG_ALL);
    if (IDL_CallProxyInit(const_cast<char*>(pLocation)) == 0)
    {
       return 0;
