@@ -25,4 +25,8 @@
 		Name="EXTENSION_CODE_DIR"
 		Value="$(SolutionDir)"
 	/>
+	<UserMacro
+		Name="IDL_DIR"
+		Value="C:\Program Files\ITT\IDL64"
+	/>
 </VisualStudioPropertySheet>

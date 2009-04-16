@@ -9,6 +9,10 @@ import traceback
 import shutil
 import zipfile
 
+aeb_platform_mappings = {'win32':'win32-x86-msvc8.1-release',
+                         'win64':'win64-x86-msvc8.1-release',
+                         'solaris':'solaris-sparc-studio12-release'}
+
 def execute_process(args, bufsize=0, executable=None, preexec_fn=None,
       close_fds=None, shell=False, cwd=None, env=None,
       universal_newlines=False, startupinfo=None, creationflags=0):
@@ -158,71 +162,6 @@ class Builder:
             if self.verbosity > 1:
                 print "Done compressing Doxygen"
 
-    def __read_version_h(self):
-        version_path = join("Code", "Include", "IDLVersion.h")
-        version_info = open(version_path, "rt").readlines()
-        rdata = {}
-        for vline in version_info:
-            fields = vline.strip().split()
-            if len(fields) >=3 and fields[0] == "#define":
-                rdata[fields[1]] = " ".join(fields[2:])
-        return rdata
-
-    def build_installer(self):
-        os.environ['PATH'] += os.pathsep + join(self.depend_path, "raptor", "Bin", self.platform)
-        try:
-            import raptor
-        except:
-            print os.environ['PATH']
-            raise ScriptException("Unable to locate raptor. Make sure the raptor dependency is installed.")
-        PF_AEBL = "urn:2008:03:aebl-syntax-ns#"
-        PF_OPTICKS = "urn:2008:03:opticks-aebl-extension-ns#"
-
-        if self.verbosity > 1:
-            print "Loading metadata template..."
-        parser = raptor.RaptorParser()
-        parser.set_feature(raptor.RAPTOR_FEATURE_NO_NET)
-        installer_path = os.path.abspath("Installer")
-        parser.parse_file(join(installer_path, "install.n3"))
-        metadata = parser.statements()
-        parser.cleanup()
-
-        manifest = metadata["urn:aebl:install-manifest"]
-        version_info = self.__read_version_h()
-        manifest[PF_AEBL + "version"] = [version_info["IDL_VERSION_NUMBER"]]
-        manifest[PF_AEBL + "name"] = [version_info["IDL_NAME"]]
-        manifest[PF_AEBL + "description"] = [version_info["IDL_NAME_LONG"]]
-        manifest[PF_AEBL + "targetPlatform"] = [self.aeb_platform]
-
-        out_path = os.path.abspath(join("Code", "Build", "Installer"))
-        if os.path.exists(out_path):
-            shutil.rmtree(out_path, True)
-        os.makedirs(out_path)
-        if self.verbosity > 1:
-            print "Saving updated metadata to AEB..."
-        serializer = raptor.RaptorSerializer("rdfxml-abbrev")
-        serializer.statements(metadata)
-        install_rdf = serializer.serialize_to_string()
-        serializer.cleanup()
-
-        if self.verbosity > 1:
-            print "Building installation tree..."
-        zfile = zipfile.ZipFile(join(out_path, "IDL.aeb"), "w", zipfile.ZIP_DEFLATED)
-
-        # platform independent items
-        zfile.writestr("install.rdf", install_rdf)
-        extension_settings_dir = join(os.path.abspath("Release"), "DefaultSettings")
-        copy_files_in_dir_to_zip(extension_settings_dir, join("content", "DefaultSettings"), zfile, [".cfg"], ["_svn", ".svn"])
-        copy_file_to_zip(os.path.abspath("Installer"), "license", "lgpl-2.1.txt", zfile)
-        copy_file_to_zip(os.path.abspath("Installer"), "icon", "idl.png", zfile)
-        doc_path = os.path.abspath(join("Code", "Build", "DoxygenOutput"))
-        copy_files_in_dir_to_zip(doc_path, join("content", "Help", "IDL"), zfile)
-
-        # platform dependent items
-        self.build_installer_platform(zfile)
-
-        zfile.close()
-
 class WindowsBuilder(Builder):
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
                  opticks_build_dir, visualstudio, verbosity):
@@ -295,46 +234,28 @@ class WindowsBuilder(Builder):
         if ret_code != 0:
             raise ScriptException("Visual Studio did not compile project")
 
-    def build_installer_platform(self, zfile):
-        extension_plugin_path = join(self.get_binaries_dir(), "PlugIns")
-        target_plugin_path = join("platform", self.aeb_platform, "PlugIns")
-        copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlInterpreter.dll", zfile)
-        copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart.dll", zfile)
-
 class Windows32bitBuilder(WindowsBuilder):
+    platform = "Win32"
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
                  opticks_build_dir, visualstudio, verbosity):
         WindowsBuilder.__init__(self, dependencies, opticks_code_dir, build_in_debug,
             opticks_build_dir, visualstudio, verbosity)
         self.is_64_bit = False
-        self.platform = "Win32"
-        if build_in_debug:
-            self.aeb_platform = "win32-x86-msvc8.1-debug"
-        else:
-            self.aeb_platform = "win32-x86-msvc8.1-release"
 
 class Windows64bitBuilder(WindowsBuilder):
+    platform = "x64"
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
                  opticks_build_dir, visualstudio, verbosity):
         WindowsBuilder.__init__(self, dependencies, opticks_code_dir, build_in_debug,
             opticks_build_dir, visualstudio, verbosity)
         self.is_64_bit = True
-        self.platform = "x64"
-        if build_in_debug:
-            self.aeb_platform = "win64-x86-msvc8.1-debug"
-        else:
-            self.aeb_platform = "win64-x86-msvc8.1-release"
 
 class SolarisBuilder(Builder):
+    platform = "solaris-sparc"
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
                  opticks_build_dir, verbosity):
         Builder.__init__(self, dependencies, opticks_code_dir, build_in_debug,
             opticks_build_dir, verbosity)
-        self.platform = "solaris-sparc"
-        if build_in_debug:
-            self.aeb_platform = "solaris-sparc-studio12-debug"
-        else:
-            self.aeb_platform = "solaris-sparc-studio12-release"
 
     def get_doxygen_path(self):
         return join(self.depend_path, "doxygen", "bin", "doxygen")
@@ -381,16 +302,95 @@ class SolarisBuilder(Builder):
     def prep_to_run(self):
         self.prep_to_run_helper([".so"])
 
-    def build_installer_platform(self, zfile):
-        extension_plugin_path = join(self.get_binaries_dir(), "PlugIns")
-        platform = self.aeb_platform
-        if self.build_debug_mode:
-            platform += "-debug"
+def read_version_h():
+    version_path = join("Code", "Include", "IDLVersion.h")
+    version_info = open(version_path, "rt").readlines()
+    rdata = {}
+    for vline in version_info:
+        fields = vline.strip().split()
+        if len(fields) >=3 and fields[0] == "#define":
+            rdata[fields[1]] = " ".join(fields[2:])
+    return rdata
+
+def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, verbosity=None):
+    if len(aeb_platforms) == 0:
+        raise ScriptException("Invalid AEB platform specification. Valid values are: %s." % ", ".join(aeb_platform_mapping.keys()))
+    if sys.platform == "win32":
+       os.environ['PATH'] += os.pathsep + join(depend_path, "raptor", "Bin", "Win32")
+       os.environ['PATH'] += os.pathsep + join(depend_path, "expat", "Bin", "Win32")
+    try:
+        import raptor
+    except:
+        raise ScriptException("Unable to locate raptor. Make sure the raptor dependency is installed.")
+    PF_AEBL = "urn:2008:03:aebl-syntax-ns#"
+    PF_OPTICKS = "urn:2008:03:opticks-aebl-extension-ns#"
+
+    if verbosity > 1:
+        print "Loading metadata template..."
+    parser = raptor.RaptorParser()
+    parser.set_feature(raptor.RAPTOR_FEATURE_NO_NET)
+    installer_path = os.path.abspath("Installer")
+    parser.parse_file(join(installer_path, "install.n3"))
+    metadata = parser.statements()
+    parser.cleanup()
+
+    manifest = metadata["urn:aebl:install-manifest"]
+    version_info = read_version_h()
+    manifest[PF_AEBL + "version"] = [version_info["IDL_VERSION_NUMBER"]]
+    manifest[PF_AEBL + "name"] = [version_info["IDL_NAME"]]
+    manifest[PF_AEBL + "description"] = [version_info["IDL_NAME_LONG"]]
+    manifest[PF_AEBL + "targetPlatform"] = aeb_platforms
+
+    out_path = os.path.abspath(join("Installer","IDL.aeb"))
+    if aeb_output is not None:
+       out_path = os.path.abspath(aeb_output)
+    out_dir = os.path.dirname(out_path)
+    if not os.path.exists(out_dir):
+       os.makedirs(out_dir)
+    if verbosity > 1:
+        print "Saving updated metadata to AEB %s..." % out_path
+    serializer = raptor.RaptorSerializer("rdfxml-abbrev")
+    serializer.statements(metadata)
+    install_rdf = serializer.serialize_to_string()
+    serializer.cleanup()
+
+    if verbosity > 1:
+        print "Building installation tree..."
+    zfile = zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED)
+
+    # platform independent items
+    zfile.writestr("install.rdf", install_rdf)
+    extension_settings_dir = join(os.path.abspath("Release"), "DefaultSettings")
+    copy_files_in_dir_to_zip(extension_settings_dir, join("content", "DefaultSettings"), zfile, [".cfg"], ["_svn", ".svn"])
+    copy_file_to_zip(os.path.abspath("Installer"), "license", "lgpl-2.1.txt", zfile)
+    copy_file_to_zip(os.path.abspath("Installer"), "icon", "idl.png", zfile)
+    doc_path = os.path.abspath(join("Code", "Build", "DoxygenOutput"))
+    copy_files_in_dir_to_zip(doc_path, join("content", "Help", "IDL"), zfile)
+
+    # platform dependent items
+    for plat in aeb_platforms:
+        if verbosity > 0:
+            print "Adding platform dependent files for %s..." % plat
+        plat_parts = plat.split('-')
+        if plat_parts[0].startswith('win'):
+            bin_dir = join(os.path.abspath("Code"), "Build")
+            if plat_parts[0] == "win32":
+                bin_dir = join(bin_dir, "Binaries-%s-%s" % (Windows32bitBuilder.platform, plat_parts[-1]))
+            else:
+                bin_dir = join(bin_dir, "Binaries-%s-%s" % (Windows64bitBuilder.platform, plat_parts[-1]))
+            extension_plugin_path = join(bin_dir, "PlugIns")
+            target_plugin_path = join("platform", plat, "PlugIns")
+            copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlInterpreter.dll", zfile)
+            copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart.dll", zfile)
+        elif plat_parts[0] == 'solaris':
+            bin_dir = os.path.join(os.path.abspath("Code"), "Build", "Binaries-%s-%s" % (SolarisBuilder.platform, plat_parts[-1]))
+            extension_plugin_path = join(bin_dir, "PlugIns")
+            target_plugin_path = join("platform", plat, "PlugIns")
+            copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlInterpreter.so", zfile)
+            copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart.so", zfile)
         else:
-            platform += "-release"
-        target_plugin_path = join("platform", self.aeb_platform, "PlugIns")
-        copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlInterpreter.so", zfile)
-        copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart.so", zfile)
+            raise ScriptException("Unknown AEB platform %s" % plat)
+    zfile.close()
 
 
 def print_env(environ):
@@ -471,7 +471,8 @@ def main(args):
     options.add_option("--build-extension", dest="build_extension",
         action="store", type="choice", choices=["all","none"])
     options.add_option("--prep", dest="prep", action="store_true")
-    options.add_option("--build-installer", dest="build_installer", action="store_true")
+    options.add_option("--build-installer", dest="build_installer", action="store")
+    options.add_option("--aeb-output", dest="aeb_output", action="store")
     options.add_option("--concurrency", dest="concurrency", action="store")
     options.add_option("--build-doxygen", dest="build_doxygen")
     options.add_option("-q", "--quiet", help="Print fewer messages",
@@ -480,7 +481,7 @@ def main(args):
         action="store_const", dest="verbosity", const=2)
     options.set_defaults(mode="release", clean=False,
         build_extension="none", build_doxygen="none",
-        build_installer=False, prep=False, concurrency=1, verbosity=1)
+        prep=False, concurrency=1, verbosity=1)
     options = options.parse_args(args[1:])[0]
 
     builder = None
@@ -511,6 +512,28 @@ def main(args):
                 "must be provided")
         if not os.path.exists(opticks_build_dir):
             raise ScriptException("Opticks build directory path is invalid")
+
+        if options.build_installer:
+            if options.verbosity > 1:
+                print "Building AEB installation extension..."
+            aeb_output = None
+            if options.aeb_output:
+               aeb_output = options.aeb_output
+            aeb_platforms = []
+            if options.build_installer == "all":
+                aeb_platforms = aeb_platform_mappings.values()
+            else:
+                plats = options.build_installer.split(',')
+                for plat in plats:
+                    plat = plat.strip()
+                    if plat in aeb_platform_mappings:
+                        aeb_platforms.append(aeb_platform_mappings[plat])
+                    else:
+                        aeb_platforms.append(plat)
+            build_installer(aeb_platforms, aeb_output, opticks_depends, options.verbosity)
+            if options.verbosity > 1:
+                print "Done building installer"
+            return 0
 
         if options.mode == "debug":
             build_in_debug = True
@@ -549,13 +572,6 @@ def main(args):
             builder.prep_to_run()
             if options.verbosity > 1:
                 print "Done prepping to run"
-
-        if options.build_installer:
-            if options.verbosity > 1:
-                print "Building AEB installation extension..."
-            builder.build_installer()
-            if options.verbosity > 1:
-                print "Done building installer"
 
     except Exception, e:
         print "--------------------------"
