@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="IDL-64bit"
+	InheritedPropertySheets=".\idl.vsprops"
+	>
+	<Tool
+		Name="VCLinkerTool"
+                AdditionalLibraryDirectories="&quot;$(IDL_DIR)\bin\bin.x86_64&quot;"
+	/>
+</VisualStudioPropertySheet>
