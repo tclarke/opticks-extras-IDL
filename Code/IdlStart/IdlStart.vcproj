@@ -58,6 +58,7 @@
 				AdditionalDependencies="idl_callproxy.lib"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86&quot;"
 				IgnoreDefaultLibraryNames=""
+				ModuleDefinitionFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -125,6 +126,7 @@
 				AdditionalDependencies="idl_callproxy.lib"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86_64&quot;"
 				IgnoreDefaultLibraryNames=""
+				ModuleDefinitionFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -260,6 +262,7 @@
 				AdditionalDependencies="idl_callproxy.lib"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\ITT\IDL64\bin\bin.x86_64&quot;"
 				IgnoreDefaultLibraryNames=""
+				ModuleDefinitionFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -324,10 +327,6 @@
 			</File>
 			<File
 				RelativePath=".\MiscCommands.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModuleManager.cpp"
 				>
 			</File>
 			<File

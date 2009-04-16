@@ -19,7 +19,7 @@ class Progress;
 #endif
 
 IDLSTART_EXPORT int start_idl(const char* pLocation, External* pServices);
-IDLSTART_EXPORT const char* execute_idl(const char* pCommand, Progress* pProgress);
+IDLSTART_EXPORT void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
 IDLSTART_EXPORT int close_idl();
 
 extern Progress* spProgress;

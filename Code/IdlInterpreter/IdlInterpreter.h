@@ -30,7 +30,7 @@ public:
    virtual void getUserDefinedTypes(std::vector<std::string>& list) const ;
    virtual bool getTypeDescription(const std::string& type, std::string& description) const ;
 
-   bool processCommand(const std::string& command, std::string& returnText, Progress* pProgress);
+   bool processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress);
 
 private:
    bool startIdl();
