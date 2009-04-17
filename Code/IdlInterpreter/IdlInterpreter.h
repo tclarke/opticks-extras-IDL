@@ -9,6 +9,7 @@
 #ifndef IDLINTERPRETER_H__
 #define IDLINTERPRETER_H__
 
+#include "ExecutableShell.h"
 #include "InterpreterShell.h"
 #include "WizardShell.h"
 
@@ -16,6 +17,23 @@
 #include <vector>
 
 class PlugInManagerServices;
+
+class IdlProxy : public ExecutableShell
+{
+public:
+   IdlProxy();
+   virtual ~IdlProxy();
+   virtual bool getInputSpecification(PlugInArgList*& pArgList);
+   virtual bool getOutputSpecification(PlugInArgList*& pArgList);
+   virtual bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
+   bool processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress);
+
+private:
+   bool startIdl();
+
+   bool mIdlRunning;
+   std::vector<DynamicModule*> mModules;
+};
 
 class IdlInterpreter : public InterpreterShell
 {
@@ -29,14 +47,6 @@ public:
    virtual bool getKeywordDescription(const std::string& keyword, std::string& description) const;
    virtual void getUserDefinedTypes(std::vector<std::string>& list) const ;
    virtual bool getTypeDescription(const std::string& type, std::string& description) const ;
-
-   bool processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress);
-
-private:
-   bool startIdl();
-
-   bool mIdlRunning;
-   std::vector<DynamicModule*> mModules;
 };
 
 class IdlInterpreterWizardItem : public WizardShell
