@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 import sys
 import subprocess
 import os
@@ -586,3 +586,4 @@ if __name__ == "__main__":
     retcode = main(sys.argv)
     print "Return code is", retcode
     sys.exit(retcode)
+>>>>>>> .r23

@@ -15,16 +15,16 @@ opts.AddOptions(BoolOption('RELEASE','False for debug, true for release',0),
 opts.Add('BUILDDIR','Directory for build files','#/Build')
 opts.Add('CACHEDIR','Directory for cache files. Default is not caching.','')
 
-SDKDIR = Dir("c:\opticks\4.2.5-SDK")
-TOOLPATH = Dir("%s/Application/CompileSettings" % SDKDIR).abspath
+SDKDIR = Dir(os.environ["OPTICKS_CODE_DIR"])
+TOOLPATH = [Dir("%s/application/CompileSettings" % SDKDIR).abspath, Dir("#/CompileSettings").abspath]
 PLATFORM = "%s-%s" % (os.environ['OSTYPE'],os.environ['MACHTYPE'])
 
 env = Environment(options=opts,
                   PLATFORM=PLATFORM,
                   ENV=os.environ,
                   tools=["default","qt4","xercesc","boost",
-                         "suncc","sunar","sunlink"],
-                  toolpath=[TOOLPATH])
+                         "idl","suncc","sunar","sunlink"],
+                  toolpath=TOOLPATH)
 if env['RELEASE']:
    MODE='release'
 else:
@@ -38,9 +38,8 @@ env["PLUGINDIR"] = '%s/Binaries-%s-%s/PlugIns' % (BUILDDIR,PLATFORM,MODE)
 env["BINDIR"] = '%s/Build/Binaries-%s-%s/Bin' % (SDKDIR,PLATFORM,SDKMODE)
 env["LIBDIR"] = '%s/Build/Binaries-%s-%s/Lib' % (SDKDIR,PLATFORM,SDKMODE)
 env["BUILDDIR"] = '%s/%s-%s/PlugIns' % (BUILDDIR,PLATFORM,MODE)
-env["COREDIR"] = "%s/Application" % SDKDIR
+env["COREDIR"] = "%s/application" % SDKDIR
 env["SDKDIR"] = SDKDIR
-
 
 Help(opts.GenerateHelpText(env))
 env["QT_MODULES"] = ["QtCore","QtGui","Qt3Support"]
@@ -64,6 +63,7 @@ ignore = Split(env['ignore'])
 plugins = map(lambda x: x.split('./')[-1].split('/')[0],
               map(lambda x: x[0],
                   filter(lambda x: 'ModuleManager.cpp' in x[2] or 'modulemanager.cpp' in x[2],os.walk('.'))))
+plugins.append("IdlStart")
 
 # check for extra vars
 if os.path.exists(".extravars"):
