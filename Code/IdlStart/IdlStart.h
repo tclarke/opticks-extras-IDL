@@ -15,7 +15,7 @@ class Progress;
 #ifdef WIN32
 #define IDLSTART_EXPORT extern "C" __declspec(dllexport)
 #else
-#define IDLSTART_EXPORT 
+#define IDLSTART_EXPORT extern "C"
 #endif
 
 IDLSTART_EXPORT int start_idl(const char* pLocation, External* pServices);

@@ -644,15 +644,15 @@ void IdlFunctions::copyLayer(RasterLayer* pLayer, const RasterLayer* pOrigLayer)
 RasterChannelType IdlFunctions::getRasterChannelType(const std::string& color)
 {
    RasterChannelType element = GRAY;
-   if (_stricmp(color.c_str(), "red") == 0)
+   if (color == "RED")
    {
       element = RED;
    }
-   else if (_stricmp(color.c_str(), "green") == 0)
+   else if (color == "GREEN")
    {
       element = GREEN;
    }
-   else if (_stricmp(color.c_str(), "blue") == 0)
+   else if (color == "BLUE")
    {
       element = BLUE;
    }

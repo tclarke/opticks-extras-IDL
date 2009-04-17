@@ -10,7 +10,7 @@
 #include "AppVerify.h"
 #include "DynamicModule.h"
 #include "External.h"
-#include "IDLVersion.h"
+#include "IdlVersion.h"
 #include "IdlInterpreter.h"
 #include "IdlInterpreterOptions.h"
 #include "ModuleManager.h"
