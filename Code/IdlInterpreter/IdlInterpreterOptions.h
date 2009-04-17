@@ -28,6 +28,7 @@ public:
    SETTING_PTR(DLL, IdlInterpreter, Filename);
    SETTING(Version, IdlInterpreter, std::string, std::string());
    SETTING(Modules, IdlInterpreter, std::vector<Filename*>, std::vector<Filename*>());
+   SETTING(InteractiveAvailable, IdlInterpreter, bool, true);
 
    IdlInterpreterOptions();
    virtual ~IdlInterpreterOptions();
