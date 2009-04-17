@@ -66,18 +66,21 @@ IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
+#ifdef WIN_API
    if (IDL_CallProxyInit(const_cast<char*>(pLocation)) == 0)
    {
       return 0;
    }
+#endif
    // Register our output function
    IDL_ToutPush(OutFunc);
 
-#ifdef WIN_API
-   VERIFYRV(IDL_Win32Init(0, 0, 0, NULL), 0);
-#else
-   VERIFYRV(IDL_Init(0, NULL, 0), 0);
-#endif
+   IDL_INIT_DATA initData;
+   initData.options = IDL_INIT_BACKGROUND;
+   if (IDL_Initialize(&initData) == 0)
+   {
+      return 0;
+   }
 
    // Add system routines
    bool success = true;
