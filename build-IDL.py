@@ -586,4 +586,3 @@ if __name__ == "__main__":
     retcode = main(sys.argv)
     print "Return code is", retcode
     sys.exit(retcode)
->>>>>>> .r23
