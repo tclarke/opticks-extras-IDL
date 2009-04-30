@@ -27,6 +27,6 @@
 	/>
 	<UserMacro
 		Name="IDL_DIR"
-		Value="C:\Program Files\ITT\IDL64"
+		Value="$(OPTICKSDEPENDENCIES)\Idl"
 	/>
 </VisualStudioPropertySheet>
