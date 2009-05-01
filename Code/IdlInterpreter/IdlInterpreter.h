@@ -29,7 +29,7 @@ public:
    bool processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress);
 
 private:
-   bool startIdl();
+   bool startIdl(const char** pOutput = NULL, const char** pErrorOutput = NULL);
 
    bool mIdlRunning;
    std::vector<DynamicModule*> mModules;
