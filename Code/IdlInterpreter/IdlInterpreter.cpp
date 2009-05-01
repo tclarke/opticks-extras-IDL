@@ -72,15 +72,39 @@ bool IdlProxy::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
 
 bool IdlProxy::processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress)
 {
-   if (!mIdlRunning && !startIdl())
+   const char* pOutput = NULL;
+   const char* pErrorOutput = NULL;
+   if (!mIdlRunning && !startIdl(&pOutput, &pErrorOutput))
    {
       returnText = "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
+      if (pErrorOutput != NULL)
+      {
+         returnText += "\n";
+         returnText += pErrorOutput;
+      }
       return false;
    }
    if (mModules.empty())
    {
       returnText = "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
+      if (pErrorOutput != NULL)
+      {
+         returnText += "\n";
+         returnText += pErrorOutput;
+      }
       return false;
+   }
+   if (pOutput != NULL)
+   {
+      returnText += pOutput;
+      returnText += "\n";
+      pOutput = NULL;
+   }
+   if (pErrorOutput != NULL)
+   {
+      errorText += pErrorOutput;
+      errorText += "\n";
+      pErrorOutput = NULL;
    }
 
    /***
@@ -104,22 +128,20 @@ bool IdlProxy::processCommand(const std::string& command, std::string& returnTex
    VERIFY(execute_idl);
 
    //execute the function and capture the output
-   const char* pOutput = NULL;
-   const char* pErrorOutput = NULL;
    execute_idl(command.c_str(), &pOutput, &pErrorOutput, pProgress);
    if (pOutput != NULL)
    {
-      returnText = pOutput;
+      returnText += pOutput;
    }
    if (pErrorOutput != NULL)
    {
-      errorText = pErrorOutput;
+      errorText += pErrorOutput;
    }
 
    return true;
 }
 
-bool IdlProxy::startIdl()
+bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
 {
    // figure out which version of IDL to use
    std::string idlDll;
@@ -154,9 +176,10 @@ bool IdlProxy::startIdl()
       if (pModule != NULL)
       {
          External* pExternal = ModuleManager::instance()->getService();
-         bool(*start_idl)(const char*, External*) =
-            reinterpret_cast<bool(*)(const char*, External*)>(pModule->getProcedureAddress("start_idl"));
-         if (start_idl != NULL && start_idl(idlDll.c_str(), pExternal) != 0)
+         bool(*start_idl)(const char*, External*, const char**, const char**) =
+            reinterpret_cast<bool(*)(const char*, External*, const char**, const char**)>(
+            pModule->getProcedureAddress("start_idl"));
+         if (start_idl != NULL && start_idl(idlDll.c_str(), pExternal, pOutput, pErrorOutput) != 0)
          {
             mModules.push_back(pModule);
             mIdlRunning = true;

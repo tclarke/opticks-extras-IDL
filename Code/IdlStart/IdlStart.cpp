@@ -62,7 +62,7 @@ void OutFunc(int flags, char* pBuf, int n)
 }
 }
 
-IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal)
+IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal, const char** pOutput, const char** pErrorOutput)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
@@ -95,8 +95,24 @@ IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal)
    if (!success)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error adding system routines.");
+      if (pErrorOutput != NULL)
+      {
+         *pErrorOutput = errorOutput.c_str();
+      }
    }
-
+   // IDL seems to push the "welcome" banner to stderr so
+   // we need to do this in order to see the banner and the
+   // output of the first command
+   if (pOutput != NULL)
+   {
+      output = errorOutput + "\n" + output;
+      *pOutput = output.c_str();
+   }
+   else if (pErrorOutput != NULL)
+   {
+      *pErrorOutput = errorOutput.c_str();
+   }
+ 
    return success ? 1 : 0;
 }
 
