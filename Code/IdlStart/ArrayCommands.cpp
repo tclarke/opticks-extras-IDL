@@ -561,7 +561,6 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          }
          break;
       case IDL_TYP_UNDEF :
-         encoding = UNKNOWN;
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to determine type.");
          break;
    }
