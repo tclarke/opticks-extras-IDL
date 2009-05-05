@@ -13,15 +13,14 @@
 #include "IdlVersion.h"
 #include "IdlInterpreter.h"
 #include "IdlInterpreterOptions.h"
-#include "ModuleManager.h"
 #include "PlugInArgList.h"
-#include "PlugInFactory.h"
 #include "PlugInManagerServices.h"
+#include "PlugInRegistration.h"
 #include "ProgressTracker.h"
 
-PLUGINFACTORY(IdlProxy);
-PLUGINFACTORY(IdlInterpreter);
-PLUGINFACTORY(IdlInterpreterWizardItem);
+REGISTER_PLUGIN_BASIC(Idl, IdlProxy);
+REGISTER_PLUGIN_BASIC(Idl, IdlInterpreter);
+REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterWizardItem);
 
 IdlProxy::IdlProxy() : mIdlRunning(false)
 {

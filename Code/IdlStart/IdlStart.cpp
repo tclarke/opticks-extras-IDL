@@ -15,7 +15,7 @@
 #include "LayerCommands.h"
 #include "MetadataCommands.h"
 #include "MiscCommands.h"
-#include "ModuleManager.h"
+#include "PlugInRegistration.h"
 #include "VisualizationCommands.h"
 #include "WindowCommands.h"
 

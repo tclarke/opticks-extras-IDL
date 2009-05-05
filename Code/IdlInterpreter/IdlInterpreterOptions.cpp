@@ -13,13 +13,14 @@
 #include "Filename.h"
 #include "IdlInterpreterOptions.h"
 #include "LabeledSection.h"
-#include "PlugInFactory.h"
+#include "OptionQWidgetWrapper.h"
+#include "PlugInRegistration.h"
 #include <QtGui/QComboBox>
 #include <QtGui/QGridLayout>
 #include <QtGui/QLabel>
 #include <QtGui/QWidget>
 
-PLUGINFACTORY_OPTIONWRAPPER(IdlInterpreterOptions);
+REGISTER_PLUGIN(Idl, IdlInterpreterOptions, OptionQWidgetWrapper<IdlInterpreterOptions>());
 
 IdlInterpreterOptions::IdlInterpreterOptions()
 {
