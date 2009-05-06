@@ -33,7 +33,7 @@ class WizardObject;
 
 /**
  * These are internal support methods not used in IDL.
- * \internal
+ * \cond INTERNAL
  */
 namespace IdlFunctions
 {
@@ -223,5 +223,6 @@ namespace IdlFunctions
    // Trevor, this container is accessed only in getWizardObject
    static std::vector<WizardObject*> mpWizards;
 }
+///\endcond INTERNAL
 
 #endif

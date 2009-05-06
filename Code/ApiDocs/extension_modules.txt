@@ -1,0 +1,23 @@
+/** \page extension_modules Extension Modules
+An additional method file must contain the following functions:
+\code
+#ifdef WIN32
+#define IDLSTART_EXPORT extern "C" __declspec(dllexport)
+#else
+#define IDLSTART_EXPORT 
+#endif
+
+IDLSTART_EXPORT int start_idl(const char* pLocation, External* pServices, const char** pOutput, const char** pErrorOutput);
+IDLSTART_EXPORT void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
+IDLSTART_EXPORT int close_idl();
+\endcode
+The method file must be linked against the same version of IDL as the main support plug-in.
+The filename should match the naming convention of the installed support plug-in which is usually in the <tt>PlugIns</tt> directory and begins with <tt>IdlStart</tt>
+If the filename is <tt>IdlStart.dll</tt> a method file should be named <tt>MyIdlMethods.dll</tt>.
+If the filename is <tt>IdlStart6.3.dll</tt> a method file should be named <tt>MyIdlMethods6.3.dll</tt>.
+This corresponds to the version selected in the options dialog.
+
+The <tt>IdlInterpreter/Modules</tt> configuration option should be overridden in a default configuration file.
+The <tt>IdlStart</tt> entry should remain and additional method files added after the <tt>IdlStart</tt> entry.
+Look in <tt>DefaultSettings/45-IDL.cfg</tt> for the configuration format.
+*/

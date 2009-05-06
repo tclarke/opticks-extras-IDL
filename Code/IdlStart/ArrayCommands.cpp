@@ -320,7 +320,7 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
  *            The name of the data set which will be the parent of the raster element.
  *            Defaults to no parent.
  * @param[in] INTERLEAVE @opt
- *            The interleave of the data. Defaults to BSQ.
+ *            The interleave of the data. Defaults to BSQ. Valid values are: BIP, BIL, and BSQ.
  * @param[in] NEW_WINDOW @opt
  *            If this flag is true, a new window is created for the data. If it is
  *            false, a new layer in the active window is created.

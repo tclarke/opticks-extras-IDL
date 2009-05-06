@@ -830,7 +830,8 @@ IDL_VPTR enable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
 /**
  * Disable frame dropping on an animation controller.
  *
- * Cause the application to play all frames even if playback needs to slow down.skip frames if necessary to maintain
+ * Prevents the application from skipping frames even if this
+ * slows down the playback rate.
  *
  * @param[in] CONTROLLER_NAME @opt
  *            The name of the animation controller where drop frames will be
