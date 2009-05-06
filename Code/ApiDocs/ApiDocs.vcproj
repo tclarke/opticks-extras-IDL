@@ -24,8 +24,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen=html -v"
-				ReBuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen=html -v"
+				BuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen -v"
+				ReBuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen -v"
 				CleanCommandLine=""
 				Output="$(BUILDDIR)\DoxygenOutput\html\index.html"
 				PreprocessorDefinitions="WIN32;_DEBUG"
@@ -45,8 +45,8 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen=html -v"
-				ReBuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen=html -v"
+				BuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen -v"
+				ReBuildCommandLine="&quot;$(SolutionDir)\..\build-IDL.py&quot; --build-doxygen -v"
 				CleanCommandLine=""
 				Output="$(BUILDDIR)\DoxygenOutput\html\index.html"
 				PreprocessorDefinitions="WIN32;NDEBUG"
@@ -64,6 +64,10 @@
 		<Filter
 			Name="Documentation"
 			>
+			<File
+				RelativePath=".\extension_modules.txt"
+				>
+			</File>
 			<File
 				RelativePath=".\mainpage.txt"
 				>
