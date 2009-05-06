@@ -9,6 +9,10 @@ import traceback
 import shutil
 import zipfile
 
+if sys.platform == "sunos5":
+   print "ERROR: Solaris builds are currently non-functional."
+   sys.exit(1)
+
 aeb_platform_mappings = {'win32':'win32-x86-msvc8.1-release',
                          'win64':'win64-x86-msvc8.1-release',
                          'solaris':'solaris-sparc-studio12-release'}
@@ -90,7 +94,7 @@ class Builder:
         extension_plugin_path = join(self.get_binaries_dir(), "PlugIns")
         if not os.path.exists(extension_plugin_path):
             os.makedirs(extension_plugin_path)
-        opticks_plugin_path = os.path.abspath(self.get_comet_plugin_dir())
+        opticks_plugin_path = os.path.abspath(self.get_opticks_plugin_dir())
         copy_files_in_dir(opticks_plugin_path, extension_plugin_path, plugin_suffixes)
         if self.verbosity > 1:
             print "Done copying Opticks plug-ins"
@@ -121,7 +125,7 @@ class Builder:
             if self.verbosity > 1:
                 print "Done creating ApplicationUserSettings folder"
 
-    def build_doxygen(self, build, artifacts_dir):
+    def build_doxygen(self, artifacts_dir):
         if self.verbosity > 1:
             print "Generating HTML..."
         doc_path = os.path.abspath(join("Code", "Build", "DoxygenOutput"))
@@ -139,7 +143,6 @@ class Builder:
         graphviz_dir = os.path.abspath(join(self.depend_path,
             "graphviz", "app"))
         env["DOT_DIR"] = join(graphviz_dir, "bin")
-        self.other_doxygen_prep(build, env)
         retcode = execute_process(args, env=env)
         if retcode != 0:
             raise ScriptException("Unable to run doxygen generation script")
@@ -175,7 +178,7 @@ class WindowsBuilder(Builder):
             self.build_debug_mode, self.is_64_bit, concurrency,
             self.vs_path, env, clean)
 
-    def get_comet_plugin_dir(self):
+    def get_opticks_plugin_dir(self):
         return os.path.abspath(join(self.opticks_build_dir,
             "Binaries-%s-%s" % (self.platform, self.mode), "PlugIns"))
 
@@ -190,21 +193,6 @@ class WindowsBuilder(Builder):
     
     def get_doxygen_path(self):
         return join(self.depend_path, "doxygen", "bin", "doxygen.exe")
-
-    def other_doxygen_prep(self, build, env):
-        if build != "all":
-            return
-        if self.verbosity > 1:
-            print "Enabling CHM generation"
-        hhc_path = os.path.abspath(join(self.ms_help_compiler, "hhc.exe"))
-        if not(os.path.exists(hhc_path)):
-            raise ScriptException("MS Help Compiler path of %s is "\
-                "invalid, see --ms-help-compiler" %
-                (self.ms_help_compiler))
-        env["GENERATE_CHM"] = "YES"
-        env["MICROSOFT_HELP_COMPILER"] = hhc_path
-        chm_file = "IDL.chm"
-        env["CHM_NAME"] = chm_file
 
     def prep_to_run(self):
         self.prep_to_run_helper([".dll", ".exe"])
@@ -291,7 +279,7 @@ class SolarisBuilder(Builder):
         if ret_code != 0:
             raise ScriptException("Scons did not compile project")
 
-    def get_comet_plugin_dir(self):
+    def get_opticks_plugin_dir(self):
         return os.path.abspath(join(self.opticks_build_dir,
             "Binaries-solaris-sparc-%s" % (self.mode), "PlugIns"))
 
@@ -312,7 +300,7 @@ def read_version_h():
             rdata[fields[1]] = " ".join(fields[2:])
     return rdata
 
-def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, verbosity=None):
+def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, sdk_version=None, verbosity=None):
     if len(aeb_platforms) == 0:
         raise ScriptException("Invalid AEB platform specification. Valid values are: %s." % ", ".join(aeb_platform_mapping.keys()))
     if sys.platform == "win32":
@@ -340,6 +328,9 @@ def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, verbosi
     manifest[PF_AEBL + "name"] = [version_info["IDL_NAME"]]
     manifest[PF_AEBL + "description"] = [version_info["IDL_NAME_LONG"]]
     manifest[PF_AEBL + "targetPlatform"] = aeb_platforms
+    if sdk_version is None:
+        raise ScriptException("No SDK version specified!")
+    metadata[manifest[PF_AEBL + "targetApplication"][0]][PF_AEBL + "minVersion"] = [sdk_version]
 
     out_path = os.path.abspath(join("Installer","IDL.aeb"))
     if aeb_output is not None:
@@ -484,17 +475,19 @@ def main(args):
     options.add_option("--build-extension", dest="build_extension",
         action="store", type="choice", choices=["all","none"])
     options.add_option("--prep", dest="prep", action="store_true")
-    options.add_option("--build-installer", dest="build_installer", action="store")
+    options.add_option("--build-installer", dest="build_installer", action="append",
+         type="choice", choices=["all", "win32", "win64", "solaris"])
+    options.add_option("--sdk-version", dest="sdk_version", action="store")
     options.add_option("--aeb-output", dest="aeb_output", action="store")
     options.add_option("--concurrency", dest="concurrency", action="store")
-    options.add_option("--build-doxygen", dest="build_doxygen")
+    options.add_option("--build-doxygen", dest="build_doxygen", action="store_true")
     options.add_option("-q", "--quiet", help="Print fewer messages",
         action="store_const", dest="verbosity", const=0)
     options.add_option("-v", "--verbose", help="Print more messages",
         action="store_const", dest="verbosity", const=2)
     options.set_defaults(mode="release", clean=False,
-        build_extension="none", build_doxygen="none",
-        prep=False, concurrency=1, verbosity=1)
+        build_extension="none", build_doxygen=False, sdk_version=None,
+        build_installer=[], prep=False, concurrency=1, verbosity=1)
     options = options.parse_args(args[1:])[0]
 
     builder = None
@@ -526,24 +519,18 @@ def main(args):
         if not os.path.exists(opticks_build_dir):
             raise ScriptException("Opticks build directory path is invalid")
 
-        if options.build_installer:
+
+        aeb_platforms = options.build_installer
+        if "all" in aeb_platforms:
+            aeb_platforms = aeb_platform_mappings.keys()
+        if len(aeb_platforms) > 0:
             if options.verbosity > 1:
                 print "Building AEB installation extension..."
             aeb_output = None
             if options.aeb_output:
                aeb_output = options.aeb_output
-            aeb_platforms = []
-            if options.build_installer == "all":
-                aeb_platforms = aeb_platform_mappings.values()
-            else:
-                plats = options.build_installer.split(',')
-                for plat in plats:
-                    plat = plat.strip()
-                    if plat in aeb_platform_mappings:
-                        aeb_platforms.append(aeb_platform_mappings[plat])
-                    else:
-                        aeb_platforms.append(plat)
-            build_installer(aeb_platforms, aeb_output, opticks_depends, options.verbosity)
+            aeb_platforms = map(aeb_platform_mappings.get, aeb_platforms)
+            build_installer(aeb_platforms, aeb_output, opticks_depends, options.sdk_version, options.verbosity)
             if options.verbosity > 1:
                 print "Done building installer"
             return 0
@@ -572,10 +559,10 @@ def main(args):
         builder.build_executable(options.clean, options.build_extension,
             options.concurrency)
 
-        if options.build_doxygen != "none":
+        if options.build_doxygen:
            if options.verbosity > 1:
               print "Building doxygen..."
-           builder.build_doxygen(options.build_doxygen, None)
+           builder.build_doxygen(None)
            if options.verbosity > 1:
               print "Done building doxygen"
 

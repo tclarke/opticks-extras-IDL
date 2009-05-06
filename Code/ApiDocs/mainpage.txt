@@ -21,29 +21,8 @@ The <tt>IDL Installation Location</tt> option locates the IDL installation direc
 Browse to and select the <tt>idl.dll</tt> file in the IDL installation directory.
 It usually resides in the <tt>bin/bin.x86</tt> subdirectory.
 The <tt>IDL Version</tt> selection allows the user to select the version of IDL which was selected in the <tt>IDL Installation Location</tt> option.
-The version entry may be blank if only one version of the IDL support plug-ins has been installed.
 In addition to these options, a configuration file only option is available for plug-in developers wishing to install additional IDL method files.
-An additional method file must contain the following functions:
-\code
-#ifdef WIN32
-#define IDLSTART_EXPORT extern "C" __declspec(dllexport)
-#else
-#define IDLSTART_EXPORT 
-#endif
-
-IDLSTART_EXPORT int start_idl(const char* pLocation, External* pServices, const char** pOutput, const char** pErrorOutput);
-IDLSTART_EXPORT void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
-IDLSTART_EXPORT int close_idl();
-\endcode
-The method file must be linked against the same version of IDL as the main support plug-in.
-The filename should match the naming convention of the installed support plug-in which is usually in the <tt>PlugIns</tt> directory and begins with <tt>IdlStart</tt>
-If the filename is <tt>IdlStart.dll</tt> a method file should be named <tt>MyIdlMethods.dll</tt>.
-If the filename is <tt>IdlStart6.3.dll</tt> a method file should be named <tt>MyIdlMethods6.3.dll</tt>.
-This corresponds to the version selected in the options dialog.
-
-The <tt>IdlInterpreter/Modules</tt> configuration option should be overridden in a default configuration file.
-The <tt>IdlStart</tt> entry should remain and additional method files added after the <tt>IdlStart</tt> entry.
-Look in <tt>DefaultSettings/45-IDL.cfg</tt> for the configuration format.
+See \ref extension_modules for further information.
 
 \section conventions Documentation Conventions
 This documentation is broken into modules which group the functionality of various IDL functions.
@@ -53,4 +32,14 @@ Parameter names for functions will be either the name of a keyword parameter or 
 A parameter name followed by <b>(opt)</b> indicates an optional parameter.
 The default value, if appropriate, will be listed in the description.
 The data type, if not obvious, will be mentioned in the description
+
+The following command groups are available:
+ - \ref animationcommands
+ - \ref arraycommands
+ - \ref gpucommands
+ - \ref layercommands
+ - \ref metadatacommands
+ - \ref misccommands
+ - \ref visualizationcommands
+ - \ref windowcommands
 */
