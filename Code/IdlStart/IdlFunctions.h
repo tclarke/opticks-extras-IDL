@@ -40,6 +40,7 @@ namespace IdlFunctions
 {
    RasterElement* getDataset(const std::string& name = "");
    WizardObject* getWizardObject(const std::string& wizardName);
+   void cleanupWizardObjects();
    bool setWizardObjectValue(WizardObject* pObject, const std::string& name, const DataVariant& value);
    DataVariant getWizardObjectValue(const WizardObject* pObject, const std::string& name);
    Layer* getLayerByName(const std::string& windowName, const std::string& layerName, bool onlyTopmostRaster = false);
@@ -87,26 +88,26 @@ namespace IdlFunctions
             RasterDataDescriptor* pParam = static_cast<RasterDataDescriptor*>(pRaster->getDataDescriptor());
             if (pParam != NULL)
             {
-               for (unsigned int b = 0; b < bands; ++b)
+               for (unsigned int band = 0; band < bands; ++band)
                {
                   try
                   {
                      ftype = pParam->getInterleaveFormat();
                      DataAccessor daImage = pRaster->getDataAccessor(
-                           getNewDataRequest(pParam, 0, 0, height-1, width-1, b));
+                           getNewDataRequest(pParam, 0, 0, height-1, width-1, band));
 
                      //populate the resultsmatrix with the data
-                     for (unsigned int r = 0; r < height; ++r)
+                     for (unsigned int row = 0; row < height; ++row)
                      {
                         if (!daImage.isValid())
                         {
                            throw std::exception();
                         }
                         T* pPixel = reinterpret_cast<T*>(daImage->getRow());
-                        for (unsigned int c = 0; c < width; ++c)
+                        for (unsigned int col = 0; col < width; ++col)
                         {
-                           unsigned int dataOffset = width * height * b + width * r + c;
-                           pPixel[c] = pMatrix[dataOffset];
+                           unsigned int dataOffset = width * height * band + width * row + col;
+                           pPixel[col] = pMatrix[dataOffset];
                         }
                         daImage->nextRow();
                      }
@@ -159,9 +160,6 @@ namespace IdlFunctions
 
       if (pElement != NULL)
       {
-         unsigned int r = 0;
-         unsigned int c = 0;
-         unsigned int b = 0;
          try
          {
             pData = new T[row*column*band];
@@ -174,26 +172,24 @@ namespace IdlFunctions
          }
          try
          {
-            InterleaveFormatType type = BSQ;
             RasterDataDescriptor* pParam = static_cast<RasterDataDescriptor*>(pElement->getDataDescriptor());
             //get the data from the disk, and store it into a new in memory block
-            for (b = bandStart; b <= bandEnd; b++)
+            for (unsigned int band = bandStart; band <= bandEnd; ++band)
             {
                DataAccessor daImage = pElement->getDataAccessor(
-                  getNewDataRequest(pParam, heightStart, widthStart, heightEnd, widthEnd, b));
+                  getNewDataRequest(pParam, heightStart, widthStart, heightEnd, widthEnd, band));
 
-               for (r = 0; r < row; ++r)
+               for (unsigned int row = 0; row < row; ++row)
                {
                   if (!daImage.isValid())
                   {
                      throw std::exception();
                   }
                   T* pPixel = reinterpret_cast<T*>(daImage->getRow());
-                  for (c = 0; c < column; ++c)
+                  for (unsigned int col = 0; col < column; ++col)
                   {
-                     //unsigned int dataOffset = r * column + c;
-                     unsigned int dataOffset = column * row * (b-bandStart) + column * r + c;
-                     pData[dataOffset] = pPixel[c];
+                     unsigned int dataOffset = column * row * (band-bandStart) + column * row + col;
+                     pData[dataOffset] = pPixel[col];
                   }
                   daImage->nextRow();
                }
@@ -216,6 +212,8 @@ namespace IdlFunctions
       int band = -1);
    void copyLayer(RasterLayer* pLayer, const RasterLayer* pOrigLayer);
    RasterChannelType getRasterChannelType(const std::string& color);
+
+   static std::vector<WizardObject*> spWizards;
 }
 ///\endcond INTERNAL
 

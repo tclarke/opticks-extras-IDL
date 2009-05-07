@@ -111,6 +111,8 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
  * This procedure reports the progress of a process.
  *
  * This will use the progress reporter passed in to the IDL execution plugin.
+ * This is most useful when executing IDL from a wizard as the lifespan of the
+ * Progress when called from the scripting window is extremely short.
  *
  * @param[in] MESSAGE @opt
  *        The message to place in the progress dialog. Defaults to "Error."
