@@ -474,7 +474,8 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
    if (total != height*width*bands)
    {
       IDL_KW_FREE;
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "ARRAY_TO_OPTICKS error.  Passed in array size does not match size keywords.");
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+         "ARRAY_TO_OPTICKS error.  Passed in array size does not match size keywords.");
       return IDL_StrToSTRING("failure");
    }
    if (kw.overwriteExists)
@@ -628,7 +629,8 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
                if (oldType != encoding)
                {
                   IDL_KW_FREE;
-                  IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "ARRAY_TO_OPTICKS error.  data type of new array is not the same as the old.");
+                  IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+                     "ARRAY_TO_OPTICKS error.  data type of new array is not the same as the old.");
                   return IDL_StrToSTRING("failure");
                }
                IdlFunctions::changeRasterElement(pRaster, pRawData, encoding, iType, heightStart, height, widthStart,

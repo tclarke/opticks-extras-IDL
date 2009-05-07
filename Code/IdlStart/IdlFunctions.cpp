@@ -68,6 +68,7 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
          if (pElement == NULL && first)
          {
             //the element was not found to be top level
+            //check for an element with the => in the name
             std::vector<DataElement*> elements = pModel->getElements("");
             for (std::vector<DataElement*>::iterator element = elements.begin();
                element != elements.end(); ++element)
@@ -184,16 +185,16 @@ RasterElement* IdlFunctions::createRasterElement(void* pData, const std::string&
          {
             size_t rowSize = pDesc->getBytesPerElement() * cols;
             //populate the resultsmatrix with the data
-            for (unsigned int band = 0; band < bands; band++)
+            for (unsigned int band = 0; band < bands; ++band)
             {
                DataAccessor daImage = pRaster->getDataAccessor(getNewDataRequest(pDesc, 0, 0, rows-1, cols-1, band));
-               for (unsigned int row = 0; row < rows; row++)
+               for (unsigned int row = 0; row < rows; ++row)
                {
                   if (!daImage.isValid())
                   {
                      throw std::exception();
                   }
-                  memcpy(pData, daImage->getRow(), rowSize);
+                  memcpy(daImage->getRow(), pData, rowSize);
                   daImage->nextRow();
                }
             }
@@ -238,19 +239,20 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, void* pDat
       try
       {
          std::size_t rowSize = pDesc->getBytesPerElement() * cols;
-         for (unsigned int b = startBand; b < startBand+bands; b++)
+         for (unsigned int band = startBand; band < startBand+bands; ++band)
          {
-            DataRequest* pRequest = getNewDataRequest(pDesc, 0, 0, rows - 1, cols - 1, b);
+            DataRequest* pRequest = getNewDataRequest(pDesc, startRow, startCol,
+               rows + startRow - 1, cols + startCol - 1, band);
 
             DataAccessor daImage = pRasterElement->getDataAccessor(pRequest);
 
-            for (unsigned int r = startRow; r < startRow+rows; ++r)
+            for (unsigned int row = startRow; row < startRow+rows; ++row)
             {
                if (!daImage.isValid())
                {
                   throw std::exception();
                }
-               memcpy(pData, daImage->getRow(), rowSize);
+               memcpy(daImage->getRow(), pData, rowSize);
                daImage->nextRow();
             }
          }
@@ -329,7 +331,7 @@ Layer* IdlFunctions::getLayerByName(const std::string& windowName, const std::st
          pList->getLayers(layers);
          Layer* pLayer = NULL;
 
-         if (layerName != "")
+         if (layerName.empty())
          {
             std::string tmpName;
             bool bFound = false;
@@ -377,7 +379,6 @@ Layer* IdlFunctions::getLayerByIndex(const std::string& windowName, int index)
          {
             std::vector<Layer*> layers;
             pList->getLayers(layers);
-            std::vector<Layer*>::const_iterator iter;
             if (index < static_cast<int>(layers.size()))
             {
                pReturn = layers.at(index);
@@ -393,7 +394,7 @@ View* IdlFunctions::getViewByWindowName(const std::string& windowName)
 {
    Service<DesktopServices> pDesktop;
    SpatialDataWindow* pWindow = NULL;
-   if (windowName != "")
+   if (windowName.empty())
    {
       pWindow = dynamic_cast<SpatialDataWindow*>(pDesktop->getWindow(windowName.c_str(), SPATIAL_DATA_WINDOW));
    }
@@ -412,15 +413,12 @@ View* IdlFunctions::getViewByWindowName(const std::string& windowName)
 
 WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
 {
-   static std::vector<WizardObject*> spWizards;
    WizardObject* pWizard = NULL;
-   std::vector<WizardObject*>::const_iterator iter;
-   WizardObject* pItem = NULL;
 
    //traverse the list of items, looking for the one that matches the item name
-   for (iter = spWizards.begin(); iter != spWizards.end(); ++iter)
+   for (std::vector<WizardObject*>::const_iterator iter = spWizards.begin(); iter != spWizards.end(); ++iter)
    {
-      pItem = *iter;
+      WizardObject* pItem = *iter;
       if (pItem != NULL)
       {
          if (pItem->getName() == wizardName)
@@ -433,12 +431,8 @@ WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
    if (pWizard == NULL)
    {
       //the wizard object doesn't exist, read it from the file
-      Service<ApplicationServices> pApp;
-      ObjectFactory* pObj = pApp->getObjectFactory();
-      VERIFYRV(pObj != NULL, NULL);
-
-      pWizard = reinterpret_cast<WizardObject*>(pObj->createObject("WizardObject"));
-      VERIFYRV(pWizard != NULL, NULL);
+      FactoryResource<WizardObject> pNewWizard;
+      VERIFYRV(pNewWizard.get() != NULL, NULL);
 
       FactoryResource<Filename> pWizardFilename;
       pWizardFilename->setFullPathAndName(wizardName);
@@ -452,20 +446,28 @@ WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
          if (pRoot != NULL)
          {
             unsigned int version = atoi(A(pRoot->getAttribute(X("version"))));
-            bSuccess = pWizard->fromXml(pRoot, version);
+            bSuccess = pNewWizard->fromXml(pRoot, version);
          }
       }
 
       if (bSuccess == false)
       {
-         pObj->destroyObject(pWizard, "WizardObject");
-         pWizard = NULL;
          VERIFYRV_MSG(false, NULL, "Could not load the wizard from the file");
       }
+      pWizard = pNewWizard.release();
       pWizard->setName(wizardName);
       spWizards.push_back(pWizard);
    }
    return pWizard;
+}
+
+void IdlFunctions::cleanupWizardObjects()
+{
+   for (std::vector<WizardObject*>::const_iterator iter = spWizards.begin(); iter != spWizards.end(); ++iter)
+   {
+      FactoryResource<WizardObject> pWizard(*iter);
+   }
+   spWizards.clear();
 }
 
 DataRequest* IdlFunctions::getNewDataRequest(RasterDataDescriptor* pParam,
@@ -492,6 +494,7 @@ DataRequest* IdlFunctions::getNewDataRequest(RasterDataDescriptor* pParam,
       {
          pRequest->setBands(pParam->getActiveBand(band), pParam->getActiveBand(band));
       }
+      pRequest->setWritable(true);
    }
 
    return pRequest.release();

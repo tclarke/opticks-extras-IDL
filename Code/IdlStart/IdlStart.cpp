@@ -12,6 +12,7 @@
 #include "AppVerify.h"
 #include "ArrayCommands.h"
 #include "GpuCommands.h"
+#include "IdlFunctions.h"
 #include "IdlStart.h"
 #include "LayerCommands.h"
 #include "MetadataCommands.h"
@@ -159,6 +160,7 @@ extern "C" LINKAGE void execute_idl(const char* pCommand, const char** pOutput, 
 
 extern "C" LINKAGE int close_idl()
 {
+   IdlFunctions::cleanupWizardObjects();
    IDL_ToutPop();
    IDL_Cleanup(IDL_TRUE);
    return 1;

@@ -15,8 +15,10 @@
 class External;
 class Progress;
 
-extern "C" LINKAGE int start_idl(const char* pLocation, External* pServices, const char** pOutput, const char** pErrorOutput);
-extern "C" LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
+extern "C" LINKAGE int start_idl(
+             const char* pLocation, External* pServices, const char** pOutput, const char** pErrorOutput);
+extern "C" LINKAGE void execute_idl(
+             const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
 extern "C" LINKAGE int close_idl();
 
 extern Progress* spProgress;

@@ -33,7 +33,7 @@
  * @param[in] WINDOW @opt
  *            The name of the window to update. Defaults to the active window.
  * @rsof
- * @usage print,enable_filter("Edge Detection")
+ * @usage print,enable_filter("EdgeDetection")
  * @endusage
  */
 IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -76,7 +76,7 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
       layerName = IDL_STRING_STR(&kw.layerName);
    }
    bool bSuccess = false;
-   if (argc < 0)
+   if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes "
          "'window' and 'layer' as optional keywords.");
@@ -89,7 +89,7 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       //determine the type, allow strings to be converted into an enum for later filters
       std::vector<std::string> supportedFilters = pLayer->getSupportedFilters();
-      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin(); filtersIt != supportedFilters.end(); filtersIt++)
+      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin(); filtersIt != supportedFilters.end(); ++filtersIt)
       {
          if (filter == *filtersIt)
          {
@@ -122,7 +122,7 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
  * @param[in] WINDOW @opt
  *            The name of the window to update. Defaults to the active window.
  * @rsof
- * @usage print,disable_filter("Edge Detection")
+ * @usage print,disable_filter("EdgeDetection")
  * @endusage
  */
 IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -179,7 +179,7 @@ IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       //determine the type, allow strings to be converted into an enum for later filters
       std::vector<std::string> supportedFilters = pLayer->getSupportedFilters();
-      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin(); filtersIt != supportedFilters.end(); filtersIt++)
+      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin(); filtersIt != supportedFilters.end(); ++filtersIt)
       {
          if (filter == *filtersIt)
          {
