@@ -273,7 +273,7 @@ IDL_VPTR get_data_element_names(int argc, IDL_VPTR pArgv[], char* pArgk)
                std::vector<std::string> names = Service<ModelServices>()->getElementNames(pElement, "");
                total = names.size();
                pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0));
-               for (unsigned int i=0; i < total; i++)
+               for (unsigned int i=0; i < total; ++i)
                {
                   IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
                }
@@ -286,7 +286,7 @@ IDL_VPTR get_data_element_names(int argc, IDL_VPTR pArgv[], char* pArgk)
          std::vector<std::string> names = Service<ModelServices>()->getElementNames("RasterElement");
          total = names.size();
          pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0));
-         for (unsigned int i=0; i < total; i++)
+         for (unsigned int i=0; i < total; ++i)
          {
             IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
          }

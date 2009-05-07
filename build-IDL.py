@@ -183,10 +183,6 @@ class WindowsBuilder(Builder):
             "Binaries-%s-%s" % (self.platform, self.mode), "PlugIns"))
 
     def get_binaries_dir(self):
-        if self.platform == "Win32":
-            arch = "32"
-        elif self.platform == "x64":
-            arch = "64"
         build_dir = os.path.join(os.path.abspath("Code"), "Build")
         return os.path.abspath(join(build_dir,
             "Binaries-%s-%s" % (self.platform, self.mode)))

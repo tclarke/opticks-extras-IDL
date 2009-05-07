@@ -899,15 +899,24 @@ IDL_VPTR disable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
 /*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(create_animation), "CREATE_ANIMATION",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(disable_can_drop_frames), "DISABLE_CAN_DROP_FRAMES",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(enable_can_drop_frames), "ENABLE_CAN_DROP_FRAMES",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_animation_cycle), "GET_ANIMATION_CYCLE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_animation_state), "GET_ANIMATION_STATE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_interval_multiplier), "GET_INTERVAL_MULTIPLIER",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_animation_cycle), "SET_ANIMATION_CYCLE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_animation_state), "SET_ANIMATION_STATE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
-   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_interval_multiplier), "SET_INTERVAL_MULTIPLIER",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(create_animation),
+      "CREATE_ANIMATION",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(disable_can_drop_frames),
+      "DISABLE_CAN_DROP_FRAMES",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(enable_can_drop_frames),
+      "ENABLE_CAN_DROP_FRAMES",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_animation_cycle),
+      "GET_ANIMATION_CYCLE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_animation_state),
+      "GET_ANIMATION_STATE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_interval_multiplier),
+      "GET_INTERVAL_MULTIPLIER",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_animation_cycle),
+      "SET_ANIMATION_CYCLE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_animation_state),
+      "SET_ANIMATION_STATE",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_interval_multiplier),
+      "SET_INTERVAL_MULTIPLIER",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
 
