@@ -156,3 +156,10 @@ extern "C" LINKAGE void execute_idl(const char* pCommand, const char** pOutput, 
       *pErrorOutput = errorOutput.c_str();
    }
 }
+
+extern "C" LINKAGE int close_idl()
+{
+   IDL_ToutPop();
+   IDL_Cleanup(IDL_TRUE);
+   return 1;
+}

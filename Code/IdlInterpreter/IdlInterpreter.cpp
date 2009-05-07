@@ -23,7 +23,10 @@ REGISTER_PLUGIN_BASIC(Idl, IdlProxy);
 REGISTER_PLUGIN_BASIC(Idl, IdlInterpreter);
 REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterWizardItem);
 
-IdlProxy::IdlProxy() : mIdlRunning(false)
+IdlProxy::IdlProxy() :
+      mIdlRunning(false),
+      mpAppServices(Service<ApplicationServices>().get(), SIGNAL_NAME(ApplicationServices, ApplicationClosed),
+         Slot(this, &IdlProxy::applicationClosed))
 {
    setName("IdlProxy");
    setDescription("Proxies commands from Opticks to IDL.");
@@ -186,6 +189,22 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
    }
 
    return mIdlRunning;
+}
+
+void IdlProxy::applicationClosed(Subject& subject, const std::string& signal, const boost::any& data)
+{
+   if (mIdlRunning && !mModules.empty()) 
+   {
+      for (std::vector<DynamicModule*>::const_iterator module = mModules.begin(); module != mModules.end(); ++module)
+      {
+         bool(*close_idl)() =
+            reinterpret_cast<bool(*)()>((*module)->getProcedureAddress("close_idl"));
+         VERIFYNRV(close_idl);
+         close_idl();
+         (*module)->unload();
+         Service<PlugInManagerServices>()->destroyDynamicModule(*module);
+      }
+   }
 }
 
 IdlInterpreter::IdlInterpreter()
