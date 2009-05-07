@@ -64,7 +64,7 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
          QString partName = list.front();
          list.pop_front();
 
-         pElement = static_cast<RasterElement*>(pModel->getElement(name, "", pElement));
+         pElement = static_cast<RasterElement*>(pModel->getElement(partName.toStdString(), "", pElement));
          if (pElement == NULL && first)
          {
             //the element was not found to be top level
