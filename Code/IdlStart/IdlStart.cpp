@@ -62,10 +62,15 @@ namespace
    }
 }
 
-LINKAGE int start_idl(const char* pLocation, External* pExternal, const char** pOutput, const char** pErrorOutput)
+extern "C" LINKAGE int start_idl(const char* pLocation, External* pExternal, const char** pOutput, const char** pErrorOutput)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
+   static int initialized = 0;
+   if (initialized++ > 0)
+   {
+      return 1;
+   }
 #ifdef WIN_API
    /** Enable this to debug load problems **/
    //IDL_CallProxyDebug(IDL_CPDEBUG_ALL);
@@ -133,7 +138,7 @@ LINKAGE int start_idl(const char* pLocation, External* pExternal, const char** p
    return success ? 1 : 0;
 }
 
-LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress)
+extern "C" LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress)
 {
    spProgress = pProgress;
    execSuccess = true;
@@ -150,11 +155,4 @@ LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char*
    {
       *pErrorOutput = errorOutput.c_str();
    }
-}
-
-LINKAGE int close_idl()
-{
-   IDL_ToutPop();
-   IDL_Cleanup(IDL_FALSE);
-   return 1;
 }
