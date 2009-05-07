@@ -32,7 +32,7 @@
  * This procedure marks a RasterElement's data as having changed.
  *
  * @param[in] DATASET @opt
- *            The name of the RaseterElement to refresh. Defaults to the primary dataset for the active view.
+ *            The name of the RasterElement to refresh. Defaults to the primary dataset for the active view.
  * @usage refresh_display(DATASET="Dataset1.tif")
  * @endusage
  */
@@ -214,7 +214,7 @@ IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
  *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
  *            The default is \p SpatialDataWindow.
  * @param[in] WINDOW @opt
- *            The name of the window to close.
+ *            The name of the window to manipulate.
  *            The default is the active window.
  * @rsof
  * @usage print,set_window_label("New Window Name", WINDOW="Old Window Name")
@@ -308,13 +308,14 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
 /**
  * Get the name of a window.
  *
- * @note This obtains the window name and not the name of the view nor any layers.
+ * @note This obtains the window's title bar label and not the name of
+ *       the Opticks Window, View, nor any Layers.
  *
  * @param[in] TYPE @opt
  *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
  *            The default is \p SpatialDataWindow.
  * @param[in] WINDOW @opt
- *            The name of the window to close.
+ *            The name of the window to access.
  *            The default is the active window.
  * @rsof
  * @usage window_name = get_window_label(WINDOW="Window Name")
@@ -408,7 +409,7 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
  *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
  *            The default is \p SpatialDataWindow.
  * @param[in] WINDOW @opt
- *            The name of the window to close.
+ *            The name of the window to access.
  *            The default is the active window.
  * @rsof
  * @usage xpos = 0
@@ -555,7 +556,7 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
  *            The type of window specified by WINDOW. Ignored if WINDOW is not specified.
  *            The default is \p SpatialDataWindow.
  * @param[in] WINDOW @opt
- *            The name of the window to close.
+ *            The name of the window to manipulate.
  *            The default is the active window.
  * @rsof
  * @usage xpos = 100

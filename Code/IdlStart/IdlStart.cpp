@@ -1,8 +1,9 @@
 /*
  * The information in this file is
- * subject to the terms and conditions of the
+ * Copyright(c) 2007 Ball Aerospace & Technologies Corporation
+ * and is subject to the terms and conditions of the
  * GNU Lesser General Public License Version 2.1
- * The license text is available from
+ * The license text is available from   
  * http://www.gnu.org/licenses/lgpl.html
  */
 
@@ -30,39 +31,38 @@ Progress* spProgress = NULL;
 
 namespace
 {
-std::string output;
-std::string errorOutput;
-bool success = true;
+   std::string output;
+   std::string errorOutput;
+   bool execSuccess = true;
 
-void OutFunc(int flags, char* pBuf, int n)
-{
-   std::string& out = (flags & IDL_TOUT_F_STDERR) ? errorOutput : output;
-   // If there is a message, save it
-   if (n != 0)
+   void OutFunc(int flags, char* pBuf, int n)
    {
-      unsigned int n = out.max_size();
-      if (out.size() < n && success)
+      std::string& out = (flags & IDL_TOUT_F_STDERR) ? errorOutput : output;
+      // If there is a message, save it
+      if (n != 0)
       {
-         try
+         if (out.size() < out.max_size() && execSuccess)
          {
-            out += pBuf;
-            if (flags & IDL_TOUT_F_NLPOST)
+            try
             {
-               out += "\n";
+               out += std::string(pBuf, n);
+               if (flags & IDL_TOUT_F_NLPOST)
+               {
+                  out += "\n";
+               }
             }
-         }
-         catch(...)
-         {
-            errorOutput.clear();
-            errorOutput = "could not generate output\n";
-            success = false;
+            catch(...)
+            {
+               errorOutput.clear();
+               errorOutput = "could not generate output\n";
+               execSuccess = false;
+            }
          }
       }
    }
 }
-}
 
-IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal, const char** pOutput, const char** pErrorOutput)
+LINKAGE int start_idl(const char* pLocation, External* pExternal, const char** pOutput, const char** pErrorOutput)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
@@ -133,10 +133,10 @@ IDLSTART_EXPORT int start_idl(const char* pLocation, External* pExternal, const 
    return success ? 1 : 0;
 }
 
-IDLSTART_EXPORT void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress)
+LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress)
 {
    spProgress = pProgress;
-   success = true;
+   execSuccess = true;
    output.clear();
    errorOutput.clear();
    //the idl command to execute the contents of the passed in std::string
@@ -152,7 +152,7 @@ IDLSTART_EXPORT void execute_idl(const char* pCommand, const char** pOutput, con
    }
 }
 
-IDLSTART_EXPORT int close_idl()
+LINKAGE int close_idl()
 {
    IDL_ToutPop();
    IDL_Cleanup(IDL_FALSE);

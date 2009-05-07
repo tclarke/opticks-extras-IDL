@@ -1,10 +1,12 @@
 /*
-* The information in this file is
-* subject to the terms and conditions of the
-* GNU Lesser General Public License Version 2.1
-* The license text is available from   
-* http://www.gnu.org/licenses/lgpl.html
-*/
+ * The information in this file is
+ * Copyright(c) 2007 Ball Aerospace & Technologies Corporation
+ * and is subject to the terms and conditions of the
+ * GNU Lesser General Public License Version 2.1
+ * The license text is available from   
+ * http://www.gnu.org/licenses/lgpl.html
+ */
+
 #include "DataAccessor.h"
 #include "DataAccessorImpl.h"
 #include "DataRequest.h"
@@ -35,80 +37,9 @@
 #include <string>
 #include <vector>
 
-template<typename T1, typename T2>
-static void copyRow(T1* inData, T2* outData, int row, int band, 
-                    int cols, int rows, int bands, int startRow, int startCol, int startBand,
-                    InterleaveFormatType iType)
-{
-   for (int c = startCol; c < startCol+cols; ++c)
-   {
-      int offset = 0;
-      if (iType == BSQ)
-      {
-         offset = (band-startBand)*rows*cols + (row-startRow)*cols + (c-startCol);
-      }
-      else if (iType = BIP)
-      {
-         offset = (row-startRow)*cols*bands + (c-startCol)*bands + (band-startBand);
-      }
-      else if (iType = BIL)
-      {
-         offset = (row-startRow)*cols*bands + (band-startBand)*cols + (c-startCol);
-      }
-      outData[c] = static_cast<T2>(inData[offset]);
-   }
-}
-
-template<typename T>
-static bool copyRowCaller(T* inData, void* outData, int row, int band, 
-                          int cols, int rows, int bands, int startRow, int startCol, int startBand,
-                          InterleaveFormatType iType, EncodingType type)
-{
-   bool bReturn = true;
-   switch (type) 
-   { 
-   case INT1UBYTE: 
-      copyRow(inData, (unsigned char*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case INT1SBYTE: 
-      copyRow(inData, (signed char*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case INT2UBYTES: 
-      copyRow(inData, (unsigned short*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case INT2SBYTES: 
-      copyRow(inData, (signed short*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case INT4UBYTES: 
-      copyRow(inData, (unsigned int*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case INT4SBYTES: 
-      copyRow(inData, (signed int*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case FLT4BYTES: 
-      copyRow(inData, (float*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   case FLT8BYTES: 
-      copyRow(inData, (double*)outData, row, band, cols, 
-         rows, bands, startRow, startCol, startBand, iType);
-      break; 
-   default: 
-      bReturn = false;
-      break; 
-   }
-   return bReturn;
-}
-
 RasterElement* IdlFunctions::getDataset(const std::string& name)
 {
-   RasterElement* pElement = NULL;
+   DataElement* pElement = NULL;
    if (name.empty())
    {
       ViewResource<SpatialDataView> pView(name, true);
@@ -133,18 +64,17 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
          QString partName = list.front();
          list.pop_front();
 
-         pElement = static_cast<RasterElement*>(pModel->getElement(name,
-            TypeConverter::toString<RasterElement>(), pElement));
+         pElement = static_cast<RasterElement*>(pModel->getElement(name, "", pElement));
          if (pElement == NULL && first)
          {
             //the element was not found to be top level
-            std::vector<DataElement*> elements = pModel->getElements(TypeConverter::toString<RasterElement>());
+            std::vector<DataElement*> elements = pModel->getElements("");
             for (std::vector<DataElement*>::iterator element = elements.begin();
                element != elements.end(); ++element)
             {
                if ((*element)->getName() == name)
                {
-                  pElement = static_cast<RasterElement*>(*element);
+                  pElement = *element;
                   break;
                }
             }
@@ -152,7 +82,7 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
          first = false;
       }
    }
-   return pElement;
+   return dynamic_cast<RasterElement*>(pElement);
 }
 
 bool IdlFunctions::setWizardObjectValue(WizardObject* pObject, const std::string& name, const DataVariant& value)
@@ -221,7 +151,7 @@ DataVariant IdlFunctions::getWizardObjectValue(const WizardObject* pObject, cons
          {
             if ((*node)->getName() == nodeName)
             {
-               return DataVariant((*node)->getType(), (*node)->getValue());
+               return DataVariant((*node)->getType(), (*node)->getValue(), false);
             }
          }
       }
@@ -332,64 +262,6 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, void* pDat
          return false;
       }
       pRasterElement->updateData();
-   }
-
-   return bSuccess;
-}
-
-bool IdlFunctions::copyRasterElement(RasterElement* pRasterElement, RasterElement* pNewElement, 
-                                     EncodingType datatype, InterleaveFormatType iType, unsigned int startRow, 
-                                     unsigned int rows, unsigned int startCol, unsigned int cols, 
-                                     unsigned int startBand, unsigned int bands, EncodingType oldType)
-{
-   int index = 0;
-   unsigned int i = 0;
-   bool bSuccess = false;
-
-   if (pRasterElement != NULL && pNewElement != NULL)
-   {
-      DynamicObject* pObject = pNewElement->getMetadata();
-      if (pObject != NULL)
-      {
-         pObject->merge(pRasterElement->getMetadata());
-      }
-      RasterDataDescriptor *pDesc = dynamic_cast<RasterDataDescriptor*>(pRasterElement->getDataDescriptor());
-      if (pDesc == NULL)
-      {
-         return false;
-      }
-
-      //populate the resultsmatrix with the data
-      try
-      {
-         for (unsigned int b = startBand; b < startBand + bands; ++b)
-         {
-            DataRequest* pRequestOld = getNewDataRequest(pDesc, 0, 0, rows - 1, cols - 1, b);
-
-            DataRequest* pRequestNew = pRequestOld->copy();
-            DataAccessor daImage = pRasterElement->getDataAccessor(pRequestOld);
-
-            DataAccessor daOutput = pNewElement->getDataAccessor(pRequestNew);
-            for (unsigned int r = startRow; r < startRow + rows; ++r)
-            {
-               if (!daImage.isValid() || !daOutput.isValid())
-               {
-                  throw std::exception();
-               }
-               switchOnEncoding(oldType, copyRowCaller, daImage->getRow(), daOutput->getRow(), r, b, cols, 
-                  rows, bands, r, startCol, b, BSQ, datatype);
-               daImage->nextRow();
-               daOutput->nextRow();
-            }
-         }
-      }
-      catch (...)
-      {
-         std::string msg = "error in copying array values to Opticks.";
-         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
-         return false;
-      }
-      pNewElement->updateData();
    }
 
    return bSuccess;
@@ -540,12 +412,13 @@ View* IdlFunctions::getViewByWindowName(const std::string& windowName)
 
 WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
 {
+   static std::vector<WizardObject*> spWizards;
    WizardObject* pWizard = NULL;
    std::vector<WizardObject*>::const_iterator iter;
    WizardObject* pItem = NULL;
 
    //traverse the list of items, looking for the one that matches the item name
-   for (iter = mpWizards.begin(); iter != mpWizards.end(); ++iter)
+   for (iter = spWizards.begin(); iter != spWizards.end(); ++iter)
    {
       pItem = *iter;
       if (pItem != NULL)
@@ -590,7 +463,7 @@ WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
          VERIFYRV_MSG(false, NULL, "Could not load the wizard from the file");
       }
       pWizard->setName(wizardName);
-      mpWizards.push_back(pWizard);
+      spWizards.push_back(pWizard);
    }
    return pWizard;
 }

@@ -23,7 +23,7 @@
 
 /**
  * Enable a named GPU filter.
- ** Dynamic texture generation must be active for this to have any effect.
+ * Dynamic texture generation must be active for this to have any effect.
  *
  * @param[in] [1]
  *            The name of the filter to enable.

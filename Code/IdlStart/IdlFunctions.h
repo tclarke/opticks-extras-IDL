@@ -1,6 +1,7 @@
 /*
  * The information in this file is
- * subject to the terms and conditions of the
+ * Copyright(c) 2007 Ball Aerospace & Technologies Corporation
+ * and is subject to the terms and conditions of the
  * GNU Lesser General Public License Version 2.1
  * The license text is available from   
  * http://www.gnu.org/licenses/lgpl.html
@@ -50,10 +51,6 @@ namespace IdlFunctions
       const std::string& newName, EncodingType datatype, InterleaveFormatType iType,
       unsigned int rows, unsigned int cols, unsigned int bands);
    bool changeRasterElement(RasterElement* pRasterElement, void* pData,
-      EncodingType datatype, InterleaveFormatType iType, unsigned int startRow,
-      unsigned int rows, unsigned int startCol, unsigned int cols,
-      unsigned int startBand, unsigned int bands, EncodingType oldType);
-   bool copyRasterElement(RasterElement* pRasterElement, RasterElement* pNewElement,
       EncodingType datatype, InterleaveFormatType iType, unsigned int startRow,
       unsigned int rows, unsigned int startCol, unsigned int cols,
       unsigned int startBand, unsigned int bands, EncodingType oldType);
@@ -219,9 +216,6 @@ namespace IdlFunctions
       int band = -1);
    void copyLayer(RasterLayer* pLayer, const RasterLayer* pOrigLayer);
    RasterChannelType getRasterChannelType(const std::string& color);
-
-   // Trevor, this container is accessed only in getWizardObject
-   static std::vector<WizardObject*> mpWizards;
 }
 ///\endcond INTERNAL
 
