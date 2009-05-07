@@ -42,14 +42,14 @@ public:
    public:
       Args() :
          mGetExisting(true),
-         mShouldRelease(false)
+         mpParentWindow(NULL)
       {
       }
 
       Args(bool getExisting, const std::string& name, const std::string& classType) :
          mName(name),
          mGetExisting(getExisting),
-         mShouldRelease(false)
+         mpParentWindow(NULL)
       {
          if (classType == TypeConverter::toString<SpatialDataView>())
          {
@@ -69,7 +69,7 @@ public:
       std::string mName;
       ViewType mType;
       bool mGetExisting;
-      mutable bool mShouldRelease;
+      mutable ViewWindow* mpParentWindow;
    };
 
    void* obtainResource(const Args& args) const
@@ -109,11 +109,6 @@ public:
             }
             pView = (pWindow == NULL) ? NULL : pWindow->getView();
          }
-         if (pView != NULL)
-         {
-            // by default, we want a weak reference to existing objects
-            args.mShouldRelease = true;
-         }
       }
       if (pView == NULL)
       {
@@ -133,13 +128,18 @@ public:
             return NULL;
          }
          pView = (pWindow == NULL) ? NULL : pWindow->getView();
+         args.mpParentWindow = pWindow;
+      }
+      if (args.mpParentWindow == NULL && dynamic_cast<QWidget*>(pView) != NULL)
+      {
+         args.mpParentWindow = dynamic_cast<ViewWindow*>(dynamic_cast<QWidget*>(pView)->parent());
       }
       return pView;
    }
    void releaseResource(const Args& args, View* pObject) const
    {
-      Service<DesktopServices>()->deleteWindow(
-           dynamic_cast<ViewWindow*>(dynamic_cast<QWidget*>(pObject)->parent()));
+      VERIFYNRV(args.mpParentWindow);
+      Service<DesktopServices>()->deleteWindow(args.mpParentWindow);
    }
 };
 
@@ -155,7 +155,7 @@ public:
    explicit ViewResource(const std::string& name, bool getExisting = true) :
       Resource<T, ViewObject>(Args(getExisting, name, TypeConverter::toString<T>()))
    {
-      if (getArgs().mShouldRelease)
+      if (getArgs().mGetExisting)
       {
          release();
       }
@@ -169,163 +169,6 @@ public:
     */
    explicit ViewResource(T* pView = NULL) :
       Resource<T, ViewObject>(pView, Args())
-   {
-   }
-};
-
-/**
- * The %LayerObject is a trait object for use with the %Resource template. 
- *
- * It provides capability for getting and returning layers.
- * 
- * @see LayerResource
- */
-class LayerObject
-{
-public:
-   class Args
-   {
-   public:
-      Args() :
-         mpElement(NULL),
-         mpView(NULL),
-         mGetExisting(true),
-         mShouldRelease(false)
-      {
-      }
-
-      Args(bool getExisting, const std::string& name, DataElement* pElement, const std::string& classType, SpatialDataView* pView) :
-         mName(name),
-         mpElement(pElement),
-         mpView(pView),
-         mGetExisting(getExisting),
-         mShouldRelease(false)
-      {
-         if (classType == TypeConverter::toString<AnnotationLayer>())
-         {
-            mType = ANNOTATION;
-         }
-         else if (classType == TypeConverter::toString<AoiLayer>())
-         {
-            mType = AOI_LAYER;
-         }
-         else if (classType == TypeConverter::toString<GcpLayer>())
-         {
-            mType = GCP_LAYER;
-         }
-         else if (classType == TypeConverter::toString<LatLonLayer>())
-         {
-            mType = LAT_LONG;
-         }
-         else if (classType == TypeConverter::toString<PseudocolorLayer>())
-         {
-            mType = PSEUDOCOLOR;
-         }
-         else if (classType == TypeConverter::toString<RasterLayer>())
-         {
-            mType = RASTER;
-         }
-         else if (classType == TypeConverter::toString<ThresholdLayer>())
-         {
-            mType = THRESHOLD;
-         }
-         else if (classType == TypeConverter::toString<TiePointLayer>())
-         {
-            mType = TIEPOINT_LAYER;
-         }
-      }
-
-      std::string mName;
-      DataElement* mpElement;
-      LayerType mType;
-      SpatialDataView* mpView;
-      bool mGetExisting;
-      mutable bool mShouldRelease;
-   };
-
-   void* obtainResource(const Args& args) const
-   {
-      if (!args.mType.isValid() || args.mpView == NULL)
-      {
-         return NULL;
-      }
-      Layer* pLayer = NULL;
-      LayerList* pList = args.mpView->getLayerList();
-      if (args.mGetExisting)
-      {
-         if (args.mName.empty() && args.mpElement == NULL)
-         {
-            pLayer = args.mpView->getTopMostLayer(args.mType);
-         }
-         else
-         {
-            pLayer = pList->getLayer(args.mType, args.mpElement, args.mName);
-         }
-         if (pLayer != NULL)
-         {
-            // by default, we want a weak reference to existing objects
-            args.mShouldRelease = true;
-         }
-      }
-      if (pLayer == NULL && args.mpElement != NULL)
-      {
-         pLayer = args.mpView->createLayer(args.mType, args.mpElement, args.mName);
-      }
-      return pLayer;
-   }
-   void releaseResource(const Args& args, Layer* pObject) const
-   {
-      if (args.mpView != NULL)
-      {
-         args.mpView->deleteLayer(pObject);
-      }
-   }
-};
-
-/**
- *  This is a %Resource class that wraps a Layer. 
- *
- *  When the %LayerResource object goes out of scope, the Layer will be deleted.
- */
-template<class T>
-class LayerResource : public Resource<T, LayerObject>
-{
-public:
-   explicit LayerResource(SpatialDataView* pView, const std::string& name, bool getExisting = true) :
-      Resource<T, LayerObject>(Args(getExisting, name, NULL, TypeConverter::toString<T>(), pView))
-   {
-      if (getArgs().mShouldRelease)
-      {
-         release();
-      }
-   }
-
-   explicit LayerResource(SpatialDataView* pView, DataElement* pElement, bool getExisting = true) :
-      Resource<T, LayerObject>(Args(getExisting, std::string(), pElement, TypeConverter::toString<T>(), pView))
-   {
-      if (getArgs().mShouldRelease)
-      {
-         release();
-      }
-   }
-
-   explicit LayerResource(SpatialDataView* pView, const std::string& name, DataElement* pElement, bool getExisting = true) :
-      Resource<T, LayerObject>(Args(getExisting, name, pElement, TypeConverter::toString<T>(), pView))
-   {
-      if (getArgs().mShouldRelease)
-      {
-         release();
-      }
-   }
-
-   /**
-    * Create a LayerResource which owns the provided layer and will
-    * destroy it when the resource is destroyed.
-    *
-    * @param pLayer the layer that will be owned by this resource.
-    */
-   explicit LayerResource(T* pLayer = NULL) :
-      Resource<T, LayerObject>(pLayer, Args())
    {
    }
 };

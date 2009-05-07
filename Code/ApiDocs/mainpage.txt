@@ -31,7 +31,7 @@ Parameter names for functions will be either the name of a keyword parameter or 
 
 A parameter name followed by <b>(opt)</b> indicates an optional parameter.
 The default value, if appropriate, will be listed in the description.
-The data type, if not obvious, will be mentioned in the description
+The data type, if not obvious, will be mentioned in the description.
 
 The following command groups are available:
  - \ref animationcommands
