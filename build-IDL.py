@@ -377,13 +377,6 @@ def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, sdk_ver
                copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart61.dll", zfile)
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart63.dll", zfile)
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart64.dll", zfile)
-            if plat_parts[0] == "win64":
-               # copy fixed versions of broken IDL libs
-               fixed_source_path = join(depend_path, "Idl", "IdlPatches", Windows64bitBuilder.platform)
-               fixed_dest_path = join("platform", plat, "SupportFiles", "IdlPatches")
-               copy_file_to_zip(join(fixed_source_path, "6.4"), join(fixed_dest_path, "6.4"), "MesaGL6_2.dll", zfile)
-               copy_file_to_zip(join(fixed_source_path, "6.4"), join(fixed_dest_path, "6.4"), "MesaGLU6_2.dll", zfile)
-               copy_file_to_zip(join(fixed_source_path, "6.4"), join(fixed_dest_path, "6.4"), "osmesa6_2.dll", zfile)
         elif plat_parts[0] == 'solaris':
             bin_dir = os.path.join(os.path.abspath("Code"), "Build", "Binaries-%s-%s" % (SolarisBuilder.platform, plat_parts[-1]))
             extension_plugin_path = join(bin_dir, "PlugIns")
