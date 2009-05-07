@@ -76,6 +76,10 @@ namespace
 /**
  * Access DataElement metadata and wizard arguments.
  *
+ * This function gets metadata values from DataElement metadata.
+ * It also gets the values of output nodes in wizards which can be used
+ * to get return values after wizard execution.
+ *
  * @param[in] [1]
  *            The metadata item name. If \p DATASET is specified, this
  *            is the name of the metadata element to access. If \p WIZARD
@@ -322,6 +326,10 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 
 /**
  * Set DataElement metadata and wizard arguments.
+ *
+ * This function sets metadata values in DataElement metadata.
+ * It also sets the values of input nodes in wizards which can be used
+ * to set parameters before wizard execution.
  *
  * @param[in] [1]
  *            The metadata item name. If \p DATASET is specified, this

@@ -1,6 +1,7 @@
 /*
  * The information in this file is
- * subject to the terms and conditions of the
+ * Copyright(c) 2007 Ball Aerospace & Technologies Corporation
+ * and is subject to the terms and conditions of the
  * GNU Lesser General Public License Version 2.1
  * The license text is available from   
  * http://www.gnu.org/licenses/lgpl.html
@@ -48,6 +49,7 @@ IdlProxy::~IdlProxy()
          VERIFYNRV(close_idl);
          close_idl();
          (*module)->unload();
+         Service<PlugInManagerServices>()->destroyDynamicModule(*module);
       }
    }
 }
@@ -117,8 +119,7 @@ bool IdlProxy::processCommand(const std::string& command, std::string& returnTex
     * P.S. This is a hack and we need to find a better way so there is
     * only one 'execute_idl' and one output function for all dlls.
     */
-   int lastLoaded = static_cast<int>(mModules.size()) - 1;
-   DynamicModule* pMod = mModules[lastLoaded];
+   DynamicModule* pMod = mModules.back();
    VERIFY(pMod != NULL);
 
    //get the location of the function that will call the IDL
@@ -148,17 +149,19 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
    const Filename* pDll = IdlInterpreterOptions::getSettingDLL();
    if (pDll != NULL)
    {
-      idlDll = pDll->getFullPathAndName();
 #if defined(WIN_API)
-      for (std::string::size_type pos = idlDll.find("/"); pos != std::string::npos; pos = idlDll.find("/"))
-      {
-         idlDll[pos] = '\\';
-      }
+      QString tmp = QString::fromStdString(pDll->getFullPathAndName());
+      tmp.replace("/", "\\");
+      idlDll = tmp.toStdString();
+#else
+      idlDll = pDll->getFullPathAndName();
 #endif
    }
 
    std::string idlVersion = IdlInterpreterOptions::getSettingVersion();
 
+   // Create the postfix for the start dll name. If a version is specified
+   // such as 6.4, remove the .
 #if defined(WIN_API)
    std::string idlPostfix = (idlVersion.size() < 3) ? ".dll" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".dll");
 #else
@@ -183,6 +186,10 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
             mModules.push_back(pModule);
             mIdlRunning = true;
          }
+         else
+         {
+            Service<PlugInManagerServices>()->destroyDynamicModule(pModule);
+         }
       }
    }
 
@@ -191,7 +198,7 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
 
 IdlInterpreter::IdlInterpreter()
 {
-   setName("IdlInterpreter");
+   setName("IDL");
    setDescription("Provides command line utilities to execute IDL commands.");
    setDescriptorId("{09BBB1FD-D12A-43B8-AB09-95AA8028BFFE}");
    setCopyright(IDL_COPYRIGHT);
@@ -278,152 +285,11 @@ bool IdlInterpreter::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgLi
 
 void IdlInterpreter::getKeywordList(std::vector<std::string>& list) const
 {
-   list.push_back("ARRAY_TO_IDL");
-   list.push_back("REFRESH_DISPLAY");
-   list.push_back("GET_CURRENT_NAME");
-   list.push_back("GET_DATA_NAME");
-   list.push_back("GET_LAYER_NAME");
-   list.push_back("SET_LAYER_POSITION");
-   list.push_back("GET_LAYER_POSITION");
-   list.push_back("GET_NUM_LAYERS");
-   list.push_back("SET_COLORMAP");
-   list.push_back("GET_STRETCH_VALUES");
-   list.push_back("SET_STRETCH_VALUES");
-   list.push_back("SET_STRETCH_METHOD");
-   list.push_back("GET_STRETCH_METHOD");
-   list.push_back("SET_STRETCH_TYPE");
-   list.push_back("GET_STRETCH_TYPE");
-   list.push_back("ENABLE_FILTER");
-   list.push_back("DISABLE_FILTER");
-   list.push_back("SHOW_LAYER");
-   list.push_back("HIDE_LAYER");
-   list.push_back("DISABLE_GPU");
-   list.push_back("ENABLE_GPU");
-   list.push_back("EXECUTE_WIZARD");
-   list.push_back("GET_METADATA");
-   list.push_back("SET_METADATA");
-   list.push_back("COPY_METADATA");
-   list.push_back("ARRAY_TO_OPTICKS");
-   list.push_back("CHANGE_DATA_TYPE");
-   list.push_back("REPORT_PROGRESS");
 }
 
 bool IdlInterpreter::getKeywordDescription(const std::string& keyword, std::string& description) const
 {
-   if (keyword == "ARRAY_TO_IDL")
-   {
-      description = "Binds a dataset to an IDL variable as a 1 dimensional array";
-   }
-   else if (keyword == "GET_CURRENT_NAME")
-   {
-      description = "Method for getting the name of the currently selected element";
-   }
-   else if (keyword == "GET_DATA_NAME")
-   {
-      description = "Method for getting the name of the Spectral Element of a layer";
-   }
-   else if (keyword == "GET_LAYER_NAME")
-   {
-      description = "Method for getting the name of the layer at a position in the layer list";
-   }
-   else if (keyword == "SET_LAYER_POSITION")
-   {
-      description = "Method for setting the position in the layer list of a named layer";
-   }
-   else if (keyword == "GET_LAYER_POSITION")
-   {
-      description = "Method for getting the position in the layer list of a named layer";
-   }
-   else if (keyword == "GET_NUM_LAYERS")
-   {
-      description = "RMethod for getting the total number of layers in a window";
-   }
-   else if (keyword == "SET_COLORMAP")
-   {
-      description = "Method for setting the color map for a grayscale image";
-   }
-   else if (keyword == "GET_STRETCH_VALUES")
-   {
-      description = "Method for getting the stretch values of the named layer";
-   }
-   else if (keyword == "SET_STRETCH_VALUES")
-   {
-      description = "Method for setting the stretch values of the named layer";
-   }
-   else if (keyword == "SET_STRETCH_METHOD")
-   {
-      description = "Method for setting the stretch method of the named layer";
-   }
-   else if (keyword == "GET_STRETCH_METHOD")
-   {
-      description = "Method for getting the stretch method of the named layer";
-   }
-   else if (keyword == "SET_STRETCH_TYPE")
-   {
-      description = "Method for setting the stretch type of the named layer";
-   }
-   else if (keyword == "GET_STRETCH_TYPE")
-   {
-      description = "Method for getting the stretch type of the named layer";
-   }
-   else if (keyword == "ENABLE_FILTER")
-   {
-      description = "Method for disabling an applied filter to a GPU enabled layer";
-   }
-   else if (keyword == "DISABLE_FILTER")
-   {
-      description = "Method for disabling an applied filter to a GPU enabled layer";
-   }
-   else if (keyword == "SHOW_LAYER")
-   {
-      description = "Method for showing a hidden layer.";
-   }
-   else if (keyword == "HIDE_LAYER")
-   {
-      description = "Method for hiding a shown layer.";
-   }
-   else if (keyword == "DISABLE_GPU")
-   {
-      description = "Method for disabling the gpu of a layer.  The GPU is an advanced graphics modes which allows filters to be applied.";
-   }
-   else if (keyword == "ENABLE_GPU")
-   {
-      description = "Method for enabling the gpu of a layer.  The GPU is an advanced graphics modes which allows filters to be applied.";
-   }
-   else if (keyword == "EXECUTE_WIZARD")
-   {
-      description = "Method for executing a Wizard.  This is intended as a means to execute a plugin.";
-   }
-   else if (keyword == "GET_METADATA")
-   {
-      description = "Method for getting information is support areas of Opticks, such as the collection parameters, metadata or wizard objects";
-   }
-   else if (keyword == "SET_METADATA")
-   {
-      description = "Method for setting information is support areas of Opticks, such as the collection parameters, metadata or wizard objects";
-   }
-   else if (keyword == "COPY_METADATA")
-   {
-      description = "Method for copying metadata from one dataset to another dataset.";
-   }
-   else if (keyword == "ARRAY_TO_OPTICKS")
-   {
-      description = "Method for taking a 1 dimensional array from IDL space, and putting it in Opticks space.";
-   }
-   else if (keyword == "CHANGE_DATA_TYPE")
-   {
-      description = "Method for changing the data type of the RasterElement.  This function replaces the contents of the spectral cube, so any map_array function would have to be redone";
-   }
-   else if (keyword == "REPORT_PROGRESS")
-   {
-      description = "Reports progress, via progress oialog, if a progress object has been supplied to the plugin.";
-   }
-   else
-   {
-      return false;
-   }
-
-   return true;
+   return false;
 }
 
 void IdlInterpreter::getUserDefinedTypes(std::vector<std::string>&) const 
@@ -494,6 +360,10 @@ bool IdlInterpreterWizardItem::execute(PlugInArgList* pInArgList, PlugInArgList*
    if (!pProxy->processCommand(command, returnText, errorText, progress.getCurrentProgress()))
    {
       progress.report("Error executing IDL command.", 0, ERRORS, true);
+      std::string returnType("Error");
+      returnText += "\n" + errorText;
+      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
+      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &returnText));
       return false;
    }
    // Populate the output arg list
