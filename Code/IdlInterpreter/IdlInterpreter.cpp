@@ -40,18 +40,6 @@ IdlProxy::IdlProxy() : mIdlRunning(false)
 
 IdlProxy::~IdlProxy()
 {
-   if (mIdlRunning && !mModules.empty()) 
-   {
-      for (std::vector<DynamicModule*>::const_iterator module = mModules.begin(); module != mModules.end(); ++module)
-      {
-         bool(*close_idl)() =
-            reinterpret_cast<bool(*)()>((*module)->getProcedureAddress("close_idl"));
-         VERIFYNRV(close_idl);
-         close_idl();
-         (*module)->unload();
-         Service<PlugInManagerServices>()->destroyDynamicModule(*module);
-      }
-   }
 }
 
 bool IdlProxy::getInputSpecification(PlugInArgList*& pArgList)
@@ -162,10 +150,14 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
 
    // Create the postfix for the start dll name. If a version is specified
    // such as 6.4, remove the .
+   if (idlVersion.size() == 3 && idlVersion[1] == '.')
+   {
+      idlVersion.erase(1, 1);
+   }
 #if defined(WIN_API)
-   std::string idlPostfix = (idlVersion.size() < 3) ? ".dll" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".dll");
+   std::string idlPostfix = idlVersion + ".dll";
 #else
-   std::string idlPostfix = (idlVersion.size() < 3) ? ".so" : (idlVersion.substr(0, 1) + idlVersion.substr(2, 1) + ".so");
+   std::string idlPostfix = idlVersion + ".so";
 #endif
    std::vector<Filename*> idlModules = IdlInterpreterOptions::getSettingModules();
 
