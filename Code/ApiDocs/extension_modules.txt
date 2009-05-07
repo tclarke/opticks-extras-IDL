@@ -3,9 +3,11 @@ An additional method file must contain the following functions:
 \code
 extern "C" LINKAGE int start_idl(const char* pLocation, External* pServices, const char** pOutput, const char** pErrorOutput);
 extern "C" LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
+extern "C" LINKAGE int close_idl();
 \endcode
 start_idl() will be passed the location of the IDL installation's <tt>idl.dll</tt>, an External which can be passwd to ModuleManager::setService() and output parameters for <tt>stdout</tt> and <tt>stderr</tt>.
 start_idl() should return 0 on error and non-zero on success.
+close_idl() is called on application exit and should return 0 on error and non-zero on success.
 execute_idl() will be passed an IDL command string, output parameters for <tt>stdout</tt> and <tt>stderr</tt>, and an optional Progress reporting object.
 The method file must be linked against the same version of IDL as the main support plug-in.
 The filename should match the naming convention of the installed support plug-in which is usually in the <tt>PlugIns</tt> directory and begins with <tt>IdlStart</tt>.

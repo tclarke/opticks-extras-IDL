@@ -10,6 +10,8 @@
 #ifndef IDLINTERPRETER_H__
 #define IDLINTERPRETER_H__
 
+#include "ApplicationServices.h"
+#include "AttachmentPtr.h"
 #include "ExecutableShell.h"
 #include "InterpreterShell.h"
 #include "WizardShell.h"
@@ -31,7 +33,9 @@ public:
 
 private:
    bool startIdl(const char** pOutput = NULL, const char** pErrorOutput = NULL);
+   void applicationClosed(Subject& subject, const std::string& signal, const boost::any& data);
 
+   AttachmentPtr<ApplicationServices> mpAppServices;
    bool mIdlRunning;
    std::vector<DynamicModule*> mModules;
 };
