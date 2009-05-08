@@ -37,7 +37,8 @@ IdlInterpreterOptions::IdlInterpreterOptions()
    
    QLabel* pVersionLabel = new QLabel("IDL Version", pIdlConfigWidget);
    mpVersion = new QComboBox(pIdlConfigWidget);
-#pragma message(__FILE__ "(" STRING(__LINE__) ") : warning : This should scan for available IdlStart dll's and add valid items appropriately (tclarke)")
+#pragma message(__FILE__ "(" STRING(__LINE__) ") : warning : This should scan for available "\
+                  "IdlStart dll's and add valid items appropriately (tclarke)")
    mpVersion->addItems(QStringList() << "6.1" << "6.3" << "6.4");
    mpVersion->setEditable(true);
    mpVersion->setDuplicatesEnabled(false);
