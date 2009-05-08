@@ -115,7 +115,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Include\IDLVersion.h"
+				RelativePath=".\Include\IdlVersion.h"
 				>
 			</File>
 		</Filter>
