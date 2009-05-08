@@ -9,6 +9,7 @@
 
 #include "IdlFunctions.h"
 #include "IdlStart.h"
+#include "IdlVersion.h"
 #include "MiscCommands.h"
 #include "PlugInArgList.h"
 #include "PlugInResource.h"
@@ -227,11 +228,54 @@ IDL_VPTR get_configuration_setting(int argc, IDL_VPTR pArgv[])
 
    return idlPtr;
 }
+
+/**
+ * Retrieve version information.
+ *
+ * @param[in] OPTICKS @opt
+ *            This flag, if true, will return the version string of Opticks.
+ *            If false, the version string of the IDL plug-in will be returned.
+ * @return The IDL plug-in version string or, if \c /OPTICKS is specified, the Opticks version string.
+ * @usage print,get_version()
+ * @endusage
+ */
+IDL_VPTR get_version(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   IDL_VPTR idlPtr;
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int opticksExists;
+      IDL_LONG opticks;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"OPTICKS", IDL_TYP_LONG, 1, IDL_KW_ZERO, reinterpret_cast<int*>(IDL_KW_OFFSETOF(opticksExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(opticks))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string verString = IDL_VERSION_NUMBER;
+   if (kw->opticksExists && kw->opticks != 0)
+   {
+      verString = Service<ConfigurationSettings>()->getVersion();
+   }
+   idlPtr = IDL_StrToSTRING(const_cast<char*>(verString.c_str()));
+   return idlPtr;
+}
+
 /*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(execute_wizard), "EXECUTE_WIZARD",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_configuration_setting), "GET_CONFIGURATION_SETTING",0,1,0,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_version), "GET_VERSION",0,0,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
 
