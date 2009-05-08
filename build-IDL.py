@@ -287,7 +287,7 @@ class SolarisBuilder(Builder):
         self.prep_to_run_helper([".so"])
 
 def read_version_h():
-    version_path = join("Code", "Include", "IDLVersion.h")
+    version_path = join("Code", "Include", "IdlVersion.h")
     version_info = open(version_path, "rt").readlines()
     rdata = {}
     for vline in version_info:
