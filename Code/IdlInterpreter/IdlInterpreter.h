@@ -29,7 +29,8 @@ public:
    virtual bool getInputSpecification(PlugInArgList*& pArgList);
    virtual bool getOutputSpecification(PlugInArgList*& pArgList);
    virtual bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
-   bool processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress);
+   bool processCommand(const std::string& command, std::string& returnText,
+      std::string& errorText, Progress* pProgress);
 
 private:
    bool startIdl(const char** pOutput = NULL, const char** pErrorOutput = NULL);

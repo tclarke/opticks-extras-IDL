@@ -63,7 +63,10 @@ namespace
    }
 }
 
-extern "C" LINKAGE int start_idl(const char* pLocation, External* pExternal, const char** pOutput, const char** pErrorOutput)
+extern "C" LINKAGE int start_idl(const char* pLocation,
+                                 External* pExternal,
+                                 const char** pOutput,
+                                 const char** pErrorOutput)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
@@ -139,7 +142,10 @@ extern "C" LINKAGE int start_idl(const char* pLocation, External* pExternal, con
    return success ? 1 : 0;
 }
 
-extern "C" LINKAGE void execute_idl(const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress)
+extern "C" LINKAGE void execute_idl(const char* pCommand,
+                                    const char** pOutput,
+                                    const char** pErrorOutput,
+                                    Progress* pProgress)
 {
    spProgress = pProgress;
    execSuccess = true;

@@ -33,7 +33,7 @@
  *
  * @param[in] DATASET @opt
  *            The name of the RasterElement to refresh. Defaults to the primary dataset for the active view.
- * @usage refresh_display(DATASET="Dataset1.tif")
+ * @usage refresh_display,DATASET="Dataset1.tif"
  * @endusage
  */
 void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -44,7 +44,6 @@ void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
       int datasetExists;
       IDL_STRING dataset;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -55,12 +54,12 @@ void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(dataset))},
       {NULL}
    };
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string dataName;
-   if (kw.datasetExists)
+   if (kw->datasetExists)
    {
-      dataName = IDL_STRING_STR(&kw.dataset);
+      dataName = IDL_STRING_STR(&kw->dataset);
    }
    WorkspaceWindow* pData = Service<DesktopServices>()->getCurrentWorkspaceWindow();
    RasterElement* pElement = NULL;
@@ -142,7 +141,6 @@ IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
       int windowNameExists;
       IDL_STRING windowName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -156,20 +154,20 @@ IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string typeName = "SpatialDataWindow";
    IDL_VPTR idlPtr;
    bool bSuccess = false;
-   if (kw.typeExists)
+   if (kw->typeExists)
    {
-      typeName = IDL_STRING_STR(&kw.typeName);
+      typeName = IDL_STRING_STR(&kw->typeName);
    }
    // retrieve the layer name passed in as a keyword
-   if (kw.windowNameExists)
+   if (kw->windowNameExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
 
    // get the layer
@@ -199,7 +197,6 @@ IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -230,7 +227,6 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
       int windowNameExists;
       IDL_STRING windowName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -244,7 +240,7 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string typeName = "SpatialDataWindow";
@@ -255,14 +251,14 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    //retrieve the label passed in as a parameter
    label = IDL_VarGetString(pArgv[0]);
 
-   if (kw.typeExists)
+   if (kw->typeExists)
    {
-      typeName = IDL_STRING_STR(&kw.typeName);
+      typeName = IDL_STRING_STR(&kw->typeName);
    }
    //retrieve the layer name passed in as a keyword
-   if (kw.windowNameExists)
+   if (kw->windowNameExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
 
    //get the layer
@@ -301,7 +297,6 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -331,7 +326,6 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
       int windowNameExists;
       IDL_STRING windowName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -345,7 +339,7 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string typeName = "SpatialDataWindow";
@@ -354,14 +348,14 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_VPTR idlPtr;
    bool bSuccess = false;
 
-   if (kw.typeExists)
+   if (kw->typeExists)
    {
-      typeName = IDL_STRING_STR(&kw.typeName);
+      typeName = IDL_STRING_STR(&kw->typeName);
    }
    //retrieve the layer name passed in as a keyword
-   if (kw.windowNameExists)
+   if (kw->windowNameExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
 
    //get the layer
@@ -392,7 +386,6 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
 
    idlPtr = IDL_StrToSTRING(const_cast<char*>(label.c_str()));
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -432,7 +425,6 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       int yPosExists;
       IDL_VPTR yPos;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -450,7 +442,7 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
    std::string windowName;
    std::string typeName = "SpatialDataWindow";
    std::string label;
@@ -458,18 +450,19 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    bool bSuccess = false;
    if (argc < 1)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "get_window_position 'type', 'window', 'win_pos_x', and 'win_pos_y' as keywords.");
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+         "get_window_position 'type', 'window', 'win_pos_x', and 'win_pos_y' as keywords.");
    }
    else
    {
-      if (kw.typeExists)
+      if (kw->typeExists)
       {
-         typeName = IDL_STRING_STR(&kw.typeName);
+         typeName = IDL_STRING_STR(&kw->typeName);
       }
       //retrieve the layer name passed in as a keyword
-      if (kw.windowNameExists)
+      if (kw->windowNameExists)
       {
-         windowName = IDL_STRING_STR(&kw.windowName);
+         windowName = IDL_STRING_STR(&kw->windowName);
       }
 
       //get the layer
@@ -498,35 +491,35 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
                if (pMain != NULL)
                {
                   int xPos = pMain->x();
-                  if (kw.xPosExists)
+                  if (kw->xPosExists)
                   {
                      //we don't know the datatype passed in, so set all of them
-                     kw.xPos->value.d = (double)xPos;
-                     kw.xPos->value.f = (float)xPos;
-                     kw.xPos->value.i = (short)xPos;
-                     kw.xPos->value.ui = (unsigned short)xPos;
-                     kw.xPos->value.ul = (unsigned int)xPos;
-                     kw.xPos->value.l = xPos;
-                     kw.xPos->value.l64 = (unsigned long)xPos;
-                     kw.xPos->value.ul64 = (unsigned long)xPos;
-                     kw.xPos->value.sc = (char)xPos;
-                     kw.xPos->value.c = (unsigned char)xPos;
+                     kw->xPos->value.d = (double)xPos;
+                     kw->xPos->value.f = (float)xPos;
+                     kw->xPos->value.i = (short)xPos;
+                     kw->xPos->value.ui = (unsigned short)xPos;
+                     kw->xPos->value.ul = (unsigned int)xPos;
+                     kw->xPos->value.l = xPos;
+                     kw->xPos->value.l64 = (unsigned long)xPos;
+                     kw->xPos->value.ul64 = (unsigned long)xPos;
+                     kw->xPos->value.sc = (char)xPos;
+                     kw->xPos->value.c = (unsigned char)xPos;
                      bSuccess = true;
                   }
                   int yPos = pMain->y();
-                  if (kw.xPosExists)
+                  if (kw->xPosExists)
                   {
                      //we don't know the datatype passed in to populate, so set all of them
-                     kw.yPos->value.d = (double)yPos;
-                     kw.yPos->value.f = (float)yPos;
-                     kw.yPos->value.i = (short)yPos;
-                     kw.yPos->value.ui = (unsigned short)yPos;
-                     kw.yPos->value.ul = (unsigned int)yPos;
-                     kw.yPos->value.l = yPos;
-                     kw.yPos->value.l64 = (unsigned long)yPos;
-                     kw.yPos->value.ul64 = (unsigned long)yPos;
-                     kw.yPos->value.sc = (char)yPos;
-                     kw.yPos->value.c = (unsigned char)yPos;
+                     kw->yPos->value.d = (double)yPos;
+                     kw->yPos->value.f = (float)yPos;
+                     kw->yPos->value.i = (short)yPos;
+                     kw->yPos->value.ui = (unsigned short)yPos;
+                     kw->yPos->value.ul = (unsigned int)yPos;
+                     kw->yPos->value.l = yPos;
+                     kw->yPos->value.l64 = (unsigned long)yPos;
+                     kw->yPos->value.ul64 = (unsigned long)yPos;
+                     kw->yPos->value.sc = (char)yPos;
+                     kw->yPos->value.c = (unsigned char)yPos;
                      bSuccess = true;
                   }
                }
@@ -539,7 +532,6 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       }
    }
    idlPtr = IDL_StrToSTRING("failure");
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -579,7 +571,6 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       int yPosExists;
       IDL_LONG yPos;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -597,7 +588,7 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
    std::string windowName;
    std::string typeName = "SpatialDataWindow";
    std::string label;
@@ -607,31 +598,32 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    bool bSuccess = false;
    if (argc < 1)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "set_window_position 'type', 'window', 'win_pos_x', and 'win_pos_x' as keywords.");
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+         "set_window_position 'type', 'window', 'win_pos_x', and 'win_pos_x' as keywords.");
    }
    else
    {
 
-      if (kw.typeExists)
+      if (kw->typeExists)
       {
-         typeName = IDL_STRING_STR(&kw.typeName);
+         typeName = IDL_STRING_STR(&kw->typeName);
       }
       //retrieve the layer name passed in as a keyword
-      if (kw.windowNameExists)
+      if (kw->windowNameExists)
       {
-         windowName = IDL_STRING_STR(&kw.windowName);
+         windowName = IDL_STRING_STR(&kw->windowName);
       }
-      if (kw.typeExists)
+      if (kw->typeExists)
       {
-         typeName = IDL_STRING_STR(&kw.typeName);
+         typeName = IDL_STRING_STR(&kw->typeName);
       }
-      if (kw.xPosExists)
+      if (kw->xPosExists)
       {
-         xPos = kw.xPos;
+         xPos = kw->xPos;
       }
-      if (kw.yPosExists)
+      if (kw->yPosExists)
       {
-         yPos = kw.yPos;
+         yPos = kw->yPos;
       }
 
       //get the layer
@@ -674,7 +666,6 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 /*@}*/

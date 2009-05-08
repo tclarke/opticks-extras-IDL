@@ -50,7 +50,6 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
       int batchExists;
       IDL_LONG batch;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -62,13 +61,13 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    int batch = 0;
 
-   if (kw.batchExists)
+   if (kw->batchExists)
    {
-      if (kw.batch != 0)
+      if (kw->batch != 0)
       {
          batch = 1;
       }
@@ -103,7 +102,6 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = &idlPtr1;
    }
-   IDL_KW_FREE;
    return *idlPtr;
 }
 
@@ -120,7 +118,7 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
  *        Integer percentage completion of a process. Defaults to 0.
  * @param[in] REPORTING_LEVEL @opt
  *        The status of the process. Defaults to Warning.
- * @usage report_progress(MESSAGE="Running algorithm", PERCENT=75, REPORTING_LEVEL="NORMAL")
+ * @usage report_progress,MESSAGE="Running algorithm", PERCENT=75, REPORTING_LEVEL="NORMAL"
  * @endusage
  */
 void report_progress(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -140,7 +138,6 @@ void report_progress(int argc, IDL_VPTR pArgv[], char* pArgk)
       int reportingLevelExists;
       IDL_STRING reportingLevel;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -156,27 +153,27 @@ void report_progress(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    //get the message
    std::string message = "Error.";
-   if (kw.messageExists)
+   if (kw->messageExists)
    {
-      message = IDL_STRING_STR(&kw.message);
+      message = IDL_STRING_STR(&kw->message);
    }
 
    //get the percentage complete
    int percent = 0;
-   if (kw.percentExists)
+   if (kw->percentExists)
    {
-      percent = kw.percent;
+      percent = kw->percent;
    }
 
    //get the level of reporting granularity
    std::string reportingLevelText = "WARNING";
-   if (kw.reportingLevelExists)
+   if (kw->reportingLevelExists)
    {
-      reportingLevelText = IDL_STRING_STR(&kw.reportingLevel);
+      reportingLevelText = IDL_STRING_STR(&kw->reportingLevel);
    }
    ReportingLevel reportingLevel;
    if (reportingLevelText == "NORMAL")

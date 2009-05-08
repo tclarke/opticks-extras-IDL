@@ -62,13 +62,17 @@ bool IdlProxy::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
    return true;
 }
 
-bool IdlProxy::processCommand(const std::string& command, std::string& returnText, std::string& errorText, Progress* pProgress)
+bool IdlProxy::processCommand(const std::string& command,
+                              std::string& returnText,
+                              std::string& errorText,
+                              Progress* pProgress)
 {
    const char* pOutput = NULL;
    const char* pErrorOutput = NULL;
    if (!mIdlRunning && !startIdl(&pOutput, &pErrorOutput))
    {
-      returnText = "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
+      returnText =
+         "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
       if (pErrorOutput != NULL)
       {
          returnText += "\n";
@@ -78,7 +82,8 @@ bool IdlProxy::processCommand(const std::string& command, std::string& returnTex
    }
    if (mModules.empty())
    {
-      returnText = "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
+      returnText =
+         "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
       if (pErrorOutput != NULL)
       {
          returnText += "\n";
@@ -115,7 +120,8 @@ bool IdlProxy::processCommand(const std::string& command, std::string& returnTex
 
    //get the location of the function that will call the IDL
    void (*execute_idl)(const char*, const char**, const char**, Progress*) =
-      reinterpret_cast<void (*)(const char*, const char**, const char**, Progress*)>(*pMod->getProcedureAddress("execute_idl"));
+      reinterpret_cast<void (*)(const char*, const char**, const char**, Progress*)>(
+            *pMod->getProcedureAddress("execute_idl"));
    VERIFY(execute_idl);
 
    //execute the function and capture the output
