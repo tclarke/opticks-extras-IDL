@@ -72,7 +72,6 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
       int timesExists;
       IDL_VPTR times;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -92,7 +91,7 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string copyDataName;
    std::string datasetName;
@@ -104,69 +103,67 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_VPTR tmpFrames;
    bool bTimesConverted = false;
    bool bFramesConverted = false;
-   if (kw.timesExists)
+   if (kw->timesExists)
    {
-      if ((kw.times->flags & ~IDL_V_ARR))
+      if ((kw->times->flags & ~IDL_V_ARR))
       {
-         IDL_KW_FREE;
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  Times keyword must be an array.");
          return IDL_StrToSTRING("failure");
       }
       else
       {
-         if (kw.times->type != IDL_TYP_DOUBLE)
+         if (kw->times->type != IDL_TYP_DOUBLE)
          {
-            IDL_VPTR tmp1 = kw.times;
+            IDL_VPTR tmp1 = kw->times;
             tmpTimes = IDL_CvtDbl(1, &tmp1);
-            kw.times = tmpTimes;
+            kw->times = tmpTimes;
             bTimesConverted = true;
          }
-         UCHAR* pTmpValues = kw.times->value.arr->data;
+         UCHAR* pTmpValues = kw->times->value.arr->data;
          pTimes = reinterpret_cast<double*>(pTmpValues);
-         IDL_MEMINT tmpSize = kw.times->value.arr->n_elts;
+         IDL_MEMINT tmpSize = kw->times->value.arr->n_elts;
          nTimes = static_cast<int>(tmpSize);
       }
    }
    short* pFrames = NULL;
    int nFrames = 0;
-   if (kw.framesExists)
+   if (kw->framesExists)
    {
-      if ((kw.frames->flags & ~IDL_V_ARR))
+      if ((kw->frames->flags & ~IDL_V_ARR))
       {
-         IDL_KW_FREE;
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  Frames keyword must be an array.");
          return IDL_StrToSTRING("failure");
       }
       else
       {
-         if (kw.frames->type != IDL_TYP_INT)
+         if (kw->frames->type != IDL_TYP_INT)
          {
-            IDL_VPTR tmp1 = kw.frames;
+            IDL_VPTR tmp1 = kw->frames;
             tmpFrames = IDL_CvtFix(1, &tmp1);
-            kw.frames = tmpFrames;
+            kw->frames = tmpFrames;
             bFramesConverted = true;
          }
-         UCHAR* pTmpValues = kw.frames->value.arr->data;
+         UCHAR* pTmpValues = kw->frames->value.arr->data;
          pFrames = reinterpret_cast<short*>(pTmpValues);
-         IDL_MEMINT tmpSize = kw.frames->value.arr->n_elts;
+         IDL_MEMINT tmpSize = kw->frames->value.arr->n_elts;
          nFrames = static_cast<int>(tmpSize);
       }
    }
 
    std::string filename;
-   if (kw.datasetExists)
+   if (kw->datasetExists)
    {
-      filename = IDL_STRING_STR(&kw.idlDataset);
+      filename = IDL_STRING_STR(&kw->idlDataset);
    }
    std::string copyfilename;
-   if (kw.copydatasetExists)
+   if (kw->copydatasetExists)
    {
-      copyfilename = IDL_STRING_STR(&kw.copyDataset);
+      copyfilename = IDL_STRING_STR(&kw->copyDataset);
    }
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
    else
    {
@@ -178,7 +175,6 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    if (pData == NULL)
    {
-      IDL_KW_FREE;
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  No dataset.");
       return IDL_StrToSTRING("failure");
    }
@@ -214,7 +210,6 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
    RasterDataDescriptor* pDescriptor = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
    if (pDescriptor == NULL)
    {
-      IDL_KW_FREE;
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  No Descriptor.");
       return IDL_StrToSTRING("failure");
    }
@@ -334,7 +329,6 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
          pController->setCanDropFrames(bCanDrop);
       }
    }
-   IDL_KW_FREE;
    return IDL_StrToSTRING("success");
 }
 
@@ -357,7 +351,6 @@ IDL_VPTR get_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -369,12 +362,12 @@ IDL_VPTR get_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -396,7 +389,6 @@ IDL_VPTR get_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
       idlPtr->value.d = value;
       idlPtr->type = IDL_TYP_DOUBLE;
    }
-   IDL_KW_FREE;
 
    return idlPtr;
 }
@@ -425,7 +417,6 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -437,7 +428,7 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    bool bSuccess = false;
    IDL_MEMINT total;
@@ -455,9 +446,9 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    IDL_Deltmp(v);
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -484,7 +475,6 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
 
    return idlPtr;
 }
@@ -508,7 +498,6 @@ IDL_VPTR get_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -520,12 +509,12 @@ IDL_VPTR get_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -568,7 +557,6 @@ IDL_VPTR set_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -580,16 +568,16 @@ IDL_VPTR set_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    bool bSuccess = false;
    //the element
    char* pValue = IDL_VarGetString(pArgv[0]);
 
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -642,7 +630,6 @@ IDL_VPTR get_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -654,12 +641,12 @@ IDL_VPTR get_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -702,7 +689,6 @@ IDL_VPTR set_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -714,16 +700,16 @@ IDL_VPTR set_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    bool bSuccess = false;
    //the element
    char* pValue = IDL_VarGetString(pArgv[0]);
 
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -779,7 +765,6 @@ IDL_VPTR enable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -791,12 +776,12 @@ IDL_VPTR enable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;
@@ -849,7 +834,6 @@ IDL_VPTR disable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
       int animationControllerNameExists;
       IDL_STRING animationControllerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -861,13 +845,13 @@ IDL_VPTR disable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    bool bSuccess = false;
    std::string controllerName;
-   if (kw.animationControllerNameExists)
+   if (kw->animationControllerNameExists)
    {
-      controllerName = IDL_STRING_STR(&kw.animationControllerName);
+      controllerName = IDL_STRING_STR(&kw->animationControllerName);
    }
 
    AnimationController* pController = NULL;

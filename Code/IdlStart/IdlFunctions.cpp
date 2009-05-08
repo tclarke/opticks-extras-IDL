@@ -161,8 +161,14 @@ DataVariant IdlFunctions::getWizardObjectValue(const WizardObject* pObject, cons
    return DataVariant();
 }
 
-RasterElement* IdlFunctions::createRasterElement(void* pData, const std::string& datasetName, const std::string& newName, EncodingType datatype, 
-                                                 InterleaveFormatType iType, unsigned int rows, unsigned int cols, unsigned int bands)
+RasterElement* IdlFunctions::createRasterElement(void* pData,
+                                                 const std::string& datasetName,
+                                                 const std::string& newName,
+                                                 EncodingType datatype, 
+                                                 InterleaveFormatType iType,
+                                                 unsigned int rows,
+                                                 unsigned int cols,
+                                                 unsigned int bands)
 {
    RasterElement* pInputRaster = getDataset(datasetName);
    DataElement* pParent = NULL;
@@ -170,7 +176,8 @@ RasterElement* IdlFunctions::createRasterElement(void* pData, const std::string&
    {
       pParent = pInputRaster->getParent();
    }
-   ModelResource<RasterElement> pRaster(RasterUtilities::createRasterElement(newName, rows, cols, bands, datatype, iType, true, pParent));
+   ModelResource<RasterElement> pRaster(
+      RasterUtilities::createRasterElement(newName, rows, cols, bands, datatype, iType, true, pParent));
    if (pRaster.get() == NULL)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Could not create new RasterElement, may already exist.");
@@ -309,7 +316,9 @@ Layer* IdlFunctions::getLayerByRaster(RasterElement* pElement)
    return pDatasetLayer;
 }
 
-Layer* IdlFunctions::getLayerByName(const std::string& windowName, const std::string& layerName, bool onlyRasterElements)
+Layer* IdlFunctions::getLayerByName(const std::string& windowName,
+                                    const std::string& layerName,
+                                    bool onlyRasterElements)
 {
    Layer* pReturn = NULL;
 
@@ -452,7 +461,7 @@ WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
 
       if (bSuccess == false)
       {
-         VERIFYRV_MSG(false, NULL, "Could not load the wizard from the file");
+         return NULL;
       }
       pWizard = pNewWizard.release();
       pWizard->setName(wizardName);

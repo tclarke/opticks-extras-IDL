@@ -38,12 +38,33 @@ class WizardObject;
  */
 namespace IdlFunctions
 {
+   template<typename T>
+   class IdlKwResource
+   {
+   public:
+      IdlKwResource(int argc, IDL_VPTR* pArgv, char* pArgk,
+         IDL_KW_PAR* pKw_list, IDL_VPTR* pPlainArgs, int mask)
+      {
+         IDL_KWProcessByOffset(argc, pArgv, pArgk, pKw_list, pPlainArgs, mask, &kw);
+      }
+      ~IdlKwResource()
+      {
+         IDL_KW_FREE; // This expects a var in the current scope called "kw"
+      }
+
+      operator T&() { return kw; }
+      T* operator->() { return &kw; }
+
+   private:
+      T kw; // does not start with 'm' so IDL_KW_FREE will work
+   };
+
    RasterElement* getDataset(const std::string& name = "");
    WizardObject* getWizardObject(const std::string& wizardName);
    void cleanupWizardObjects();
    bool setWizardObjectValue(WizardObject* pObject, const std::string& name, const DataVariant& value);
    DataVariant getWizardObjectValue(const WizardObject* pObject, const std::string& name);
-   Layer* getLayerByName(const std::string& windowName, const std::string& layerName, bool onlyTopmostRaster = false);
+   Layer* getLayerByName(const std::string& windowName, const std::string& layerName, bool onlyRasterElements = true);
    Layer* getLayerByRaster(RasterElement* pElement);
    Layer* getLayerByIndex(const std::string& windowName, int index);
    View* getViewByWindowName(const std::string& windowName);

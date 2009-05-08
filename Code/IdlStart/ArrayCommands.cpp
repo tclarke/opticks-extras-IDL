@@ -90,7 +90,6 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
       int bandsExists;
       IDL_VPTR bands;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -120,12 +119,12 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string filename;
-   if (kw.datasetExists)
+   if (kw->datasetExists)
    {
-      filename = IDL_STRING_STR(&kw.datasetName);
+      filename = IDL_STRING_STR(&kw->datasetName);
    }
    RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
 
@@ -148,8 +147,8 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
    RasterElement* pMatrix = NULL;
 
    pRawData = reinterpret_cast<unsigned char*>(pData->getRawData());
-   if (pRawData == NULL || kw.startyheightExists || kw.endyheightExists || kw.startxwidthExists ||
-      kw.endxwidthExists || kw.bandstartExists || kw.bandendExists)
+   if (pRawData == NULL || kw->startyheightExists || kw->endyheightExists || kw->startxwidthExists ||
+      kw->endxwidthExists || kw->bandstartExists || kw->bandendExists)
    {
       pRawData = NULL;
       // can't get rawdata pointer or subcube selected, have to copy
@@ -166,29 +165,29 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             unsigned int bandStart= 0;
             unsigned int bandEnd = pDesc->getBandCount()-1;
             encoding = pDesc->getDataType();
-            if (kw.startyheightExists)
+            if (kw->startyheightExists)
             {
-               heightStart = kw.startyheight;
+               heightStart = kw->startyheight;
             }
-            if (kw.endyheightExists)
+            if (kw->endyheightExists)
             {
-               heightEnd = kw.endyheight;
+               heightEnd = kw->endyheight;
             }
-            if (kw.startxwidthExists)
+            if (kw->startxwidthExists)
             {
-               widthStart = kw.startxwidth;
+               widthStart = kw->startxwidth;
             }
-            if (kw.endxwidthExists)
+            if (kw->endxwidthExists)
             {
-               widthEnd = kw.endxwidth;
+               widthEnd = kw->endxwidth;
             }
-            if (kw.bandstartExists)
+            if (kw->bandstartExists)
             {
-               bandStart = kw.bandstart;
+               bandStart = kw->bandstart;
             }
-            if (kw.bandendExists)
+            if (kw->bandendExists)
             {
-               bandEnd = kw.bandend;
+               bandEnd = kw->bandend;
             }
             column = widthEnd - widthStart+1;
             row = heightEnd - heightStart+1;
@@ -253,22 +252,21 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
          break;
    }
 
-   if (kw.widthExists)
+   if (kw->widthExists)
    {
       //we don't know the datatype passed in, so set all of them
-      kw.width->value.d = 0.0;
+      kw->width->value.d = 0.0;
    }
-   if (kw.heightExists)
+   if (kw->heightExists)
    {
       //we don't know the datatype passed in to populate, so set all of them
-      kw.width->value.d = 0.0;
+      kw->width->value.d = 0.0;
    }
-   if (kw.bandsExists)
+   if (kw->bandsExists)
    {
       //we don't know the datatype passed in to populate, so set all of them
-      kw.width->value.d = 0.0;
+      kw->width->value.d = 0.0;
    }
-   IDL_KW_FREE;
    static IDL_MEMINT dims[] = {row, column, band};
    if (band == 1)
    {
@@ -373,7 +371,6 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
       int startyheightExists;
       IDL_LONG startyheight;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -405,7 +402,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    IDL_MEMINT total;
    std::string unitName;
@@ -420,13 +417,12 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
    if (argc < 2)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "ARRAY_TO_OPTICKS was not passed needed parameters.  It takes a 1 "
-         "dimenstional array of data along with a name to represent the data, it has HEIGHT_START, HEIGHT_END, "
+         "dimensional array of data along with a name to represent the data, it has HEIGHT_START, HEIGHT_END, "
          "WIDTH_START, WIDTH_END, and BANDS_START, BANDS_END keywords "
          "to describe the dimensions.  A DATASET keyword to specify a dataset to associate the new data with "
          "an existing window, needed if not using the NEW_WINDOW keyword.  There also exists an INTERLEAVE keyword "
          "which defaults to BSQ, but allows BIP and BIL.  The last keyword is UNITS, which should hold "
          "a std::string you wish to label the data values with.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
    else
@@ -438,49 +434,48 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
    bool bSuccess = false;
    EncodingType encoding;
    int type = pArgv[0]->type;
-   if (kw.unitsExists)
+   if (kw->unitsExists)
    {
-      unitName = IDL_STRING_STR(&kw.idlUnits);
+      unitName = IDL_STRING_STR(&kw->idlUnits);
    }
-   if (kw.datasetExists)
+   if (kw->datasetExists)
    {
-      datasetName = IDL_STRING_STR(&kw.idlDataset);
+      datasetName = IDL_STRING_STR(&kw->idlDataset);
    }
-   if (kw.heightExists)
+   if (kw->heightExists)
    {
-      height = kw.height;
+      height = kw->height;
    }
-   if (kw.widthExists)
+   if (kw->widthExists)
    {
-      width = kw.width;
+      width = kw->width;
    }
-   if (kw.bandsExists)
+   if (kw->bandsExists)
    {
-      bands = kw.bands;
+      bands = kw->bands;
    }
-   if (kw.newWindowExists)
+   if (kw->newWindowExists)
    {
-      if (kw.newWindow != 0)
+      if (kw->newWindow != 0)
       {
          newWindow = 1;
       }
    }
    //handle the ability to override the default interleave type
    InterleaveFormatType iType = BSQ;
-   if (kw.interleaveExists)
+   if (kw->interleaveExists)
    {
-      iType = StringUtilities::fromXmlString<InterleaveFormatType>(IDL_STRING_STR(&kw.idlInterleave));
+      iType = StringUtilities::fromXmlString<InterleaveFormatType>(IDL_STRING_STR(&kw->idlInterleave));
    }
    if (total != height*width*bands)
    {
-      IDL_KW_FREE;
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
          "ARRAY_TO_OPTICKS error.  Passed in array size does not match size keywords.");
       return IDL_StrToSTRING("failure");
    }
-   if (kw.overwriteExists)
+   if (kw->overwriteExists)
    {
-      if (kw.overwrite != 0)
+      if (kw->overwrite != 0)
       {
          overwrite = 1;
       }
@@ -565,10 +560,10 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to determine type.");
          break;
    }
-   if ((kw.newWindowExists && kw.newWindow != 0) ||
-       (kw.overwriteExists && kw.overwrite != 0))
+   if ((kw->newWindowExists && kw->newWindow != 0) ||
+       (kw->overwriteExists && kw->overwrite != 0))
    {
-      if (kw.newWindowExists && kw.newWindow != 0)
+      if (kw->newWindowExists && kw->newWindow != 0)
       {
          //user wants to create a new RasterElement and window
          RasterElement* pRaster = IdlFunctions::createRasterElement(pRawData, datasetName,
@@ -613,22 +608,21 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
                unsigned int heightStart = 0;
                unsigned int widthStart= 0;
                unsigned int bandStart= 0;
-               if (kw.startyheightExists)
+               if (kw->startyheightExists)
                {
-                  heightStart = kw.startyheight;
+                  heightStart = kw->startyheight;
                }
-               if (kw.startxwidthExists)
+               if (kw->startxwidthExists)
                {
-                  widthStart = kw.startxwidth;
+                  widthStart = kw->startxwidth;
                }
-               if (kw.bandstartExists)
+               if (kw->bandstartExists)
                {
-                  bandStart = kw.bandstart;
+                  bandStart = kw->bandstart;
                }
                EncodingType oldType = pDesc->getDataType();
                if (oldType != encoding)
                {
-                  IDL_KW_FREE;
                   IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
                      "ARRAY_TO_OPTICKS error.  data type of new array is not the same as the old.");
                   return IDL_StrToSTRING("failure");
@@ -640,7 +634,6 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          }
       }
    }
-   IDL_KW_FREE;
    if (bSuccess)
    {
       idlPtr = IDL_StrToSTRING("success");

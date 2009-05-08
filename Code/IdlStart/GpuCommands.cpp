@@ -47,7 +47,6 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
       int layerNameExists;
       IDL_STRING layerName;
    } KW_RESULT;
-   KW_RESULT kw;
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
    //flags, a boolean whether the value was populated and finally the value itself
@@ -61,26 +60,25 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
    std::string filter;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
    bool bSuccess = false;
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes "
          "'window' and 'layer' as optional keywords.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
    filter = IDL_VarGetString(pArgv[0]);
@@ -89,7 +87,8 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       //determine the type, allow strings to be converted into an enum for later filters
       std::vector<std::string> supportedFilters = pLayer->getSupportedFilters();
-      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin(); filtersIt != supportedFilters.end(); ++filtersIt)
+      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin();
+           filtersIt != supportedFilters.end(); ++filtersIt)
       {
          if (filter == *filtersIt)
          {
@@ -107,7 +106,6 @@ IDL_VPTR enable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -136,7 +134,6 @@ IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
       int layerNameExists;
       IDL_STRING layerName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -150,27 +147,26 @@ IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
    std::string filter;
    bool bSuccess = false;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
 
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes  "
          "'window' and 'layer' as optional keywords.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
    filter = IDL_VarGetString(pArgv[0]);
@@ -179,7 +175,8 @@ IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       //determine the type, allow strings to be converted into an enum for later filters
       std::vector<std::string> supportedFilters = pLayer->getSupportedFilters();
-      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin(); filtersIt != supportedFilters.end(); ++filtersIt)
+      for (std::vector<std::string>::const_iterator filtersIt = supportedFilters.begin();
+           filtersIt != supportedFilters.end(); ++filtersIt)
       {
          if (filter == *filtersIt)
          {
@@ -197,7 +194,6 @@ IDL_VPTR disable_filter(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -221,7 +217,6 @@ IDL_VPTR disable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
       int windowExists;
       IDL_STRING windowName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -233,21 +228,20 @@ IDL_VPTR disable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
    bool bSuccess = false;
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes a layer name as a parameter with a "
          "'window' as an optional keyword.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
    //the layer name as a parameter
@@ -266,7 +260,6 @@ IDL_VPTR disable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -291,7 +284,6 @@ IDL_VPTR enable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
       int windowExists;
       IDL_STRING windowName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -303,22 +295,21 @@ IDL_VPTR enable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
    bool bSuccess = false;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
 
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes a layer name as a parameter with a "
          "'window' as an optional keyword.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
    //the layer name as a parameter
@@ -337,7 +328,6 @@ IDL_VPTR enable_gpu(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 /*@}*/

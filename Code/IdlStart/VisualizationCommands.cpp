@@ -49,7 +49,6 @@ IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
       int colormapExists;
       IDL_STRING colormap;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -63,26 +62,26 @@ IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string mapName;
    int index = -1;
    std::string layerName;
 
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
 
    if (argc < 1)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes a colormap filename as a parameter, and a 'layer' and 'window' name as keywords.");
-      IDL_KW_FREE;
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+         "function takes a colormap filename as a parameter, and a 'layer' and 'window' name as keywords.");
       return IDL_StrToSTRING("failure");
    }
    //get the colormap filename passed as an input parameter
@@ -104,7 +103,6 @@ IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
          catch (...)
          {
             IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Color map filename is invalid.");
-            IDL_KW_FREE;
             return IDL_StrToSTRING("failure");
          }
       }
@@ -122,13 +120,11 @@ IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
             catch (...)
             {
                IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Color map filename is invalid.");
-               IDL_KW_FREE;
                return IDL_StrToSTRING("failure");
             }
          }
       }
    }
-   IDL_KW_FREE;
    return IDL_StrToSTRING("success");
 }
 
@@ -169,7 +165,6 @@ IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
       int channelExists;
       IDL_STRING channel;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -189,29 +184,30 @@ IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
    bool bSuccess = false;
 
    std::string windowName;
    std::string layerName;
    std::string channel = "GRAY";
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
-   if (kw.channelExists)
+   if (kw->channelExists)
    {
-      channel = IDL_STRING_STR(&kw.channel);
+      channel = IDL_STRING_STR(&kw->channel);
    }
 
    if (argc < 1)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "get_stretch_values 'layer', 'window', 'channel', 'min' and 'max' as keywords.");
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+         "get_stretch_values 'layer', 'window', 'channel', 'min' and 'max' as keywords.");
    }
    else
    {
@@ -225,33 +221,33 @@ IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
          double max = 0.0;
          //get the stretch values from the layer
          pLayer->getStretchValues(element, min, max);
-         if (kw.minExists)
+         if (kw->minExists)
          {
             //we don't know the datatype passed in, so set all of them
-            kw.min->value.d = min;
-            kw.min->value.f = static_cast<float>(min);
-            kw.min->value.i = static_cast<short>(min);
-            kw.min->value.ui = static_cast<unsigned short>(min);
-            kw.min->value.ul = static_cast<unsigned int>(min);
-            kw.min->value.l = static_cast<int>(min);
-            kw.min->value.l64 = static_cast<unsigned long>(min);
-            kw.min->value.ul64 = static_cast<unsigned long>(min);
-            kw.min->value.sc = static_cast<char>(min);
-            kw.min->value.c = static_cast<unsigned char>(min);
+            kw->min->value.d = min;
+            kw->min->value.f = static_cast<float>(min);
+            kw->min->value.i = static_cast<short>(min);
+            kw->min->value.ui = static_cast<unsigned short>(min);
+            kw->min->value.ul = static_cast<unsigned int>(min);
+            kw->min->value.l = static_cast<int>(min);
+            kw->min->value.l64 = static_cast<unsigned long>(min);
+            kw->min->value.ul64 = static_cast<unsigned long>(min);
+            kw->min->value.sc = static_cast<char>(min);
+            kw->min->value.c = static_cast<unsigned char>(min);
          }
-         if (kw.maxExists)
+         if (kw->maxExists)
          {
             //we don't know the datatype passed in to populate, so set all of them
-            kw.max->value.d = max;
-            kw.max->value.f = static_cast<float>(max);
-            kw.max->value.i = static_cast<short>(max);
-            kw.max->value.ui = static_cast<unsigned short>(max);
-            kw.max->value.ul = static_cast<unsigned int>(max);
-            kw.max->value.l = static_cast<int>(max);
-            kw.max->value.l64 = static_cast<unsigned long>(max);
-            kw.max->value.ul64 = static_cast<unsigned long>(max);
-            kw.max->value.sc = static_cast<char>(max);
-            kw.max->value.c = static_cast<unsigned char>(max);
+            kw->max->value.d = max;
+            kw->max->value.f = static_cast<float>(max);
+            kw->max->value.i = static_cast<short>(max);
+            kw->max->value.ui = static_cast<unsigned short>(max);
+            kw->max->value.ul = static_cast<unsigned int>(max);
+            kw->max->value.l = static_cast<int>(max);
+            kw->max->value.l64 = static_cast<unsigned long>(max);
+            kw->max->value.ul64 = static_cast<unsigned long>(max);
+            kw->max->value.sc = static_cast<char>(max);
+            kw->max->value.c = static_cast<unsigned char>(max);
          }
          bSuccess = true;
       }
@@ -264,7 +260,6 @@ IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -303,7 +298,6 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
       int channelExists;
       IDL_STRING channel;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -323,7 +317,7 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
@@ -331,32 +325,32 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
    double min = 0.0;
    double max = 0.0;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
-   if (kw.channelExists)
+   if (kw->channelExists)
    {
-      channel = IDL_STRING_STR(&kw.channel);
+      channel = IDL_STRING_STR(&kw->channel);
    }
-   if (kw.minExists)
+   if (kw->minExists)
    {
-      min = kw.min;
+      min = kw->min;
    }
-   if (kw.maxExists)
+   if (kw->maxExists)
    {
-      max = kw.max;
+      max = kw->max;
    }
 
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "set_stretch_values needs at least the 'min' or"
-         "'max' keywords populated along with a 'layer' name.  it can have 'window' or 'channel' as optional keywords");
-      IDL_KW_FREE;
+         "'max' keywords populated along with a 'layer' name.  "
+         "it can have 'window' or 'channel' as optional keywords");
       return IDL_StrToSTRING("failure");
    }
    //if no layer name is given then make sure we get the top most Raster Layer so the last parameter is set to true
@@ -368,11 +362,11 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
       double tmpmin = 0.0;
       double tmpmax = 0.0;
       pLayer->getStretchValues(element, tmpmin, tmpmax);
-      if (!kw.minExists)
+      if (!kw->minExists)
       {
          min = tmpmin;
       }
-      if (!kw.maxExists)
+      if (!kw->maxExists)
       {
          max = tmpmax;
       }
@@ -383,7 +377,6 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -416,7 +409,6 @@ IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
       int channelExists;
       IDL_STRING channel;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -432,7 +424,7 @@ IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
@@ -441,24 +433,23 @@ IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
    double min = 0.0;
    double max = 0.0;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
-   if (kw.channelExists)
+   if (kw->channelExists)
    {
-      channel = IDL_STRING_STR(&kw.channel);
+      channel = IDL_STRING_STR(&kw->channel);
    }
    bool bSuccess = false;
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes a method name as a parameter with a "
          "'window', 'layer' and 'channel' as optional keywords.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
 
@@ -477,7 +468,6 @@ IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
          bSuccess = true;
       }
    }
-   IDL_KW_FREE;
    if (bSuccess)
    {
       idlPtr = IDL_StrToSTRING("success");
@@ -515,7 +505,6 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
       int channelExists;
       IDL_STRING channel;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -531,7 +520,7 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
@@ -540,24 +529,23 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
    double min = 0.0;
    double max = 0.0;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
-   if (kw.channelExists)
+   if (kw->channelExists)
    {
-      channel = IDL_STRING_STR(&kw.channel);
+      channel = IDL_STRING_STR(&kw->channel);
    }
 
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes  "
          "'window', 'layer' and 'channel' as optional keywords.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("");
    }
    RasterLayer* pLayer = dynamic_cast<RasterLayer*>(IdlFunctions::getLayerByName(windowName, layerName));
@@ -567,7 +555,6 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
       //return the stretch type as a std::string
       method = StringUtilities::toXmlString(pLayer->getStretchUnits(element));
    }
-   IDL_KW_FREE;
    return IDL_StrToSTRING(const_cast<char*>(method.c_str()));
 }
 
@@ -600,7 +587,6 @@ IDL_VPTR set_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
       int modeExists;
       IDL_STRING mode;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -616,31 +602,30 @@ IDL_VPTR set_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
    std::string mode;
    std::string type;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
-   if (kw.modeExists)
+   if (kw->modeExists)
    {
-      mode = IDL_STRING_STR(&kw.mode);
+      mode = IDL_STRING_STR(&kw->mode);
    }
    bool bSuccess = false;
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes a type name as a parameter with a "
          "'window', 'layer' and 'mode' as optional keywords.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("failure");
    }
    //the stretch type
@@ -674,7 +659,6 @@ IDL_VPTR set_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       idlPtr = IDL_StrToSTRING("failure");
    }
-   IDL_KW_FREE;
    return idlPtr;
 }
 
@@ -704,7 +688,6 @@ IDL_VPTR get_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
       int modeExists;
       IDL_STRING mode;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -720,31 +703,30 @@ IDL_VPTR get_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    std::string windowName;
    std::string layerName;
    std::string mode;
    std::string type;
 
-   if (kw.windowExists)
+   if (kw->windowExists)
    {
-      windowName = IDL_STRING_STR(&kw.windowName);
+      windowName = IDL_STRING_STR(&kw->windowName);
    }
-   if (kw.modeExists)
+   if (kw->modeExists)
    {
-      mode = IDL_STRING_STR(&kw.mode);
+      mode = IDL_STRING_STR(&kw->mode);
    }
-   if (kw.layerNameExists)
+   if (kw->layerNameExists)
    {
-      layerName = IDL_STRING_STR(&kw.layerName);
+      layerName = IDL_STRING_STR(&kw->layerName);
    }
 
    if (argc < 0)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes  "
          "'window', 'layer' and 'mode' as optional keywords.");
-      IDL_KW_FREE;
       return IDL_StrToSTRING("");
    }
 
@@ -764,7 +746,6 @@ IDL_VPTR get_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
 
       type = StringUtilities::toXmlString(pLayer->getStretchType(element));
    }
-   IDL_KW_FREE;
    return IDL_StrToSTRING(const_cast<char*>(type.c_str()));
 }
 /*@}*/

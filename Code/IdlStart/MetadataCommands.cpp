@@ -107,7 +107,6 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       int wizardExists;
       IDL_STRING wizardName;
    } KW_RESULT;
-   KW_RESULT kw;
 
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
@@ -121,7 +120,7 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "GET_METADATA takes a std::string noting which "
@@ -137,13 +136,13 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    std::string element = IDL_VarGetString(pArgv[0]);
    DynamicObject* pObject = NULL;
 
-   if (kw.datasetExists)
+   if (kw->datasetExists)
    {
-      filename = IDL_STRING_STR(&kw.datasetName);
+      filename = IDL_STRING_STR(&kw->datasetName);
    }
-   if (kw.wizardExists)
+   if (kw->wizardExists)
    {
-      wizardName = IDL_STRING_STR(&kw.wizardName);
+      wizardName = IDL_STRING_STR(&kw->wizardName);
       wizard = 1;
    }
 
@@ -319,7 +318,6 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
       }
    }
-   IDL_KW_FREE;
 
    return idlPtr;
 }
@@ -342,13 +340,17 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
  *            The name of the data element. Defaults to the
  *            primary raster element of the active window if
  *            a wizard is not specified.
+ * @param[in] FILENAME @opt
+ *            This flag indicates that \p [2] is a filename and will be expanded
+ *            to a canonical, absolute filename.
  * @param[in] WIZARD @opt
  *            The full path name of the wizard file. If not specified
  *            a data element will be used.
  * @param[in] BOOL @opt
  *            If this flag is present, treat \p [2] as a boolean type.
  * @rsof
- * @usage print,set_metadata("Value - Annotation Name/AnnotationName", "Annotation 1", WIZARD="C:\Wizards\ProcessAnnotation.wiz")
+ * @usage print,set_metadata("Value - Annotation Name/AnnotationName",
+ *        "Annotation 1", WIZARD="C:\Wizards\ProcessAnnotation.wiz")
  * @endusage
  */
 IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -372,7 +374,6 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       int filenameExists;
       IDL_LONG useFilename;
    } KW_RESULT;
-   KW_RESULT kw;
    //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
    //name of the keyword, followed by the type, the mask(which should be 1),
    //flags, a boolean whether the value was populated and finally the value itself
@@ -389,7 +390,7 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
       {NULL}
    };
 
-   IDL_KWProcessByOffset(argc, pArgv, pArgk, kw_pars, 0, 1, &kw);
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
    std::string elementName = IDL_VarGetString(pArgv[0]);
 
    IDL_MEMINT total;
@@ -397,27 +398,27 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    IDL_VarGetData(pArgv[1], &total, &pValue, 0);
 
    std::string filename;
-   if (kw.datasetExists)
+   if (kw->datasetExists)
    {
-      filename = IDL_STRING_STR(&kw.datasetName);
+      filename = IDL_STRING_STR(&kw->datasetName);
    }
    std::string wizardName;
-   if (kw.wizardExists)
+   if (kw->wizardExists)
    {
-      wizardName = IDL_STRING_STR(&kw.wizardName);
+      wizardName = IDL_STRING_STR(&kw->wizardName);
    }
    bool bUseBool = false;
-   if (kw.boolExists)
+   if (kw->boolExists)
    {
-      if (kw.useBool != 0)
+      if (kw->useBool != 0)
       {
          bUseBool = true;
       }
    }
    bool bUseFilename = false;
-   if (kw.filenameExists)
+   if (kw->filenameExists)
    {
-      if (kw.useFilename != 0)
+      if (kw->useFilename != 0)
       {
          bUseFilename = true;
       }
@@ -437,7 +438,7 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          //if there is just one, get the contents of the variable as a std::string
          FactoryResource<Filename> pFilename;
          pFilename->setFullPathAndName(reinterpret_cast<char*>(IDL_VarGetString(pArgv[1])));
-         value = DataVariant(*(pFilename.release()));
+         value = DataVariant(*(pFilename.get())); // DataVariant will deep copy, so don't release here
       }
       else
       {
@@ -502,6 +503,7 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          }
          break;
       case IDL_TYP_UNDEF :
+      default:
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to determine type.");
          break;
       }
@@ -538,7 +540,6 @@ IDL_VPTR set_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to find wizard file.");
       }
    }
-   IDL_KW_FREE;
    if (bSuccess)
    {
       idlPtr = IDL_StrToSTRING("success");
