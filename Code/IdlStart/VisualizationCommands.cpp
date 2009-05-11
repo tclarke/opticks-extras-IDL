@@ -204,7 +204,7 @@ IDL_VPTR get_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
       channel = IDL_STRING_STR(&kw->channel);
    }
 
-   if (argc < 1)
+   if (argc < 0)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
          "get_stretch_values 'layer', 'window', 'channel', 'min' and 'max' as keywords.");
@@ -393,7 +393,7 @@ IDL_VPTR set_stretch_values(int argc, IDL_VPTR pArgv[], char* pArgk)
  * @param[in] WINDOW @opt
  *            The name of the window to update. Defaults to the active window.
  * @rsof
- * @usage print,set_stretch_method("PERCENTILE")
+ * @usage print,set_stretch_method("Percentile")
  * @endusage
  */
 IDL_VPTR set_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
@@ -542,7 +542,7 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
       channel = IDL_STRING_STR(&kw->channel);
    }
 
-   if (argc < 1)
+   if (argc < 0)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "function takes  "
          "'window', 'layer' and 'channel' as optional keywords.");
@@ -563,15 +563,15 @@ IDL_VPTR get_stretch_method(int argc, IDL_VPTR pArgv[], char* pArgk)
  *
  * @param[in] [1]
  *            The new streth type.
- * @param[in] CHANNEL @opt
- *            The color channel whose stretch type will be set. Defaults to GRAY.
+ * @param[in] MODE @opt
+ *            The display mode whose stretch type will be set. Defaults to GRAY.
  * @param[in] LAYER @opt
  *            The name of the raster layer. Defaults to
  *            the layer containing the primary raster element.
  * @param[in] WINDOW @opt
  *            The name of the window to update. Defaults to the active window.
  * @rsof
- * @usage print,set_stretch_type("LINEAR")
+ * @usage print,set_stretch_type("Linear")
  * @endusage
  */
 IDL_VPTR set_stretch_type(int argc, IDL_VPTR pArgv[], char* pArgk)
