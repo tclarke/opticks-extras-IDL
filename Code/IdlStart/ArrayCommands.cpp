@@ -197,7 +197,8 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             //copy the subcube, determine the type
             try
             {
-               pRawData = new unsigned char[column*row*band*bytesPerElement];
+               pRawData = reinterpret_cast<unsigned char*>(
+                  malloc(column*row*band*bytesPerElement));
             }
             catch (...)
             {
@@ -317,7 +318,8 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    else
    {
-      arrayRef = IDL_ImportArray(dimensions, dims, type, pRawData, NULL, NULL);
+      arrayRef = IDL_ImportArray(dimensions, dims, type, pRawData,
+         reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
    return arrayRef;
 }
