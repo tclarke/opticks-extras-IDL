@@ -161,10 +161,11 @@ DataVariant IdlFunctions::getWizardObjectValue(const WizardObject* pObject, cons
    return DataVariant();
 }
 
-RasterElement* IdlFunctions::createRasterElement(void* pData,
+RasterElement* IdlFunctions::createRasterElement(char* pData,
                                                  const std::string& datasetName,
                                                  const std::string& newName,
                                                  EncodingType datatype, 
+                                                 bool inMemory,
                                                  InterleaveFormatType iType,
                                                  unsigned int rows,
                                                  unsigned int cols,
@@ -177,56 +178,113 @@ RasterElement* IdlFunctions::createRasterElement(void* pData,
       pParent = pInputRaster->getParent();
    }
    ModelResource<RasterElement> pRaster(
-      RasterUtilities::createRasterElement(newName, rows, cols, bands, datatype, iType, true, pParent));
+      RasterUtilities::createRasterElement(newName, rows, cols, bands, datatype, iType, inMemory, pParent));
    if (pRaster.get() == NULL)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Could not create new RasterElement, may already exist.");
       return NULL;
    }
    RasterDataDescriptor* pDesc = static_cast<RasterDataDescriptor*>(pRaster->getDataDescriptor());
-   if (pDesc != NULL)
+   if (pDesc == NULL)
    {
-      if (pData != NULL)
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Could not create new RasterElement, may already exist.");
+      return NULL;
+   }
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Invalid array data provided.");
+      return NULL;
+   }
+   unsigned int bytesPerElement = pDesc->getBytesPerElement();
+   if (iType == BSQ)
+   {
+      for (unsigned int band = 0; band < bands; ++band)
       {
          try
          {
-            size_t rowSize = pDesc->getBytesPerElement() * cols;
+            FactoryResource<DataRequest> pRequest;
+            pRequest->setInterleaveFormat(BSQ);
+            pRequest->setRows(pDesc->getActiveRow(0), pDesc->getActiveRow(rows-1), 1);
+            pRequest->setColumns(pDesc->getActiveColumn(0), pDesc->getActiveColumn(cols-1), cols);
+            pRequest->setBands(pDesc->getActiveBand(band), pDesc->getActiveBand(band), 1);
+            pRequest->setWritable(true);
+            DataAccessor daImage = pRaster->getDataAccessor(pRequest.release());
+
             //populate the resultsmatrix with the data
-            for (unsigned int band = 0; band < bands; ++band)
+            for (unsigned int row = 0; row < rows; ++row)
             {
-               DataAccessor daImage = pRaster->getDataAccessor(getNewDataRequest(pDesc, 0, 0, rows-1, cols-1, band));
-               for (unsigned int row = 0; row < rows; ++row)
+               if (!daImage.isValid())
                {
-                  if (!daImage.isValid())
-                  {
-                     throw std::exception();
-                  }
-                  memcpy(daImage->getRow(), pData, rowSize);
-                  daImage->nextRow();
+                  throw std::exception();
                }
+               memcpy(daImage->getRow(), pData + (cols * rows * band * bytesPerElement) + (cols * row * bytesPerElement), cols * bytesPerElement);
+               daImage->nextRow();
             }
          }
-         catch (...)
+         catch(...)
          {
-            std::string msg = "error in copying array values to Opticks.";
-            IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
+            IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "error in copying array values to Opticks.");
             return false;
          }
       }
-      if (pInputRaster != NULL)
+   }
+   else if (iType == BIP)
+   {
+      try
       {
-         RasterDataDescriptor* pDesc = static_cast<RasterDataDescriptor*>(pRaster->getDataDescriptor());
-         RasterDataDescriptor* pInputDesc = static_cast<RasterDataDescriptor*>(pInputRaster->getDataDescriptor());
-         VERIFY(pDesc != NULL && pInputDesc != NULL);
-         //----- Set the Bands Info
-         std::vector<DimensionDescriptor> bandsVec = RasterUtilities::generateDimensionVector(bands, true, true);
-         pDesc->setBands(bandsVec);
+         FactoryResource<DataRequest> pRequest;
+         pRequest->setInterleaveFormat(BIP);
+         pRequest->setRows(pDesc->getActiveRow(0), pDesc->getActiveRow(rows-1), 1);
+         pRequest->setColumns(pDesc->getActiveColumn(0), pDesc->getActiveColumn(cols-1), cols);
+         pRequest->setWritable(true);
+         DataAccessor daImage = pRaster->getDataAccessor(pRequest.release());
+         for (unsigned int row = 0; row < rows; ++row)
+         {
+            if (!daImage.isValid())
+            {                                       
+               throw std::exception();
+            }
+            memcpy(daImage->getRow(), pData + (row * cols * bands * bytesPerElement), cols * bands * bytesPerElement);
+            daImage->nextRow();
+         }
+      }
+      catch (...)
+      {
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "error in copying array values to Opticks.");
+         return false;
+      }
+   }
+   else if (iType == BIL)
+   {
+      try
+      {
+         FactoryResource<DataRequest> pRequest;
+         pRequest->setInterleaveFormat(BIL);
+         pRequest->setRows(pDesc->getActiveRow(0), pDesc->getActiveRow(rows-1), 1);
+         pRequest->setColumns(pDesc->getActiveColumn(0), pDesc->getActiveColumn(cols-1), cols);
+         pRequest->setBands(pDesc->getActiveBand(0), pDesc->getActiveBand(bands-1), bands);
+         pRequest->setWritable(true);
+         DataAccessor daImage = pRaster->getDataAccessor(pRequest.release());
+         for (unsigned int row = 0; row < rows; ++row)
+         {
+            if (!daImage.isValid())
+            {                                       
+               throw std::exception();
+            }
+            memcpy(daImage->getRow(), pData + (row * cols * bands * bytesPerElement), cols * bands * bytesPerElement);
+            daImage->nextRow();
+         }
+      }
+      catch (...)
+      {
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "error in copying array values to Opticks.");
+         return false;
       }
    }
    return pRaster.release();
 }
 
-bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, void* pData,
+bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pData,
                                        EncodingType datatype, InterleaveFormatType iType, unsigned int startRow, 
                                        unsigned int rows, unsigned int startCol, unsigned int cols, 
                                        unsigned int startBand, unsigned int bands, EncodingType oldType)
@@ -234,6 +292,9 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, void* pDat
    int index = 0;
    unsigned int i = 0;
    bool bSuccess = false;
+   unsigned int stopRow = startRow + rows - 1;
+   unsigned int stopCol = startCol + cols - 1;
+   unsigned int stopBand = startBand + bands - 1;
 
    if (pRasterElement != NULL && pData != NULL)
    {
@@ -245,22 +306,99 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, void* pDat
 
       try
       {
-         std::size_t rowSize = pDesc->getBytesPerElement() * cols;
-         for (unsigned int band = startBand; band < startBand+bands; ++band)
+         unsigned int bytesPerElement = pDesc->getBytesPerElement();
+         if (iType == BSQ)
          {
-            DataRequest* pRequest = getNewDataRequest(pDesc, startRow, startCol,
-               rows + startRow - 1, cols + startCol - 1, band);
-
-            DataAccessor daImage = pRasterElement->getDataAccessor(pRequest);
-
-            for (unsigned int row = startRow; row < startRow+rows; ++row)
+            //get the data from the disk, and store it into a new in memory block
+            for (unsigned int band = 0; band < bands; ++band)
             {
+               FactoryResource<DataRequest> pRequest;
+               pRequest->setInterleaveFormat(BSQ);
+               pRequest->setRows(pDesc->getActiveRow(startRow), pDesc->getActiveRow(stopRow), 1);
+               pRequest->setColumns(pDesc->getActiveColumn(startCol), pDesc->getActiveColumn(stopCol), cols);
+               pRequest->setBands(pDesc->getActiveBand(startBand + band), pDesc->getActiveBand(startBand + band), 1);
+               pRequest->setWritable(true);
+               DataAccessor daImage = pRasterElement->getDataAccessor(pRequest.release());
                if (!daImage.isValid())
-               {
+               {                                       
                   throw std::exception();
                }
-               memcpy(daImage->getRow(), pData, rowSize);
-               daImage->nextRow();
+
+               for (unsigned int row = 0; row < rows; ++row)
+               {
+                  for (unsigned int col = 0; col < cols; ++col)
+                  {
+                     daImage->toPixel(startRow + row, startCol + col);
+                     if (!daImage.isValid())
+                     {
+                        throw std::exception();
+                     }
+                     memcpy(daImage->getColumn(),
+                        pData + (cols * rows * band * bytesPerElement) + (cols * row * bytesPerElement) + (col * bytesPerElement),
+                        bytesPerElement);
+                  }
+               }
+            }
+         }
+         else if (iType == BIP)
+         {
+            FactoryResource<DataRequest> pRequest;
+            pRequest->setInterleaveFormat(BIP);
+            pRequest->setRows(pDesc->getActiveRow(startRow), pDesc->getActiveRow(stopRow), 1);
+            pRequest->setColumns(pDesc->getActiveColumn(startCol), pDesc->getActiveColumn(stopCol), cols);
+            pRequest->setWritable(true);
+            DataAccessor daImage = pRasterElement->getDataAccessor(pRequest.release());
+            if (!daImage.isValid())
+            {                                       
+               throw std::exception();
+            }
+            for (unsigned int row = 0; row < rows; ++row)
+            {
+               for (unsigned int col = 0; col < cols; ++col)
+               {
+                  daImage->toPixel(startRow + row, startCol + col);
+                  if (!daImage.isValid())
+                  {                                       
+                     throw std::exception();
+                  }
+                  for (unsigned int band = 0; band < bands; ++band)
+                  {
+                     memcpy(static_cast<unsigned char*>(daImage->getColumn()) + ((band + startBand) * bytesPerElement),
+                        pData + (row * cols * bands * bytesPerElement) + (col * bands * bytesPerElement) + (band * bytesPerElement),
+                        bytesPerElement);
+                  }
+               }
+            }
+         }
+         else if (iType == BIL)
+         {
+            for (unsigned int row = 0; row < rows; ++row)
+            {
+               for (unsigned int band = 0; band < bands; ++band)
+               {
+                  FactoryResource<DataRequest> pRequest;
+                  pRequest->setInterleaveFormat(BIL);
+                  pRequest->setRows(pDesc->getActiveRow(startRow + row), pDesc->getActiveRow(startRow + row), 1);
+                  pRequest->setColumns(pDesc->getActiveColumn(startCol), pDesc->getActiveColumn(stopCol), cols);
+                  pRequest->setBands(pDesc->getActiveBand(startBand + band), pDesc->getActiveBand(startBand + band), 1);
+                  pRequest->setWritable(true);
+                  DataAccessor daImage = pRasterElement->getDataAccessor(pRequest.release());
+                  if (!daImage.isValid())
+                  {                                       
+                     throw std::exception();
+                  }
+                  for (unsigned int col = 0; col < cols; ++col)
+                  {
+                     daImage->toPixel(startRow + row, startCol + col);
+                     if (!daImage.isValid())
+                     {                                       
+                        throw std::exception();
+                     }
+                     memcpy(daImage->getColumn(),
+                        pData + (row * cols * bands * bytesPerElement) + (band * cols * bytesPerElement) + (col * bytesPerElement),
+                        bytesPerElement);
+                  }
+               }
             }
          }
       }
@@ -500,36 +638,6 @@ void IdlFunctions::cleanupWizardObjects()
       FactoryResource<WizardObject> pWizard(*iter);
    }
    spWizards.clear();
-}
-
-DataRequest* IdlFunctions::getNewDataRequest(RasterDataDescriptor* pParam,
-                                             unsigned int rowStart, unsigned int colStart,
-                                             unsigned int rowEnd, unsigned int colEnd,
-                                             int band)
-{
-   FactoryResource<DataRequest> pRequest;
-   if (pParam != NULL)
-   {
-      InterleaveFormatType type = pParam->getInterleaveFormat();
-      if (band < 0 && type != BIP)
-      {
-         type = BIP;
-      }
-      else if (band >= 0 && type == BIP)
-      {
-         type = BSQ;
-      }
-      pRequest->setInterleaveFormat(type);
-      pRequest->setRows(pParam->getActiveRow(rowStart), pParam->getActiveRow(rowEnd));
-      pRequest->setColumns(pParam->getActiveColumn(colStart), pParam->getActiveColumn(colEnd));
-      if (type != BIP)
-      {
-         pRequest->setBands(pParam->getActiveBand(band), pParam->getActiveBand(band));
-      }
-      pRequest->setWritable(true);
-   }
-
-   return pRequest.release();
 }
 
 void IdlFunctions::copyLayer(RasterLayer* pLayer, const RasterLayer* pOrigLayer)
