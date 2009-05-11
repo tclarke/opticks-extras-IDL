@@ -146,10 +146,12 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
    int dimensions = 3;
    RasterElement* pMatrix = NULL;
 
+   bool gotReData = true;
    pRawData = reinterpret_cast<unsigned char*>(pData->getRawData());
    if (pRawData == NULL || kw->startyheightExists || kw->endyheightExists || kw->startxwidthExists ||
       kw->endxwidthExists || kw->bandstartExists || kw->bandendExists)
    {
+      gotReData = false;
       pRawData = NULL;
       // can't get rawdata pointer or subcube selected, have to copy
       if (pData != NULL)
@@ -157,7 +159,6 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
          const RasterDataDescriptor* pDesc = dynamic_cast<const RasterDataDescriptor*>(pData->getDataDescriptor());
          if (pDesc != NULL)
          {
-            iType = pDesc->getInterleaveFormat();
             unsigned int heightStart = 0;
             unsigned int heightEnd = pDesc->getRowCount()-1;
             unsigned int widthStart= 0;
@@ -165,6 +166,7 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             unsigned int bandStart= 0;
             unsigned int bandEnd = pDesc->getBandCount()-1;
             encoding = pDesc->getDataType();
+            unsigned int bytesPerElement = pDesc->getBytesPerElement();
             if (kw->startyheightExists)
             {
                heightStart = kw->startyheight;
@@ -193,6 +195,17 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             row = heightEnd - heightStart+1;
             band = bandEnd - bandStart+1;
             //copy the subcube, determine the type
+            try
+            {
+               pRawData = new unsigned char[column*row*band*bytesPerElement];
+            }
+            catch (...)
+            {
+               std::string msg = "Not enough memory to allocate array";
+               IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
+               return IDL_StrToSTRING("");
+            }
+
             switchOnComplexEncoding(encoding, IdlFunctions::copySubcube, pRawData, pData,
                heightStart, heightEnd, widthStart, widthEnd, bandStart, bandEnd);
          }
@@ -297,7 +310,16 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
          break;
       }
    }
-   return IDL_ImportArray(dimensions, dims, type, pRawData, NULL, NULL);
+   IDL_VPTR arrayRef;
+   if (gotReData)
+   {
+      arrayRef = IDL_ImportArray(dimensions, dims, type, pRawData, NULL, NULL);
+   }
+   else
+   {
+      arrayRef = IDL_ImportArray(dimensions, dims, type, pRawData, NULL, NULL);
+   }
+   return arrayRef;
 }
 
 /**
@@ -322,6 +344,9 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
  * @param[in] NEW_WINDOW @opt
  *            If this flag is true, a new window is created for the data. If it is
  *            false, a new layer in the active window is created.
+ * @param[in] ON_DISK @opt
+ *            If this flag is true, the data is stored on the hard disk when pushed back to Opticks. If it is
+ *            false, the data is stored in RAM when pushed back to Opticks.
  * @param[in] UNITS @opt
  *            The name of the units represented by the data. Defaults to no units.
  * @param[in] OVERWITE @opt
@@ -350,6 +375,8 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
       IDL_KW_RESULT_FIRST_FIELD;
       int newWindowExists;
       IDL_LONG newWindow;
+      int onDiskExists;
+      IDL_LONG onDisk;
       int interleaveExists;
       IDL_STRING idlInterleave;
       int unitsExists;
@@ -391,6 +418,8 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(idlInterleave))},
       {"NEW_WINDOW", IDL_TYP_LONG, 1, IDL_KW_ZERO, reinterpret_cast<int*>(IDL_KW_OFFSETOF(newWindowExists)),
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(newWindow))},
+      {"ON_DISK", IDL_TYP_LONG, 1, IDL_KW_ZERO, reinterpret_cast<int*>(IDL_KW_OFFSETOF(onDiskExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(onDisk))},
       {"OVERWRITE", IDL_TYP_LONG, 1, IDL_KW_ZERO, reinterpret_cast<int*>(IDL_KW_OFFSETOF(overwriteExists)),
          reinterpret_cast<char*>(IDL_KW_OFFSETOF(overwrite))},
       {"UNITS", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(unitsExists)),
@@ -480,6 +509,14 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          overwrite = 1;
       }
    }
+   bool inMemory = true;
+   if (kw->onDiskExists)
+   {
+      if (kw->onDisk != 0)
+      {
+         inMemory = false;
+      }
+   }
 
    //add the data as a new results matrix and view to the current dataset and window
    switch (type)
@@ -489,7 +526,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<char*>(pRawData), newDataName, width,
-               height, bands, unitName, encoding, iType, datasetName);
+               height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -498,7 +535,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<short*>(pRawData), newDataName, width,
-               height, bands, unitName, encoding, iType, datasetName);
+               height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -507,7 +544,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<unsigned short*>(pRawData), newDataName,
-               width, height, bands, unitName, encoding, iType, datasetName);
+               width, height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -516,7 +553,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<int*>(pRawData), newDataName, width,
-               height, bands, unitName, encoding, iType, datasetName);
+               height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -525,7 +562,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<unsigned int*>(pRawData), newDataName,
-               width, height, bands, unitName, encoding, iType, datasetName);
+               width, height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -534,7 +571,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<float*>(pRawData), newDataName,
-               width, height, bands, unitName, encoding, iType, datasetName);
+               width, height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -543,7 +580,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<double*>(pRawData), newDataName,
-               width, height, bands, unitName, encoding, iType, datasetName);
+               width, height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -552,7 +589,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          if (!newWindow && !overwrite)
          {
             IdlFunctions::addMatrixToCurrentView(reinterpret_cast<FloatComplex*>(pRawData), newDataName,
-               width, height, bands, unitName, encoding, iType, datasetName);
+               width, height, bands, unitName, encoding, inMemory, iType, datasetName);
             bSuccess = true;
          }
          break;
@@ -564,7 +601,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       //user wants to create a new RasterElement and window
       RasterElement* pRaster = IdlFunctions::createRasterElement(pRawData, datasetName,
-         newDataName, encoding, iType, height, width, bands);
+         newDataName, encoding, inMemory, iType, height, width, bands);
       if (pRaster != NULL)
       {
          //----- Now create the spatial data window to display the data
