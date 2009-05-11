@@ -35,7 +35,7 @@
  * Create a new animation.
  * Create a time or frame based animation and attach it to a raster layer.
  *
- * @param[in] DATASET
+ * @param[in] DATASET @opt
  *        The name of the RasterElement which will be animated.
  * @param[in] CONTROLLER_NAME @opt
  *        The name of the animation controller. A new one will
@@ -131,6 +131,10 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       if ((kw->frames->flags & ~IDL_V_ARR))
       {
+         if (bTimesConverted)
+         {
+            IDL_Deltmp(tmpTimes);
+         }
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  Frames keyword must be an array.");
          return IDL_StrToSTRING("failure");
       }
@@ -175,6 +179,14 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    if (pData == NULL)
    {
+      if (bTimesConverted)
+      {
+         IDL_Deltmp(tmpTimes);
+      }
+      if (bFramesConverted)
+      {
+         IDL_Deltmp(tmpFrames);
+      }
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  No dataset.");
       return IDL_StrToSTRING("failure");
    }
@@ -210,6 +222,14 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
    RasterDataDescriptor* pDescriptor = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
    if (pDescriptor == NULL)
    {
+      if (bTimesConverted)
+      {
+         IDL_Deltmp(tmpTimes);
+      }
+      if (bFramesConverted)
+      {
+         IDL_Deltmp(tmpFrames);
+      }
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "CREATE_ANIMATION critical error.  No Descriptor.");
       return IDL_StrToSTRING("failure");
    }
@@ -315,19 +335,17 @@ IDL_VPTR create_animation(int argc, IDL_VPTR pArgv[], char* pArgk)
    if (pAnimationToolbar != NULL)
    {
       //set the controller to be active and its properties to the copy controller's
-      AnimationController* pCurrentController = pAnimationToolbar->getAnimationController();
+      pAnimationToolbar->setAnimationController(pController);
+      pAnimationToolbar->show();
+      bool bCanDrop = false;
+      if (pCopyController != NULL)
       {
-         pAnimationToolbar->setAnimationController(pController);
-         bool bCanDrop = false;
-         if (pCopyController != NULL)
-         {
-            pController->setMinimumFrameRate(pCopyController->getMinimumFrameRate());
-            pController->setAnimationCycle(pCopyController->getAnimationCycle());
-            pController->setIntervalMultiplier(pCopyController->getIntervalMultiplier());
-            bCanDrop = pCopyController->getCanDropFrames();
-         }
-         pController->setCanDropFrames(bCanDrop);
+         pController->setMinimumFrameRate(pCopyController->getMinimumFrameRate());
+         pController->setAnimationCycle(pCopyController->getAnimationCycle());
+         pController->setIntervalMultiplier(pCopyController->getIntervalMultiplier());
+         bCanDrop = pCopyController->getCanDropFrames();
       }
+      pController->setCanDropFrames(bCanDrop);
    }
    return IDL_StrToSTRING("success");
 }
@@ -375,11 +393,14 @@ IDL_VPTR get_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
 
    if (pController != NULL)
@@ -456,11 +477,14 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
    if (pController != NULL)
    {
@@ -491,7 +515,7 @@ IDL_VPTR set_interval_multiplier(int argc, IDL_VPTR pArgv[], char* pArgk)
  */
 IDL_VPTR get_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
-   IDL_VPTR idlPtr;
+   IDL_VPTR idlPtr = NULL;
    typedef struct
    {
       IDL_KW_RESULT_FIRST_FIELD;
@@ -585,11 +609,14 @@ IDL_VPTR set_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
    if (pController != NULL)
    {
@@ -654,11 +681,14 @@ IDL_VPTR get_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
    if (pController != NULL)
    {
@@ -717,11 +747,14 @@ IDL_VPTR set_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
    if (pController != NULL)
    {
@@ -789,11 +822,14 @@ IDL_VPTR enable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
    bool bSuccess = false;
    if (pController != NULL)
@@ -859,11 +895,14 @@ IDL_VPTR disable_can_drop_frames(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       pController = Service<AnimationServices>()->getAnimationController(controllerName);
    }
-   AnimationToolBar* pToolbar =
-      dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
-   if (pToolbar != NULL)
+   else
    {
-      pController = pToolbar->getAnimationController();
+      AnimationToolBar* pToolbar =
+         dynamic_cast<AnimationToolBar*>(Service<DesktopServices>()->getWindow("Animation", TOOLBAR));
+      if (pToolbar != NULL)
+      {
+         pController = pToolbar->getAnimationController();
+      }
    }
    if (pController != NULL)
    {

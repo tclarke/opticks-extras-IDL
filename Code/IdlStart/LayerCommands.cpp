@@ -34,7 +34,7 @@
  * @param[in] FILE @opt
  *            This flag gets the currently active window's primary data element's file name.
  * @param[in] WINDOW @opt
- *            This flag get the name of the currently active window.
+ *            This flag gets the name of the currently active window.
  * @return The name of the element.
  * @usage print,get_current_name(/FILE)
  * @endusage
@@ -267,7 +267,7 @@ IDL_VPTR get_data_element_names(int argc, IDL_VPTR pArgv[], char* pArgk)
             {
                std::vector<std::string> names = Service<ModelServices>()->getElementNames(pElement, "");
                total = names.size();
-               pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0));
+               pStrarr = reinterpret_cast<IDL_STRING*>(malloc(sizeof(IDL_STRING)));
                for (unsigned int i=0; i < total; ++i)
                {
                   IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
@@ -276,26 +276,32 @@ IDL_VPTR get_data_element_names(int argc, IDL_VPTR pArgv[], char* pArgk)
             }
          }
       }
-      if (windowName == "all")
+   }
+   else if (windowName == "all")
+   {
+      std::vector<std::string> names = Service<ModelServices>()->getElementNames("RasterElement");
+      total = names.size();
+      pStrarr = reinterpret_cast<IDL_STRING*>(malloc(sizeof(IDL_STRING)));
+      for (unsigned int i=0; i < total; ++i)
       {
-         std::vector<std::string> names = Service<ModelServices>()->getElementNames("RasterElement");
-         total = names.size();
-         pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(total * sizeof(IDL_STRING), NULL, 0));
-         for (unsigned int i=0; i < total; ++i)
-         {
-            IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
-         }
-         bSuccess = true;
+         IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
       }
+      bSuccess = true;
+   }
+   if (total == 0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "No elements matched.");
+      return NULL;
    }
    if (!bSuccess)
    {
-      pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(1 * sizeof(IDL_STRING), NULL, 0));
+      pStrarr = reinterpret_cast<IDL_STRING*>(malloc(sizeof(IDL_STRING)));
       char* pEmpty = "";
       IDL_StrStore(&(pStrarr[0]), pEmpty);
    }
    IDL_MEMINT dims[] = {total};
-   idlPtr = IDL_ImportArray(1, dims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr), NULL, NULL);
+   idlPtr = IDL_ImportArray(1, dims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr),
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    return idlPtr;
 }
 
@@ -348,10 +354,9 @@ IDL_VPTR get_layer_name(int argc, IDL_VPTR pArgv[], char* pArgk)
       windowName = IDL_STRING_STR(&kw->windowName);
    }
 
-   if (argc < 1)
+   if (argc < 0)
    {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "get_layer_name takes a layer position as a keyword with a "
-         "window as an optional keyword to specifiy a non current window.");
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Invalid arguments");
       return IDL_StrToSTRING("");
    }
    Layer* pLayer = IdlFunctions::getLayerByIndex(windowName, index);
@@ -414,7 +419,7 @@ IDL_VPTR set_layer_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       windowName = IDL_STRING_STR(&kw->windowName);
    }
 
-   if (argc < 1)
+   if (argc < 2)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "set_layer_position takes a layer name as a parameter with a "
          "window as an optional keyword.  A keyword 'index' is needed to specify the position.");

@@ -340,7 +340,7 @@ Layer* IdlFunctions::getLayerByName(const std::string& windowName,
          pList->getLayers(layers);
          Layer* pLayer = NULL;
 
-         if (layerName.empty())
+         if (!layerName.empty())
          {
             std::string tmpName;
             bool bFound = false;
@@ -420,6 +420,32 @@ View* IdlFunctions::getViewByWindowName(const std::string& windowName)
    return (pWindow->getSpatialDataView());
 }
 
+bool IdlFunctions::clearWizardObject(const std::string& wizardName)
+{
+   if (wizardName.empty())
+   {
+      for (std::vector<WizardObject*>::iterator iter = spWizards.begin(); iter != spWizards.end(); ++iter)
+      {
+         FactoryResource<WizardObject> pWiz(*iter);
+      }
+      spWizards.clear();
+      return true;
+   }
+
+   //traverse the list of items, looking for the one that matches the item name
+   for (std::vector<WizardObject*>::iterator iter = spWizards.begin(); iter != spWizards.end(); ++iter)
+   {
+      WizardObject* pItem = *iter;
+      if (pItem != NULL && pItem->getName() == wizardName)
+      {
+         FactoryResource<WizardObject> pWiz(pItem);
+         spWizards.erase(iter);
+         return true;
+      }
+   }
+   return false;
+}
+
 WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
 {
    WizardObject* pWizard = NULL;
@@ -428,13 +454,10 @@ WizardObject* IdlFunctions::getWizardObject(const std::string& wizardName)
    for (std::vector<WizardObject*>::const_iterator iter = spWizards.begin(); iter != spWizards.end(); ++iter)
    {
       WizardObject* pItem = *iter;
-      if (pItem != NULL)
+      if (pItem != NULL && pItem->getName() == wizardName)
       {
-         if (pItem->getName() == wizardName)
-         {
-            pWizard = pItem;
-            break;
-         }
+         pWizard = pItem;
+         break;
       }
    }
    if (pWizard == NULL)

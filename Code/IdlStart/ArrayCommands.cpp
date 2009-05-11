@@ -267,7 +267,7 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
       //we don't know the datatype passed in to populate, so set all of them
       kw->width->value.d = 0.0;
    }
-   static IDL_MEMINT dims[] = {row, column, band};
+   IDL_MEMINT dims[] = {row, column, band};
    if (band == 1)
    {
       dimensions = 2;
@@ -560,77 +560,73 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "unable to determine type.");
          break;
    }
-   if ((kw->newWindowExists && kw->newWindow != 0) ||
-       (kw->overwriteExists && kw->overwrite != 0))
+   if (newWindow != 0)
    {
-      if (kw->newWindowExists && kw->newWindow != 0)
+      //user wants to create a new RasterElement and window
+      RasterElement* pRaster = IdlFunctions::createRasterElement(pRawData, datasetName,
+         newDataName, encoding, iType, height, width, bands);
+      if (pRaster != NULL)
       {
-         //user wants to create a new RasterElement and window
-         RasterElement* pRaster = IdlFunctions::createRasterElement(pRawData, datasetName,
-            newDataName, encoding, iType, height, width, bands);
-         if (pRaster != NULL)
+         //----- Now create the spatial data window to display the data
+         SpatialDataWindow* pWindow = static_cast<SpatialDataWindow*>(
+            Service<DesktopServices>()->createWindow(newDataName, SPATIAL_DATA_WINDOW));
+
+         if (pWindow != NULL)
          {
-            //----- Now create the spatial data window to display the data
-            SpatialDataWindow* pWindow = static_cast<SpatialDataWindow*>(
-               Service<DesktopServices>()->createWindow(newDataName, SPATIAL_DATA_WINDOW));
+            SpatialDataView* pView = pWindow->getSpatialDataView();
 
-            if (pWindow != NULL)
+            if (pView != NULL)
             {
-               SpatialDataView* pView = pWindow->getSpatialDataView();
-
-               if (pView != NULL)
-               {
-                  UndoLock undo(pView);
-                  //----- Set the spatial data in the view
-                  pView->setPrimaryRasterElement(pRaster);
-                  //----- Create the cube layer
-                  RasterLayer* pLayer = static_cast<RasterLayer*>(pView->createLayer(RASTER, pRaster));
-                  bSuccess = true;
-               }
+               UndoLock undo(pView);
+               //----- Set the spatial data in the view
+               pView->setPrimaryRasterElement(pRaster);
+               //----- Create the cube layer
+               RasterLayer* pLayer = static_cast<RasterLayer*>(pView->createLayer(RASTER, pRaster));
+               bSuccess = true;
             }
          }
       }
-      else
+   }
+   else if (overwrite != 0)
+   {
+      //the user wants to replace the spectral cube of the RasterElement with all new data
+      RasterElement* pParent = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(datasetName));
+      RasterElement* pRaster = static_cast<RasterElement*>(Service<ModelServices>()->getElement(newDataName,
+         TypeConverter::toString<RasterElement>(), pParent));
+      if (pRaster == NULL)
       {
-         //the user wants to replace the spectral cube of the RasterElement with all new data
-         RasterElement* pParent = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(datasetName));
-         RasterElement* pRaster = static_cast<RasterElement*>(Service<ModelServices>()->getElement(newDataName,
-            TypeConverter::toString<RasterElement>(), pParent));
-         if (pRaster == NULL)
+         pRaster = pParent;
+      }
+      if (pRaster != NULL)
+      {
+         RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pRaster->getDataDescriptor());
+         if (pDesc != NULL)
          {
-            pRaster = pParent;
-         }
-         if (pRaster != NULL)
-         {
-            RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pRaster->getDataDescriptor());
-            if (pDesc != NULL)
+            unsigned int heightStart = 0;
+            unsigned int widthStart= 0;
+            unsigned int bandStart= 0;
+            if (kw->startyheightExists)
             {
-               unsigned int heightStart = 0;
-               unsigned int widthStart= 0;
-               unsigned int bandStart= 0;
-               if (kw->startyheightExists)
-               {
-                  heightStart = kw->startyheight;
-               }
-               if (kw->startxwidthExists)
-               {
-                  widthStart = kw->startxwidth;
-               }
-               if (kw->bandstartExists)
-               {
-                  bandStart = kw->bandstart;
-               }
-               EncodingType oldType = pDesc->getDataType();
-               if (oldType != encoding)
-               {
-                  IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
-                     "ARRAY_TO_OPTICKS error.  data type of new array is not the same as the old.");
-                  return IDL_StrToSTRING("failure");
-               }
-               IdlFunctions::changeRasterElement(pRaster, pRawData, encoding, iType, heightStart, height, widthStart,
-                  width, bandStart, bands, oldType);
-               bSuccess = true;
+               heightStart = kw->startyheight;
             }
+            if (kw->startxwidthExists)
+            {
+               widthStart = kw->startxwidth;
+            }
+            if (kw->bandstartExists)
+            {
+               bandStart = kw->bandstart;
+            }
+            EncodingType oldType = pDesc->getDataType();
+            if (oldType != encoding)
+            {
+               IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+                  "ARRAY_TO_OPTICKS error.  data type of new array is not the same as the old.");
+               return IDL_StrToSTRING("failure");
+            }
+            IdlFunctions::changeRasterElement(pRaster, pRawData, encoding, iType, heightStart, height, widthStart,
+               width, bandStart, bands, oldType);
+            bSuccess = true;
          }
       }
    }
