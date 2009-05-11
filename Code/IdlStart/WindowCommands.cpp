@@ -94,26 +94,6 @@ void refresh_display(int argc, IDL_VPTR pArgv[], char* pArgk)
             }
             pElement->updateData();
          }
-         if (pElement != NULL)
-         {
-            //here is a piece of code to force an update by adjusting the histogram
-            //settings of the raster layer being udpated.
-            RasterLayer* pLayer = dynamic_cast<RasterLayer*>(
-               IdlFunctions::getLayerByRaster(pElement));
-            if (pLayer != NULL)
-            {
-               DisplayMode mode = pLayer->getDisplayMode();
-               if (mode == GRAYSCALE_MODE)
-               {
-                  pLayer->setDisplayMode(RGB_MODE);
-               }
-               else
-               {
-                  pLayer->setDisplayMode(GRAYSCALE_MODE);
-               }
-               pLayer->setDisplayMode(mode);
-            }
-         }
          pView->refresh();
       }
    }
@@ -185,7 +165,6 @@ IDL_VPTR close_window(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    if (pWindow != NULL)
    {
-      // close the window
       bSuccess = Service<DesktopServices>()->deleteWindow(pWindow);
    }
 
@@ -276,7 +255,6 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    if (pWindow != NULL)
    {
-      //close the window
       QWidget* pTmpWidget = pWindow->getWidget();
       if (pTmpWidget != NULL)
       {
@@ -373,7 +351,6 @@ IDL_VPTR get_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    if (pWindow != NULL)
    {
-      //close the window
       QWidget* pTmpWidget = pWindow->getWidget();
       if (pTmpWidget != NULL)
       {
@@ -448,7 +425,7 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    std::string label;
 
    bool bSuccess = false;
-   if (argc < 1)
+   if (argc < 2)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
          "get_window_position 'type', 'window', 'win_pos_x', and 'win_pos_y' as keywords.");
@@ -480,7 +457,6 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       }
       if (pWindow != NULL)
       {
-         //close the window
          QWidget* pTmpWidget = pWindow->getWidget();
          if (pTmpWidget != NULL)
          {
@@ -494,44 +470,47 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
                   if (kw->xPosExists)
                   {
                      //we don't know the datatype passed in, so set all of them
-                     kw->xPos->value.d = (double)xPos;
-                     kw->xPos->value.f = (float)xPos;
-                     kw->xPos->value.i = (short)xPos;
-                     kw->xPos->value.ui = (unsigned short)xPos;
-                     kw->xPos->value.ul = (unsigned int)xPos;
+                     kw->xPos->value.d = static_cast<double>(xPos);
+                     kw->xPos->value.f = static_cast<float>(xPos);
+                     kw->xPos->value.i = static_cast<short>(xPos);
+                     kw->xPos->value.ui = static_cast<unsigned short>(xPos);
+                     kw->xPos->value.ul = static_cast<unsigned int>(xPos);
                      kw->xPos->value.l = xPos;
-                     kw->xPos->value.l64 = (unsigned long)xPos;
-                     kw->xPos->value.ul64 = (unsigned long)xPos;
-                     kw->xPos->value.sc = (char)xPos;
-                     kw->xPos->value.c = (unsigned char)xPos;
+                     kw->xPos->value.l64 = static_cast<unsigned long>(xPos);
+                     kw->xPos->value.ul64 = static_cast<unsigned long>(xPos);
+                     kw->xPos->value.sc = static_cast<char>(xPos);
+                     kw->xPos->value.c = static_cast<unsigned char>(xPos);
                      bSuccess = true;
                   }
                   int yPos = pMain->y();
-                  if (kw->xPosExists)
+                  if (kw->yPosExists)
                   {
                      //we don't know the datatype passed in to populate, so set all of them
-                     kw->yPos->value.d = (double)yPos;
-                     kw->yPos->value.f = (float)yPos;
-                     kw->yPos->value.i = (short)yPos;
-                     kw->yPos->value.ui = (unsigned short)yPos;
-                     kw->yPos->value.ul = (unsigned int)yPos;
+                     kw->yPos->value.d = static_cast<double>(yPos);
+                     kw->yPos->value.f = static_cast<float>(yPos);
+                     kw->yPos->value.i = static_cast<short>(yPos);
+                     kw->yPos->value.ui = static_cast<unsigned short>(yPos);
+                     kw->yPos->value.ul = static_cast<unsigned int>(yPos);
                      kw->yPos->value.l = yPos;
-                     kw->yPos->value.l64 = (unsigned long)yPos;
-                     kw->yPos->value.ul64 = (unsigned long)yPos;
-                     kw->yPos->value.sc = (char)yPos;
-                     kw->yPos->value.c = (unsigned char)yPos;
+                     kw->yPos->value.l64 = static_cast<unsigned long>(yPos);
+                     kw->yPos->value.ul64 = static_cast<unsigned long>(yPos);
+                     kw->yPos->value.sc = static_cast<char>(yPos);
+                     kw->yPos->value.c = static_cast<unsigned char>(yPos);
                      bSuccess = true;
                   }
                }
             }
          }
       }
-      if (bSuccess)
-      {
-         idlPtr = IDL_StrToSTRING("success");
-      }
    }
-   idlPtr = IDL_StrToSTRING("failure");
+   if (bSuccess)
+   {
+         idlPtr = IDL_StrToSTRING("success");
+   }
+   else
+   {
+      idlPtr = IDL_StrToSTRING("failure");
+   }
    return idlPtr;
 }
 
@@ -596,7 +575,7 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    int yPos = 0;
 
    bool bSuccess = false;
-   if (argc < 1)
+   if (argc < 2)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
          "set_window_position 'type', 'window', 'win_pos_x', and 'win_pos_x' as keywords.");
@@ -641,7 +620,6 @@ IDL_VPTR set_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
       }
       if (pWindow != NULL)
       {
-         //close the window
          QWidget* pTmpWidget = pWindow->getWidget();
          if (pTmpWidget != NULL)
          {

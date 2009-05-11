@@ -60,6 +60,7 @@ namespace IdlFunctions
    };
 
    RasterElement* getDataset(const std::string& name = "");
+   bool clearWizardObject(const std::string& wizardName);
    WizardObject* getWizardObject(const std::string& wizardName);
    void cleanupWizardObjects();
    bool setWizardObjectValue(WizardObject* pObject, const std::string& name, const DataVariant& value);

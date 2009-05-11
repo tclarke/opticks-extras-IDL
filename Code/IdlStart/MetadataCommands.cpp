@@ -605,12 +605,43 @@ IDL_VPTR copy_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    pDestMetadata->merge(pSourceMetadata);
    return IDL_StrToSTRING("success");
 }
+
+/**
+ * Reload a wizard from disk.
+ *
+ * If wizard nodes have been accessed or mutated, this function
+ * will force the wizard to reload from disk the next time it is
+ * used. If the wizard has not been accessed previously, this function
+ * will return "failure". Any value nodes which have been modified will be
+ * reset to the on-disk values.
+ *
+ * @param[in] [1] @opt
+ *            The name of the wizard file. If this is not specified,
+ *            all previously loaded wizards will be reloaded.
+ * @rsof
+ * @usage print,reload_wizard()
+ * @endusage
+ */
+IDL_VPTR reload_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   std::string wizardName;
+   if (argc >= 1)
+   {
+      wizardName = IDL_VarGetString(pArgv[0]);
+   }
+   if (!IdlFunctions::clearWizardObject(wizardName))
+   {
+      return IDL_StrToSTRING("failure");
+   }
+   return IDL_StrToSTRING("success");
+}
 /*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(copy_metadata), "COPY_METADATA",0,2,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(get_metadata), "GET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(set_metadata), "SET_METADATA",0,5,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(reload_wizard), "RELOAD_WIZARD",0,1,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
 
