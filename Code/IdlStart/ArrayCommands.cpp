@@ -31,6 +31,9 @@
 /**
  * Make raster data available to IDL.
  *
+ * @note You must zero out the return value of this function before destroying
+ *       the corresponding raster element in Opticks or the application may crash.
+ *
  * @param[in] DATASET @opt
  *            The name of the raster element to get. Defaults to
  *            the primary raster element of the active window.
@@ -195,12 +198,9 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             row = heightEnd - heightStart+1;
             band = bandEnd - bandStart+1;
             //copy the subcube, determine the type
-            try
-            {
-               pRawData = reinterpret_cast<unsigned char*>(
+            pRawData = reinterpret_cast<unsigned char*>(
                   malloc(column*row*band*bytesPerElement));
-            }
-            catch (...)
+            if (pRawData == NULL)
             {
                std::string msg = "Not enough memory to allocate array";
                IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
