@@ -23,11 +23,12 @@ namespace
    template<typename T>
    IDL_VPTR vector_to_idl(const DataVariant& value, int idlType)
    {
-      std::vector<T> vec = dv_cast<std::vector<T> >(value);
-      UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(vec.size() * sizeof(T)));
+      const std::vector<T>* pVec = dv_cast<std::vector<T> >(&value);
+      VERIFYRV(pVec, NULL);
+      UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(pVec->size() * sizeof(T)));
       VERIFYRV(pCopyvec, NULL);
-      memcpy(pCopyvec, &vec.front(), vec.size() * sizeof(T));
-      IDL_MEMINT pDims[] = {vec.size()};
+      memcpy(pCopyvec, &pVec->front(), pVec->size() * sizeof(T));
+      IDL_MEMINT pDims[] = {pVec->size()};
       return IDL_ImportArray(1, pDims, idlType, pCopyvec,
          reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
@@ -215,15 +216,16 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    else if (valType == "vector<bool>")
    {
-      std::vector<bool> vec = dv_cast<std::vector<bool> >(value);
+      const std::vector<bool>* pVec = dv_cast<std::vector<bool> >(&value);
+      VERIFYRV(pVec, NULL);
       unsigned char* pCopyvec = reinterpret_cast<unsigned char*>(
-         malloc(vec.size() * sizeof(unsigned char)));
+         malloc(pVec->size() * sizeof(unsigned char)));
       VERIFYRV(pCopyvec, NULL);
-      for (std::vector<bool>::size_type idx = 0; idx < vec.size(); ++idx)
+      for (std::vector<bool>::size_type idx = 0; idx < pVec->size(); ++idx)
       {
-         pCopyvec[idx] = vec[idx] ? 1 : 0;
+         pCopyvec[idx] = (*pVec)[idx] ? 1 : 0;
       }
-      IDL_MEMINT dims[] = {vec.size()};
+      IDL_MEMINT dims[] = {pVec->size()};
       idlPtr = IDL_ImportArray(1, dims, IDL_TYP_BYTE, pCopyvec,
          reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
