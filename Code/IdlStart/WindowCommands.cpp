@@ -505,7 +505,7 @@ IDL_VPTR get_window_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    if (bSuccess)
    {
-         idlPtr = IDL_StrToSTRING("success");
+      idlPtr = IDL_StrToSTRING("success");
    }
    else
    {

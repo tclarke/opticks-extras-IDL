@@ -19,6 +19,8 @@
 #include "PlugInRegistration.h"
 #include "ProgressTracker.h"
 
+#include <QtCore/QString>
+
 REGISTER_PLUGIN_BASIC(Idl, IdlProxy);
 REGISTER_PLUGIN_BASIC(Idl, IdlInterpreter);
 REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterWizardItem);

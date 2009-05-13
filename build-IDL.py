@@ -244,15 +244,6 @@ class SolarisBuilder(Builder):
     def get_doxygen_path(self):
         return join(self.depend_path, "doxygen", "bin", "doxygen")
 
-    def other_doxygen_prep(self, build, env):
-        graphviz_dir = os.path.abspath(join(self.depend_path,
-            "graphviz", "app"))
-        env["GVBINDIR"] = join(graphviz_dir, "lib", "graphviz")
-        new_value = join(graphviz_dir, "lib")
-        if env.has_key("LD_LIBRARY_PATH_32"):
-            new_value = new_value + ":" + env["LD_LIBRARY_PATH_32"]
-        env["LD_LIBRARY_PATH_32"] = new_value
-
     def compile_code(self, env, clean, concurrency):
         #Build extension plugins
         self.run_scons(os.path.abspath("."), self.build_debug_mode,
