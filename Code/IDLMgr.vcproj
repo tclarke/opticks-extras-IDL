@@ -111,10 +111,6 @@
 			Name="Include"
 			>
 			<File
-				RelativePath=".\Include\DesktopResource.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Include\IdlVersion.h"
 				>
 			</File>

@@ -168,7 +168,7 @@ namespace IdlFunctions
             for (unsigned int row = 0; row < height; ++row)
             {
                if (!daImage.isValid())
-               {                                       
+               {
                   throw std::exception();
                }
                memcpy(daImage->getRow(), pMatrix + (row * width * bands), width * bands * bytesPerElement);
@@ -195,7 +195,7 @@ namespace IdlFunctions
             for (unsigned int row = 0; row < height; ++row)
             {
                if (!daImage.isValid())
-               {                                       
+               {
                   throw std::exception();
                }
                memcpy(daImage->getRow(), pMatrix + (row * width * bands), width * bands * bytesPerElement);
@@ -280,7 +280,7 @@ namespace IdlFunctions
                   {
                      daImage->toPixel(heightStart + row, widthStart + col);
                      if (!daImage.isValid())
-                     {                                       
+                     {
                         throw std::exception();
                      }
                      for (unsigned int band = 0; band < bands; ++band)
@@ -306,7 +306,7 @@ namespace IdlFunctions
                      {
                         daImage->toPixel(heightStart + row, widthStart + col);
                         if (!daImage.isValid())
-                        {                                       
+                        {
                            throw std::exception();
                         }
                         memcpy(pData + (row * width * bands) + (band * width) + col, daImage->getColumn(), bytesPerElement);

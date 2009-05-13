@@ -10,7 +10,6 @@
 #include "DataAccessor.h"
 #include "DataAccessorImpl.h"
 #include "DataRequest.h"
-#include "DesktopResource.h"
 #include "DesktopServices.h"
 #include "DynamicObject.h"
 #include "IdlFunctions.h"
@@ -42,15 +41,16 @@ RasterElement* IdlFunctions::getDataset(const std::string& name)
    DataElement* pElement = NULL;
    if (name.empty())
    {
-      ViewResource<SpatialDataView> pView(name, true);
-      if (pView.get() == NULL)
+      SpatialDataWindow* pWindow = dynamic_cast<SpatialDataWindow*>(
+         Service<DesktopServices>()->getCurrentWorkspaceWindow());
+      SpatialDataView* pView = (pWindow == NULL) ? NULL : pWindow->getSpatialDataView();
+      if (pView == NULL)
       {
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "No spatial data window selected.");
          return NULL;
       }
       LayerList* pList = pView->getLayerList();
       pElement = (pList == NULL) ? NULL : pList->getPrimaryRasterElement();
-      pView.release();
    }
    else
    {
@@ -241,7 +241,7 @@ RasterElement* IdlFunctions::createRasterElement(char* pData,
          for (unsigned int row = 0; row < rows; ++row)
          {
             if (!daImage.isValid())
-            {                                       
+            {
                throw std::exception();
             }
             memcpy(daImage->getRow(), pData + (row * cols * bands * bytesPerElement), cols * bands * bytesPerElement);
@@ -268,7 +268,7 @@ RasterElement* IdlFunctions::createRasterElement(char* pData,
          for (unsigned int row = 0; row < rows; ++row)
          {
             if (!daImage.isValid())
-            {                                       
+            {
                throw std::exception();
             }
             memcpy(daImage->getRow(), pData + (row * cols * bands * bytesPerElement), cols * bands * bytesPerElement);
@@ -320,7 +320,7 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pDat
                pRequest->setWritable(true);
                DataAccessor daImage = pRasterElement->getDataAccessor(pRequest.release());
                if (!daImage.isValid())
-               {                                       
+               {
                   throw std::exception();
                }
 
@@ -349,7 +349,7 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pDat
             pRequest->setWritable(true);
             DataAccessor daImage = pRasterElement->getDataAccessor(pRequest.release());
             if (!daImage.isValid())
-            {                                       
+            {
                throw std::exception();
             }
             for (unsigned int row = 0; row < rows; ++row)
@@ -358,7 +358,7 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pDat
                {
                   daImage->toPixel(startRow + row, startCol + col);
                   if (!daImage.isValid())
-                  {                                       
+                  {
                      throw std::exception();
                   }
                   for (unsigned int band = 0; band < bands; ++band)
@@ -384,14 +384,14 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pDat
                   pRequest->setWritable(true);
                   DataAccessor daImage = pRasterElement->getDataAccessor(pRequest.release());
                   if (!daImage.isValid())
-                  {                                       
+                  {
                      throw std::exception();
                   }
                   for (unsigned int col = 0; col < cols; ++col)
                   {
                      daImage->toPixel(startRow + row, startCol + col);
                      if (!daImage.isValid())
-                     {                                       
+                     {
                         throw std::exception();
                      }
                      memcpy(daImage->getColumn(),

@@ -24,8 +24,12 @@ namespace
    IDL_VPTR vector_to_idl(const DataVariant& value, int idlType)
    {
       std::vector<T> vec = dv_cast<std::vector<T> >(value);
+      UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(vec.size() * sizeof(T)));
+      VERIFYRV(pCopyvec, NULL);
+      memcpy(pCopyvec, &vec.front(), vec.size() * sizeof(T));
       IDL_MEMINT pDims[] = {vec.size()};
-      return IDL_ImportArray(1, pDims, idlType, reinterpret_cast<UCHAR*>(&vec.front()), NULL, NULL);
+      return IDL_ImportArray(1, pDims, idlType, pCopyvec,
+         reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
 
    template<typename T>
@@ -212,14 +216,16 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    else if (valType == "vector<bool>")
    {
       std::vector<bool> vec = dv_cast<std::vector<bool> >(value);
-      std::vector<unsigned char> copyvec;
-      copyvec.reserve(vec.size());
-      for (std::vector<bool>::const_iterator val = vec.begin(); val != vec.end(); ++val)
+      unsigned char* pCopyvec = reinterpret_cast<unsigned char*>(
+         malloc(vec.size() * sizeof(unsigned char)));
+      VERIFYRV(pCopyvec, NULL);
+      for (std::vector<bool>::size_type idx = 0; idx < vec.size(); ++idx)
       {
-         copyvec.push_back((*val) ? 1 : 0);
+         pCopyvec[idx] = vec[idx] ? 1 : 0;
       }
-      IDL_MEMINT dims[] = {copyvec.size()};
-      idlPtr = IDL_ImportArray(1, dims, IDL_TYP_BYTE, &copyvec.front(), NULL, NULL);
+      IDL_MEMINT dims[] = {vec.size()};
+      idlPtr = IDL_ImportArray(1, dims, IDL_TYP_BYTE, pCopyvec,
+         reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
    else if (valType == "short")
    {
@@ -280,13 +286,15 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    else if (valType == "vector<Filename>")
    {
       std::vector<Filename*> vec = dv_cast<std::vector<Filename*> >(value);
-      IDL_STRING* pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(vec.size() * sizeof(IDL_STRING), NULL, 0));
+      IDL_STRING* pStrarr = reinterpret_cast<IDL_STRING*>(malloc(vec.size() * sizeof(IDL_STRING)));
+      VERIFYRV(pStrarr, NULL);
       for (size_t idx = 0; idx < vec.size(); ++idx)
       {
          IDL_StrStore(&(pStrarr[idx]), const_cast<char*>(vec[idx]->getFullPathAndName().c_str()));
       }
       IDL_MEMINT pDims[] = {vec.size()};
-      idlPtr = IDL_ImportArray(1, pDims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr), NULL, NULL);
+      idlPtr = IDL_ImportArray(1, pDims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr),
+         reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
    else if (valType == "string")
    {
@@ -295,13 +303,15 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
    else if (valType == "vector<string>")
    {
       std::vector<std::string> vec = dv_cast<std::vector<std::string> >(value);
-      IDL_STRING* pStrarr = reinterpret_cast<IDL_STRING*>(IDL_MemAlloc(vec.size() * sizeof(IDL_STRING), NULL, 0));
+      IDL_STRING* pStrarr = reinterpret_cast<IDL_STRING*>(malloc(vec.size() * sizeof(IDL_STRING)));
+      VERIFYRV(pStrarr, NULL);
       for (size_t idx = 0; idx < vec.size(); ++idx)
       {
          IDL_StrStore(&(pStrarr[idx]), const_cast<char*>(vec[idx].c_str()));
       }
       IDL_MEMINT pDims[] = {vec.size()};
-      idlPtr = IDL_ImportArray(1, pDims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr), NULL, NULL);
+      idlPtr = IDL_ImportArray(1, pDims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr),
+         reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
    }
    else
    {
