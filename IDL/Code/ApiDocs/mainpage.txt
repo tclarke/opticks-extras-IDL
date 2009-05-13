@@ -1,0 +1,45 @@
+/**
+@mainpage Opticks IDL Integration
+
+\section overview Overview
+The IDL Interface to Opticks provides access to Opticks data and functionality through a defined set of IDL commands.
+This interface supports interaction with data loaded in Opticks through both the IDL command line and IDL scripts.
+Additionally, the IDL Interface provides functions to view and modify metadata, manipulate layers, and adjust some visualization parameters.
+The interface is accessed through the scripting window in Opticks, which accepts IDL commands and displays IDL output in the same manner as the command line interface in the IDL Developer's Environment.
+The IDL Interface also supports batch processing through the Opticks Wizard functionality.
+This capability allows users to run Opticks plug-ins from IDL and run IDL scripts from Opticks.
+IDL commands can be run from a wizard by adding the <tt>IDL Interpreter</tt> desktop wizard item to a wizard and passing the IDL code as a string.
+
+The IDL Interface is designed to provide a mechanism for rapidly prototyping new algorithms in IDL while leveraging Opticks functionality.
+This interface supports seamlessly executing proven R&D IDL algorithms via Opticks while awaiting formal software implementation.
+It can also be useful for validating Opticks implementations of algorithms against IDL counterparts.
+Introductory material on IDL use is beyond the scope of this document which assumes at least a basic familiarity with the IDL language.
+
+\section setup Setup
+The <tt>Scripting/IDL Interpreter</tt> options page contains two configuration options which need to be set before use.
+The <tt>IDL Installation Location</tt> option locates the IDL installation directory.
+Browse to and select the <tt>idl.dll</tt> file in the IDL installation directory.
+It usually resides in the <tt>bin/bin.x86</tt> subdirectory.
+The <tt>IDL Version</tt> selection allows the user to select the version of IDL which was selected in the <tt>IDL Installation Location</tt> option.
+In addition to these options, a configuration file only option is available for plug-in developers wishing to install additional IDL method files.
+See \ref extension_modules for further information.
+
+\section conventions Documentation Conventions
+This documentation is broken into modules which group the functionality of various IDL functions.
+Parameter names for functions will be either the name of a keyword parameter or will indicate the number of the positional parameter starting with 1.
+<tt>[1]</tt> indicates the first positional parameter.
+
+A parameter name followed by <b>(opt)</b> indicates an optional parameter.
+The default value, if appropriate, will be listed in the description.
+The data type, if not obvious, will be mentioned in the description.
+
+The following command groups are available:
+ - \ref animationcommands
+ - \ref arraycommands
+ - \ref gpucommands
+ - \ref layercommands
+ - \ref metadatacommands
+ - \ref misccommands
+ - \ref visualizationcommands
+ - \ref windowcommands
+*/
