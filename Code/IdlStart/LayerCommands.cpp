@@ -208,7 +208,7 @@ IDL_VPTR get_data_name(int argc, IDL_VPTR pArgv[], char* pArgk)
  *
  * @param[in] WINDOW @opt
  *            The name of the window. Defaults to the active window.
- * @return An array of data element names.
+ * @return An array of data element names or the string "failure" if an error occurred.
  * @usage names = get_data_element_names()
  * @endusage
  */
@@ -267,12 +267,15 @@ IDL_VPTR get_data_element_names(int argc, IDL_VPTR pArgv[], char* pArgk)
             {
                std::vector<std::string> names = Service<ModelServices>()->getElementNames(pElement, "");
                total = names.size();
-               pStrarr = reinterpret_cast<IDL_STRING*>(malloc(total * sizeof(IDL_STRING)));
-               for (unsigned int i=0; i < total; ++i)
+               if (total > 0)
                {
-                  IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
+                  pStrarr = reinterpret_cast<IDL_STRING*>(malloc(total * sizeof(IDL_STRING)));
+                  for (unsigned int i=0; i < total; ++i)
+                  {
+                     IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
+                  }
+                  bSuccess = true;
                }
-               bSuccess = true;
             }
          }
       }
@@ -281,23 +284,20 @@ IDL_VPTR get_data_element_names(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       std::vector<std::string> names = Service<ModelServices>()->getElementNames("RasterElement");
       total = names.size();
-      pStrarr = reinterpret_cast<IDL_STRING*>(malloc(total* sizeof(IDL_STRING)));
-      for (unsigned int i=0; i < total; ++i)
+      if (total > 0)
       {
-         IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
+         pStrarr = reinterpret_cast<IDL_STRING*>(malloc(total* sizeof(IDL_STRING)));
+         for (unsigned int i=0; i < total; ++i)
+         {
+            IDL_StrStore(&(pStrarr[i]), const_cast<char*>(names[i].c_str()));
+         }
+         bSuccess = true;
       }
-      bSuccess = true;
-   }
-   if (total == 0)
-   {
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "No elements matched.");
-      return NULL;
    }
    if (!bSuccess)
    {
-      pStrarr = reinterpret_cast<IDL_STRING*>(malloc(sizeof(IDL_STRING)));
-      char* pEmpty = "";
-      IDL_StrStore(&(pStrarr[0]), pEmpty);
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "No elements matched.");
+      return IDL_StrToSTRING("failure");
    }
    IDL_MEMINT dims[] = {total};
    idlPtr = IDL_ImportArray(1, dims, IDL_TYP_STRING, reinterpret_cast<UCHAR*>(pStrarr),
