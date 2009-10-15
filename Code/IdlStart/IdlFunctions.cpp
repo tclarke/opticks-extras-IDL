@@ -291,7 +291,6 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pDat
 {
    int index = 0;
    unsigned int i = 0;
-   bool bSuccess = false;
    unsigned int stopRow = startRow + rows - 1;
    unsigned int stopCol = startCol + cols - 1;
    unsigned int stopBand = startBand + bands - 1;
@@ -411,7 +410,7 @@ bool IdlFunctions::changeRasterElement(RasterElement* pRasterElement, char* pDat
       pRasterElement->updateData();
    }
 
-   return bSuccess;
+   return true;
 }
 
 Layer* IdlFunctions::getLayerByRaster(RasterElement* pElement)

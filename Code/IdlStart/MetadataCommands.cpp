@@ -158,8 +158,7 @@ IDL_VPTR get_metadata(int argc, IDL_VPTR pArgv[], char* pArgk)
 
       if (pElement == NULL)
       {
-         std::string msg = "Error could not find array.";
-         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg);
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
          return IDL_StrToSTRING("");
       }
       //not a wizard, so we use the dynamic object functions to get data
