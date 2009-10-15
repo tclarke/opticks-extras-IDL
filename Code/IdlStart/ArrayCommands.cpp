@@ -133,8 +133,7 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    if (pData == NULL)
    {
-      std::string msg = "Error could not find array.";
-      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg);
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
       return IDL_StrToSTRING("");
    }
    unsigned char* pRawData = NULL;
@@ -204,7 +203,7 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             {
                std::string msg = "Not enough memory to allocate array";
                IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, msg.c_str());
-               return IDL_StrToSTRING("");
+               return IDL_StrToSTRING("failure");
             }
 
             switchOnComplexEncoding(encoding, IdlFunctions::copySubcube, pRawData, pData,
@@ -256,7 +255,7 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
          type = IDL_TYP_FLOAT;
          break;
       case FLT8COMPLEX:
-         type = IDL_TYP_DCOMPLEX;
+         type = IDL_TYP_COMPLEX;
          break;
       case FLT8BYTES:
          type = IDL_TYP_DOUBLE;
@@ -268,36 +267,39 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    if (kw->widthExists)
    {
-      //we don't know the datatype passed in, so set all of them
-      kw->width->value.d = 0.0;
+      IDL_ALLTYPES tempVal;
+      tempVal.ul = column;
+      IDL_StoreScalar(kw->width, IDL_TYP_ULONG, &tempVal);
    }
    if (kw->heightExists)
    {
-      //we don't know the datatype passed in to populate, so set all of them
-      kw->width->value.d = 0.0;
+      IDL_ALLTYPES tempVal;
+      tempVal.ul = row;
+      IDL_StoreScalar(kw->height, IDL_TYP_ULONG, &tempVal);
    }
    if (kw->bandsExists)
    {
-      //we don't know the datatype passed in to populate, so set all of them
-      kw->width->value.d = 0.0;
+      IDL_ALLTYPES tempVal;
+      tempVal.ul = band;
+      IDL_StoreScalar(kw->bands, IDL_TYP_ULONG, &tempVal);
    }
-   IDL_MEMINT dims[] = {row, column, band};
+   IDL_MEMINT dims[] = {0, 0, 0};
    if (band == 1)
    {
       dimensions = 2;
-      // reverse the order for IDL (column major)
-      dims[0] = column;
+      // set the order for IDL (column major)
       dims[1] = row;
+      dims[0] = column;
    }
    else
    {
       switch (iType)
       {
-      // reverse the order for IDL (column major)
+      // set the order for IDL (column major)
       case BSQ:
-         dims[2] = row;
-         dims[1] = column;
-         dims[0] = band;
+         dims[2] = band;
+         dims[1] = row;
+         dims[0] = column;
          break;
       case BIL:
          dims[2] = row;
@@ -305,10 +307,13 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
          dims[0] = column;
          break;
       case BIP:
-         dims[2] = band;
-         dims[1] = row;
-         dims[0] = column;
+         dims[2] = row;
+         dims[1] = column;
+         dims[0] = band;
          break;
+      default:
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Invalid interleave.");
+         return IDL_StrToSTRING("failure");
       }
    }
    IDL_VPTR arrayRef;
@@ -496,7 +501,14 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
    InterleaveFormatType iType = BSQ;
    if (kw->interleaveExists)
    {
-      iType = StringUtilities::fromXmlString<InterleaveFormatType>(IDL_STRING_STR(&kw->idlInterleave));
+      bool error = false;
+      iType = StringUtilities::fromXmlString<InterleaveFormatType>(IDL_STRING_STR(&kw->idlInterleave), &error);
+      if (error || !iType.isValid())
+      {
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
+            "ARRAY_TO_OPTICKS error.  INTERLEAVE argument must be one of the following: BIP, BSQ or BIL");
+         return IDL_StrToSTRING("failure");
+      }
    }
    if (total != height*width*bands)
    {
@@ -586,7 +598,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
             bSuccess = true;
          }
          break;
-      case IDL_TYP_DCOMPLEX:
+      case IDL_TYP_COMPLEX:
          encoding = FLT8COMPLEX;
          if (!newWindow && !overwrite)
          {
@@ -663,9 +675,8 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
                   "ARRAY_TO_OPTICKS error.  data type of new array is not the same as the old.");
                return IDL_StrToSTRING("failure");
             }
-            IdlFunctions::changeRasterElement(pRaster, pRawData, encoding, iType, heightStart, height, widthStart,
-               width, bandStart, bands, oldType);
-            bSuccess = true;
+            bSuccess = IdlFunctions::changeRasterElement(pRaster, pRawData, encoding, iType, heightStart,
+               height, widthStart, width, bandStart, bands, oldType);
          }
       }
    }
@@ -680,11 +691,190 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    return idlPtr;
 }
+
+/**
+ * Return details about Opticks raster data.  This is very useful to determine the amount
+ * and layout of the data that is returned from array_to_idl() without having to copy the
+ * data into IDL.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @param[out] BANDS_OUT @opt
+ *             Returns the number of active bands.
+ * @param[out] HEIGHT_OUT @opt
+ *             Returns the number of active rows.
+ * @param[out] WIDTH_OUT @opt
+ *             Returns the number of active columns.
+ * @param[out] INTERLEAVE_OUT @opt
+ *             Returns "BIP", "BSQ" or "BIL".  See the following table for the dimension
+ *             arrangement of the IDL array that will be returned when array_to_idl() is
+ *             called for the same \p DATASET.
+ *                - BIP - BANDS_OUT, WIDTH_OUT, HEIGHT_OUT
+ *                - BSQ - WIDTH_OUT, HEIGHT_OUT, BANDS_OUT
+ *                - BIL - WIDTH_OUT, BANDS_OUT, HEIGHT_OUT
+ * @param[out] BPE_OUT @opt
+ *             Returns number of bytes required to store a single value in the IDL array
+ *             that will be returned when array_to_idl() is called for the same \p DATASET.
+ * @rsof
+ * @usage
+ * print,opticks_array_dimensions(BANDS_OUT=num_bands, HEIGHT_OUT=num_rows, WIDTH_OUT=num_columns)
+ * print,num_bands
+ * print,num_rows
+ * print,num_columns
+ * @endusage
+ */
+IDL_VPTR opticks_array_dimensions(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+      int heightExists;
+      IDL_VPTR height;
+      int widthExists;
+      IDL_VPTR width;
+      int bandsExists;
+      IDL_VPTR bands;
+      int interleaveExists;
+      IDL_VPTR interleave;
+      int bpeExists;
+      IDL_VPTR bpe;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"BANDS_OUT", IDL_TYP_UNDEF, 1, IDL_KW_OUT, reinterpret_cast<int*>(IDL_KW_OFFSETOF(bandsExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(bands))},
+      {"BPE_OUT", IDL_TYP_UNDEF, 1, IDL_KW_OUT, reinterpret_cast<int*>(IDL_KW_OFFSETOF(bpeExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(bpe))},
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {"HEIGHT_OUT", IDL_TYP_UNDEF, 1, IDL_KW_OUT, reinterpret_cast<int*>(IDL_KW_OFFSETOF(heightExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(height))},
+      {"INTERLEAVE_OUT", IDL_TYP_UNDEF, 1, IDL_KW_OUT, reinterpret_cast<int*>(IDL_KW_OFFSETOF(interleaveExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(interleave))},
+      {"WIDTH_OUT", IDL_TYP_UNDEF, 1, IDL_KW_OUT, reinterpret_cast<int*>(IDL_KW_OFFSETOF(widthExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(width))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   if (kw->widthExists)
+   {
+      unsigned int column = pDesc->getColumnCount();
+      IDL_ALLTYPES tempVal;
+      tempVal.ul = column;
+      IDL_StoreScalar(kw->width, IDL_TYP_ULONG, &tempVal);
+   }
+   if (kw->heightExists)
+   {
+      unsigned int row = pDesc->getRowCount();
+      IDL_ALLTYPES tempVal;
+      tempVal.ul = row;
+      IDL_StoreScalar(kw->height, IDL_TYP_ULONG, &tempVal);
+   }
+   if (kw->bandsExists)
+   {
+      unsigned int band = pDesc->getBandCount();
+      IDL_ALLTYPES tempVal;
+      tempVal.ul = band;
+      IDL_StoreScalar(kw->bands, IDL_TYP_ULONG, &tempVal);
+   }
+   if (kw->interleaveExists)
+   {
+      InterleaveFormatType iType = pDesc->getInterleaveFormat();
+      bool error = false;
+      std::string value = StringUtilities::toXmlString(iType, &error);
+      if (error)
+      {
+         const char* pMsg = "Array has an invalid interleave type. This is a bug in the application, not IDL.";
+         IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, pMsg);
+         return IDL_StrToSTRING("failure");
+      }
+      IDL_ALLTYPES tempVal;
+      IDL_StrStore(&(tempVal.str), const_cast<char*>(value.c_str()));
+      IDL_StoreScalar(kw->interleave, IDL_TYP_STRING, &tempVal);
+   }
+   if (kw->bpeExists)
+   {
+      EncodingType encoding = pDesc->getDataType();
+      unsigned char type = IDL_TYP_UNDEF;
+
+      //set the datatype based on the encoding
+      switch (encoding)
+      {
+         case INT1SBYTE:
+            type = IDL_TYP_BYTE;
+            break;
+         case INT1UBYTE:
+            type = IDL_TYP_BYTE;
+            break;
+         case INT2SBYTES:
+            type = IDL_TYP_INT;
+            break;
+         case INT2UBYTES:
+            type = IDL_TYP_UINT;
+            break;
+         case INT4SCOMPLEX:
+            type = IDL_TYP_UNDEF;
+            break;
+         case INT4SBYTES:
+            type = IDL_TYP_LONG;
+            break;
+         case INT4UBYTES:
+            type = IDL_TYP_ULONG;
+            break;
+         case FLT4BYTES:
+            type = IDL_TYP_FLOAT;
+            break;
+         case FLT8COMPLEX:
+            type = IDL_TYP_COMPLEX;
+            break;
+         case FLT8BYTES:
+            type = IDL_TYP_DOUBLE;
+            break;
+         default:
+            type = IDL_TYP_UNDEF;
+            break;
+      }
+      IDL_ALLTYPES temp;
+      temp.l = IDL_TypeSizeFunc(type);
+      IDL_StoreScalar(kw->bpe, IDL_TYP_LONG, &temp);
+   }
+   return IDL_StrToSTRING("success");
+}
+
 /*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(array_to_idl), "ARRAY_TO_IDL",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(array_to_opticks), "ARRAY_TO_OPTICKS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_dimensions),
+      "OPTICKS_ARRAY_DIMENSIONS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
 
