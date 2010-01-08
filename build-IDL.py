@@ -8,6 +8,8 @@ import optparse
 import traceback
 import shutil
 import zipfile
+import re
+import datetime
 
 if sys.platform == "sunos5":
    print "ERROR: Solaris builds are currently non-functional."
@@ -62,6 +64,106 @@ class Builder:
             self.mode = "debug"
         else:
             self.mode = "release"
+
+    def update_version_number(self, scheme, new_version):
+        if scheme is None or scheme == "none":
+            return
+
+        if self.verbosity > 1:
+            print "Updating version number..."
+        # Read the version directly from the file
+        try:
+            version_info = read_version_h()
+            version_number = version_info["IDL_VERSION_NUMBER"]
+            version_number = version_number.strip('"')
+        except:
+            raise ScriptException("Could not determine the "\
+                "current version while attempting to update "\
+                "the version")
+        if self.verbosity >= 1:
+            print "Original version # was", version_number
+
+        if new_version is not None:
+            version_number = new_version
+
+        if scheme == "nightly" or scheme == "unofficial":
+            #strip off any suffix from the version #
+            version_parts = version_number.split(".")
+            if len(version_parts) >= 2:
+                #Check for Nightly.BuildRev where BuildRev is just a number
+                #If so, strip off the BuildRev portion so the rest off the
+                #suffix stripping will work.
+                if version_parts[-2].find("Nightly") != -1:
+                    version_parts = version_parts[0:-1] #Trim off the BuildRev part
+
+            for count in range(0, len(version_parts) - 1):
+                if not(version_parts[count].isdigit()):
+                    raise ScriptException("The current version # "\
+                        "is improperly formatted.")
+            last_part = version_parts[-1]
+            match_obj = re.match("^\d+(\D*)", last_part)
+            if match_obj is None:
+                raise ScriptException("The current version # is "\
+                    "improperly formatted.")
+            version_parts[-1] = last_part[:match_obj.start(1)]
+            version_number = ".".join(version_parts)
+
+            #append on the appropriate suffix to the version #
+            if scheme == "unofficial":
+                version_number = version_number + "Unofficial"
+            elif scheme == "nightly":
+                todays_date = datetime.date.today()
+                today_str = todays_date.strftime("%Y%m%d")
+                if len(today_str) != 8:
+                    raise ScriptException("This platform does not properly "\
+                        "pad month and days to 2 digits when using "\
+                        "strftime.  Please update this script to address "\
+                        "this problem")
+                build_revision = "NoRev"
+                if os.path.exists(".svn") or os.path.exists("_svn"):
+                    process = subprocess.Popen(["svnversion", "-c", "-n", "."],
+                        stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+                    stdout = process.communicate()[0]
+                    if process.returncode != 0:
+                        raise ScriptException("Problem running svnversion")
+                    version_line_split = stdout.split(":")
+                    if len(version_line_split) != 2:
+                        raise ScriptException("Unexpected output from "\
+                            "svnversion")
+                    build_revision = version_line_split[1]
+                    if build_revision.endswith("S"):
+                        raise ScriptException("Switched working copy not "\
+                            "currently supported")
+                    if build_revision.endswith("M"):
+                        build_revision = build_revision[:-1] + "*"
+
+                if not(str(build_revision).isdigit()):
+                    raise ScriptException("The Build Revision when using "\
+                        "--update-version=nightly must indicate a "\
+                        "subversion working copy that has not been modified.")
+                version_number = version_number + \
+                    "Nightly%s.%s" % (today_str, build_revision)
+        elif new_version is None:
+            print "You need to use --new-version to provide the version "\
+                "# when using the production, rc, or milestone scheme"
+
+        if self.verbosity >= 1:
+            print "Setting version # to", version_number
+
+        # Update IdlVersion.h
+        version_info["IDL_VERSION_NUMBER"] = '"' + version_number + '"'
+        if scheme == "production":
+            version_info["IDL_IS_PRODUCTION_RELEASE"] = "true"
+            if self.verbosity >= 1:
+                print "Making a production release"
+        else:
+            version_info["IDL_IS_PRODUCTION_RELEASE"] = "false"
+            if self.verbosity >= 1:
+                print "Making a not for production release"
+
+        update_version_h(version_info)
+        if self.verbosity > 1:
+            print "Done updating version number"
 
     def build_executable(self, clean_build_first, build_opticks, concurrency):
         #No return code, throw exception or ScriptException
@@ -279,13 +381,31 @@ class SolarisBuilder(Builder):
 
 def read_version_h():
     version_path = join("Code", "Include", "IdlVersion.h")
-    version_info = open(version_path, "rt").readlines()
+    version_file = open(version_path, "rt")
+    version_info = version_file.readlines()
+    version_file.close()
     rdata = {}
     for vline in version_info:
         fields = vline.strip().split()
         if len(fields) >=3 and fields[0] == "#define":
             rdata[fields[1]] = " ".join(fields[2:])
     return rdata
+
+def update_version_h(fields_to_replace):
+    version_path = join("Code", "Include", "IdlVersion.h")
+    version_file = open(version_path, "rt")
+    version_info = version_file.readlines()
+    version_file.close()
+    version_file = open(version_path, "wt")
+    for vline in version_info:
+        fields = vline.strip().split()
+        if len(fields) >= 3 and fields[0] == '#define' and \
+                fields[1] in fields_to_replace:
+            version_file.write('#define %s %s\n' % (fields[1],
+                fields_to_replace[fields[1]]))
+        else:
+            version_file.write(vline)
+    version_file.close()
 
 def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, sdk_version=None, verbosity=None):
     if len(aeb_platforms) == 0:
@@ -465,9 +585,25 @@ def main(args):
         action="store_const", dest="verbosity", const=0)
     options.add_option("-v", "--verbose", help="Print more messages",
         action="store_const", dest="verbosity", const=2)
+    options.add_option("--update-version", dest="update_version_scheme",
+        action="store", type="choice",
+        choices=["milestone", "nightly", "none", "production",
+                 "rc", "unofficial"],
+        help="Use milestone, nightly, production, rc, unofficial or "\
+             "none.  When using milestone, production, or rc you will "\
+             "need to use --new-version to provide the complete "\
+             "version #. "\
+             "Using production will mark the extension "\
+             "as production, all others will mark the extension "\
+             "as not for production.  The unofficial and nightly "\
+             "will mutate the existing version #, so --new-version is "\
+             "not required.")
+    options.add_option("--new-version", dest="new_version",
+        action="store", type="string")
     options.set_defaults(mode="release", clean=False,
         build_extension="none", build_doxygen=False, sdk_version=None,
-        build_installer=[], prep=False, concurrency=1, verbosity=1)
+        build_installer=[], prep=False, concurrency=1, verbosity=1,
+        update_version_scheme="none")
     options = options.parse_args(args[1:])[0]
 
     builder = None
@@ -535,6 +671,9 @@ def main(args):
                 builder = Windows64bitBuilder(opticks_depends, opticks_code_dir,
                     build_in_debug, opticks_build_dir,
                     options.visualstudio, options.verbosity)
+
+        builder.update_version_number(options.update_version_scheme,
+            options.new_version)
 
         builder.build_executable(options.clean, options.build_extension,
             options.concurrency)
