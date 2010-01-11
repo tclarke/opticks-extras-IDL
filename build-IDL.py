@@ -16,7 +16,9 @@ if sys.platform == "sunos5":
    sys.exit(1)
 
 aeb_platform_mappings = {'win32':'win32-x86-msvc8.1-release',
+                         'win32-debug':'win32-x86-msvc8.1-debug',
                          'win64':'win64-x86-msvc8.1-release',
+                         'win64-debug':'win64-x86-msvc8.1-debug',
                          'solaris':'solaris-sparc-studio12-release'}
 
 def execute_process(args, bufsize=0, executable=None, preexec_fn=None,
@@ -484,6 +486,8 @@ def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, sdk_ver
                copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart61.dll", zfile)
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart63.dll", zfile)
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart64.dll", zfile)
+            copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart70.dll", zfile)
+            copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart71.dll", zfile)
         elif plat_parts[0] == 'solaris':
             bin_dir = os.path.join(os.path.abspath("Code"), "Build", "Binaries-%s-%s" % (SolarisBuilder.platform, plat_parts[-1]))
             extension_plugin_path = join(bin_dir, "PlugIns")
@@ -575,8 +579,8 @@ def main(args):
     options.add_option("--build-extension", dest="build_extension",
         action="store", type="choice", choices=["all","none"])
     options.add_option("--prep", dest="prep", action="store_true")
-    options.add_option("--build-installer", dest="build_installer", action="append",
-         type="choice", choices=["all", "win32", "win64", "solaris"])
+    options.add_option("-i", "--build-installer", dest="build_installer", action="append",
+         type="choice", choices=["all", "win32", "win32-debug", "win64", "win64-debug", "solaris"])
     options.add_option("--sdk-version", dest="sdk_version", action="store")
     options.add_option("--aeb-output", dest="aeb_output", action="store")
     options.add_option("--concurrency", dest="concurrency", action="store")
