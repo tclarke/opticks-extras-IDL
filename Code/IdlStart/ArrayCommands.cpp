@@ -868,6 +868,528 @@ IDL_VPTR opticks_array_dimensions(int argc, IDL_VPTR pArgv[], char* pArgk)
    return IDL_StrToSTRING("success");
 }
 
+/**
+ * Return details about the on-disk row numbers for an Opticks raster data.
+ *
+ * This will return an IDL array, where the value for each item in the
+ * array is the on-disk row number for that given loaded row.  This functionality
+ * is provided because some Opticks wizard items require the on-disk number
+ * in order to function properly.  The Opticks IDL API does not require this
+ * number to function properly.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @return An IDL array containing the on-disk row numbers.  If the \b DATASET could not
+ *         found, then the IDL string of "failure" will be returned.
+ * @usage 
+ * print,opticks_array_dimensions(HEIGHT_OUT=num_rows)
+ * print,num_rows
+ * row_list = opticks_array_ondisk_rows()
+ * ; n_elements(row_list) would be equal to num_rows
+ * ; row_list[0] would return the on-disk number of the first row
+ * @endusage
+ */
+IDL_VPTR opticks_array_ondisk_rows(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   if (argc<0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "OPTICKS_ARRAY_ONDISK_ROWS takes a 'dataset' name as a keyword.");
+   }
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   const std::vector<DimensionDescriptor>& rows = pDesc->getRows();
+   if (rows.empty())
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(rows.size() * sizeof(unsigned int)));
+   VERIFYRV(pCopyvec, NULL);
+   unsigned int* pTempPtr = reinterpret_cast<unsigned int*>(pCopyvec);
+   for (std::vector<DimensionDescriptor>::const_iterator rowIter = rows.begin();
+        rowIter != rows.end();
+        ++rowIter, ++pTempPtr)
+   {
+      *pTempPtr = rowIter->getOnDiskNumber();
+   }
+   IDL_MEMINT pDims[] = {rows.size()};
+   return IDL_ImportArray(1, pDims, IDL_TYP_ULONG, pCopyvec,
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
+}
+
+/**
+ * Return details about the on-disk column numbers for an Opticks raster data.
+ *
+ * This will return an IDL array, where the value for each item in the
+ * array is the on-disk column number for that given loaded column.  This functionality
+ * is provided because some Opticks wizard items require the on-disk number
+ * in order to function properly.  The Opticks IDL API does not require this
+ * number to function properly.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @return An IDL array containing the on-disk column numbers.  If the \b DATASET could not
+ *         found, then the IDL string of "failure" will be returned.
+ * @usage 
+ * print,opticks_array_dimensions(WIDTH_OUT=num_columns)
+ * print,num_columns
+ * col_list = opticks_array_ondisk_columns()
+ * ; n_elements(col_list) would be equal to num_columns
+ * ; col_list[0] would return the on-disk number of the first column
+ * @endusage
+ */
+IDL_VPTR opticks_array_ondisk_columns(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   if (argc<0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "OPTICKS_ARRAY_ONDISK_COLUMNS takes a 'dataset' name as a keyword.");
+   }
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   const std::vector<DimensionDescriptor>& columns = pDesc->getColumns();
+   if (columns.empty())
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(columns.size() * sizeof(unsigned int)));
+   VERIFYRV(pCopyvec, NULL);
+   unsigned int* pTempPtr = reinterpret_cast<unsigned int*>(pCopyvec);
+   for (std::vector<DimensionDescriptor>::const_iterator colIter = columns.begin();
+        colIter != columns.end();
+        ++colIter, ++pTempPtr)
+   {
+      *pTempPtr = colIter->getOnDiskNumber();
+   }
+   IDL_MEMINT pDims[] = {columns.size()};
+   return IDL_ImportArray(1, pDims, IDL_TYP_ULONG, pCopyvec,
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
+}
+
+/**
+ * Return details about the on-disk band numbers for an Opticks raster data.
+ *
+ * This will return an IDL array, where the value for each item in the
+ * array is the on-disk band number for that given loaded band.  This functionality
+ * is provided because some Opticks wizard items require the on-disk number
+ * in order to function properly.  The Opticks IDL API does not require this
+ * number to function properly.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @return An IDL array containing the on-disk band numbers.  If the \b DATASET could not
+ *         found, then the IDL string of "failure" will be returned.
+ * @usage 
+ * print,opticks_array_dimensions(BANDS_OUT=num_bands)
+ * print,num_bands
+ * band_list = opticks_array_ondisk_bands()
+ * ; n_elements(band_list) would be equal to num_bands
+ * ; band_list[0] would return the on-disk number of the first band
+ * @endusage
+ */
+IDL_VPTR opticks_array_ondisk_bands(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   if (argc<0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "OPTICKS_ARRAY_ONDISK_BANDS takes a 'dataset' name as a keyword.");
+   }
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   const std::vector<DimensionDescriptor>& bands = pDesc->getBands();
+   if (bands.empty())
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(bands.size() * sizeof(unsigned int)));
+   VERIFYRV(pCopyvec, NULL);
+   unsigned int* pTempPtr = reinterpret_cast<unsigned int*>(pCopyvec);
+   for (std::vector<DimensionDescriptor>::const_iterator bandIter = bands.begin();
+        bandIter != bands.end();
+        ++bandIter, ++pTempPtr)
+   {
+      *pTempPtr = bandIter->getOnDiskNumber();
+   }
+   IDL_MEMINT pDims[] = {bands.size()};
+   return IDL_ImportArray(1, pDims, IDL_TYP_ULONG, pCopyvec,
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
+}
+
+/**
+ * Return details about the original row numbers for an Opticks raster data.
+ *
+ * This will return an IDL array, where the value for each item in the
+ * array is the original row number for that given loaded row.  This functionality
+ * is provided because some Opticks wizard items require the original number
+ * in order to function properly.  The Opticks IDL API does not require this
+ * number to function properly.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @return An IDL array containing the original row numbers.  If the \b DATASET could not
+ *         found, then the IDL string of "failure" will be returned.
+ * @usage 
+ * print,opticks_array_dimensions(HEIGHT_OUT=num_rows)
+ * print,num_rows
+ * row_list = opticks_array_original_rows()
+ * ; n_elements(row_list) would be equal to num_rows
+ * ; row_list[0] would return the original number of the first row
+ * @endusage
+ */
+IDL_VPTR opticks_array_original_rows(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   if (argc<0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "OPTICKS_ARRAY_ORIGINAL_ROWS takes a 'dataset' name as a keyword.");
+   }
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   const std::vector<DimensionDescriptor>& rows = pDesc->getRows();
+   if (rows.empty())
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(rows.size() * sizeof(unsigned int)));
+   VERIFYRV(pCopyvec, NULL);
+   unsigned int* pTempPtr = reinterpret_cast<unsigned int*>(pCopyvec);
+   for (std::vector<DimensionDescriptor>::const_iterator rowIter = rows.begin();
+        rowIter != rows.end();
+        ++rowIter, ++pTempPtr)
+   {
+      *pTempPtr = rowIter->getOriginalNumber();
+   }
+   IDL_MEMINT pDims[] = {rows.size()};
+   return IDL_ImportArray(1, pDims, IDL_TYP_ULONG, pCopyvec,
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
+}
+
+/**
+ * Return details about the original column numbers for an Opticks raster data.
+ *
+ * This will return an IDL array, where the value for each item in the
+ * array is the original column number for that given loaded column.  This functionality
+ * is provided because some Opticks wizard items require the original number
+ * in order to function properly.  The Opticks IDL API does not require this
+ * number to function properly.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @return An IDL array containing the original column numbers.  If the \b DATASET could not
+ *         found, then the IDL string of "failure" will be returned.
+ * @usage 
+ * print,opticks_array_dimensions(WIDTH_OUT=num_columns)
+ * print,num_columns
+ * col_list = opticks_array_original_columns()
+ * ; n_elements(col_list) would be equal to num_columns
+ * ; col_list[0] would return the original number of the first column
+ * @endusage
+ */
+IDL_VPTR opticks_array_original_columns(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   if (argc<0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "OPTICKS_ARRAY_ORIGINAL_COLUMNS takes a 'dataset' name as a keyword.");
+   }
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   const std::vector<DimensionDescriptor>& columns = pDesc->getColumns();
+   if (columns.empty())
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(columns.size() * sizeof(unsigned int)));
+   VERIFYRV(pCopyvec, NULL);
+   unsigned int* pTempPtr = reinterpret_cast<unsigned int*>(pCopyvec);
+   for (std::vector<DimensionDescriptor>::const_iterator colIter = columns.begin();
+        colIter != columns.end();
+        ++colIter, ++pTempPtr)
+   {
+      *pTempPtr = colIter->getOriginalNumber();
+   }
+   IDL_MEMINT pDims[] = {columns.size()};
+   return IDL_ImportArray(1, pDims, IDL_TYP_ULONG, pCopyvec,
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
+}
+
+/**
+ * Return details about the original band numbers for an Opticks raster data.
+ *
+ * This will return an IDL array, where the value for each item in the
+ * array is the original band number for that given loaded band.  This functionality
+ * is provided because some Opticks wizard items require the original number
+ * in order to function properly.  The Opticks IDL API does not require this
+ * number to function properly.
+ *
+ * @param[in] DATASET @opt
+ *            The name of the raster element to get. Defaults to
+ *            the primary raster element of the active window.
+ * @return An IDL array containing the original band numbers.  If the \b DATASET could not
+ *         found, then the IDL string of "failure" will be returned.
+ * @usage 
+ * print,opticks_array_dimensions(BANDS_OUT=num_bands)
+ * print,num_bands
+ * band_list = opticks_array_original_bands()
+ * ; n_elements(band_list) would be equal to num_bands
+ * ; band_list[0] would return the original number of the first band
+ * @endusage
+ */
+IDL_VPTR opticks_array_original_bands(int argc, IDL_VPTR pArgv[], char* pArgk)
+{
+   if (argc<0)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "OPTICKS_ARRAY_ORIGINAL_BANDS takes a 'dataset' name as a keyword.");
+   }
+   typedef struct
+   {
+      IDL_KW_RESULT_FIRST_FIELD;
+      int datasetExists;
+      IDL_STRING datasetName;
+   } KW_RESULT;
+
+   //IDL_KW_FAST_SCAN is the type of scan we are using, following it is the
+   //name of the keyword, followed by the type, the mask(which should be 1),
+   //flags, a boolean whether the value was populated and finally the value itself
+   static IDL_KW_PAR kw_pars[] = {
+      IDL_KW_FAST_SCAN,
+      {"DATASET", IDL_TYP_STRING, 1, 0, reinterpret_cast<int*>(IDL_KW_OFFSETOF(datasetExists)),
+         reinterpret_cast<char*>(IDL_KW_OFFSETOF(datasetName))},
+      {NULL}
+   };
+
+   IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
+
+   std::string filename;
+   if (kw->datasetExists)
+   {
+      filename = IDL_STRING_STR(&kw->datasetName);
+   }
+   RasterElement* pData = dynamic_cast<RasterElement*>(IdlFunctions::getDataset(filename));
+
+   if (pData == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   RasterDataDescriptor* pDesc = dynamic_cast<RasterDataDescriptor*>(pData->getDataDescriptor());
+   if (pDesc == NULL)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+
+   const std::vector<DimensionDescriptor>& bands = pDesc->getBands();
+   if (bands.empty())
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error could not find array.");
+      return IDL_StrToSTRING("failure");
+   }
+   UCHAR* pCopyvec = reinterpret_cast<UCHAR*>(malloc(bands.size() * sizeof(unsigned int)));
+   VERIFYRV(pCopyvec, NULL);
+   unsigned int* pTempPtr = reinterpret_cast<unsigned int*>(pCopyvec);
+   for (std::vector<DimensionDescriptor>::const_iterator bandIter = bands.begin();
+        bandIter != bands.end();
+        ++bandIter, ++pTempPtr)
+   {
+      *pTempPtr = bandIter->getOriginalNumber();
+   }
+   IDL_MEMINT pDims[] = {bands.size()};
+   return IDL_ImportArray(1, pDims, IDL_TYP_ULONG, pCopyvec,
+      reinterpret_cast<IDL_ARRAY_FREE_CB>(free), NULL);
+}
+
 /*@}*/
 
 static IDL_SYSFUN_DEF2 func_definitions[] = {
@@ -875,6 +1397,18 @@ static IDL_SYSFUN_DEF2 func_definitions[] = {
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(array_to_opticks), "ARRAY_TO_OPTICKS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_dimensions),
       "OPTICKS_ARRAY_DIMENSIONS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_ondisk_rows),
+      "OPTICKS_ARRAY_ONDISK_ROWS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_ondisk_columns),
+      "OPTICKS_ARRAY_ONDISK_COLUMNS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_ondisk_bands),
+      "OPTICKS_ARRAY_ONDISK_BANDS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_original_rows),
+      "OPTICKS_ARRAY_ORIGINAL_ROWS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_original_columns),
+      "OPTICKS_ARRAY_ORIGINAL_COLUMNS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
+   {reinterpret_cast<IDL_SYSRTN_GENERIC>(opticks_array_original_bands),
+      "OPTICKS_ARRAY_ORIGINAL_BANDS",0,12,IDL_SYSFUN_DEF_F_KEYWORDS,0},
    {NULL, NULL, 0, 0, 0, 0}
 };
 
