@@ -18,8 +18,7 @@ if sys.platform == "sunos5":
 aeb_platform_mappings = {'win32':'win32-x86-msvc8.1-release',
                          'win32-debug':'win32-x86-msvc8.1-debug',
                          'win64':'win64-x86-msvc8.1-release',
-                         'win64-debug':'win64-x86-msvc8.1-debug',
-                         'solaris':'solaris-sparc-studio12-release'}
+                         'win64-debug':'win64-x86-msvc8.1-debug'}
 
 def execute_process(args, bufsize=0, executable=None, preexec_fn=None,
       close_fds=None, shell=False, cwd=None, env=None,
@@ -167,11 +166,8 @@ class Builder:
         if self.verbosity > 1:
             print "Done updating version number"
 
-    def build_executable(self, clean_build_first, build_opticks, concurrency):
+    def build_executable(self, clean_build_first, concurrency):
         #No return code, throw exception or ScriptException
-        if build_opticks == "none":
-            return
-
         if self.verbosity > 1:
             print "Building IDL plug-ins..."
         buildenv = os.environ
@@ -577,10 +573,10 @@ def main(args):
         action="store", type="choice", choices=["debug", "release"])
     options.add_option("--clean", dest="clean", action="store_true")
     options.add_option("--build-extension", dest="build_extension",
-        action="store", type="choice", choices=["all","none"])
+        action="store_true")
     options.add_option("--prep", dest="prep", action="store_true")
-    options.add_option("-i", "--build-installer", dest="build_installer", action="append",
-         type="choice", choices=["all", "win32", "win32-debug", "win64", "win64-debug", "solaris"])
+    options.add_option("-i", "--build-installer",
+        dest="build_installer", action="store")
     options.add_option("--sdk-version", dest="sdk_version", action="store")
     options.add_option("--aeb-output", dest="aeb_output", action="store")
     options.add_option("--concurrency", dest="concurrency", action="store")
@@ -605,8 +601,8 @@ def main(args):
     options.add_option("--new-version", dest="new_version",
         action="store", type="string")
     options.set_defaults(mode="release", clean=False,
-        build_extension="none", build_doxygen=False, sdk_version=None,
-        build_installer=[], prep=False, concurrency=1, verbosity=1,
+        build_extension=False, build_doxygen=False, sdk_version=None,
+        prep=False, concurrency=1, verbosity=1,
         update_version_scheme="none")
     options = options.parse_args(args[1:])[0]
 
@@ -639,22 +635,6 @@ def main(args):
         if not os.path.exists(opticks_build_dir):
             raise ScriptException("Opticks build directory path is invalid")
 
-
-        aeb_platforms = options.build_installer
-        if "all" in aeb_platforms:
-            aeb_platforms = aeb_platform_mappings.keys()
-        if len(aeb_platforms) > 0:
-            if options.verbosity > 1:
-                print "Building AEB installation extension..."
-            aeb_output = None
-            if options.aeb_output:
-               aeb_output = options.aeb_output
-            aeb_platforms = map(aeb_platform_mappings.get, aeb_platforms)
-            build_installer(aeb_platforms, aeb_output, opticks_depends, options.sdk_version, options.verbosity)
-            if options.verbosity > 1:
-                print "Done building installer"
-            return 0
-
         if options.mode == "debug":
             build_in_debug = True
         else:
@@ -679,15 +659,39 @@ def main(args):
         builder.update_version_number(options.update_version_scheme,
             options.new_version)
 
-        builder.build_executable(options.clean, options.build_extension,
-            options.concurrency)
+        if options.build_extension:
+            builder.build_executable(options.clean,
+                options.concurrency)
 
-        if options.build_doxygen:
+        if options.build_doxygen or options.build_installer:
            if options.verbosity > 1:
               print "Building doxygen..."
            builder.build_doxygen(None)
            if options.verbosity > 1:
               print "Done building doxygen"
+
+        if options.build_installer:
+            if options.verbosity > 1:
+                print "Building AEB installation extension..."
+            aeb_output = None
+            if options.aeb_output:
+               aeb_output = options.aeb_output
+            aeb_platforms = []
+            if options.build_installer == "all":
+                aeb_platforms = aeb_platform_mappings.values()
+            else:
+                plats = options.build_installer.split(',')
+                for plat in plats:
+                    plat = plat.strip()
+                    if plat in aeb_platform_mappings:
+                        aeb_platforms.append(aeb_platform_mappings[plat])
+                    else:
+                        aeb_platforms.append(plat)
+            build_installer(aeb_platforms, aeb_output,
+                opticks_depends, options.sdk_version, options.verbosity)
+            if options.verbosity > 1:
+                print "Done building installer"
+            return 0
 
         if options.prep:
             if options.verbosity > 1:
