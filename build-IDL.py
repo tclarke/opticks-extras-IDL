@@ -377,8 +377,11 @@ class SolarisBuilder(Builder):
     def prep_to_run(self):
         self.prep_to_run_helper([".so"])
 
-def read_version_h():
-    version_path = join("Code", "Include", "IdlVersion.h")
+def read_version_h(path=None):
+    if path is None:
+        version_path = join("Code", "Include", "IdlVersion.h")
+    else:
+        version_path = path
     version_file = open(version_path, "rt")
     version_info = version_file.readlines()
     version_file.close()
@@ -405,7 +408,8 @@ def update_version_h(fields_to_replace):
             version_file.write(vline)
     version_file.close()
 
-def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, sdk_version=None, verbosity=None):
+def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None,
+                    verbosity=None, opticks_code_dir=None):
     if len(aeb_platforms) == 0:
         raise ScriptException("Invalid AEB platform specification. Valid values are: %s." % ", ".join(aeb_platform_mapping.keys()))
     if sys.platform == "win32":
@@ -433,10 +437,17 @@ def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None, sdk_ver
     manifest[PF_AEBL + "name"] = [version_info["IDL_NAME"]]
     manifest[PF_AEBL + "description"] = [version_info["IDL_NAME_LONG"]]
     manifest[PF_AEBL + "targetPlatform"] = aeb_platforms
-    if sdk_version is None:
-        raise ScriptException("No SDK version specified!")
-    metadata[manifest[PF_AEBL + "targetApplication"][0]][PF_AEBL + "minVersion"] = [sdk_version]
-
+    opticks_version_info = read_version_h(os.path.abspath(join(opticks_code_dir, "application", "Interfaces", "OpticksVersion.h")))
+    opticks_version = opticks_version_info["OPTICKS_VERSION"][1:-1]
+    parts = opticks_version.split(".")
+    min_version = opticks_version
+    max_version = opticks_version
+    if len(parts) >= 2:
+        if parts[1].isdigit() and len(parts) >= 3:
+            max_version = ".".join(parts[:2]) + ".*"
+    metadata[manifest[PF_AEBL + "targetApplication"][0]][PF_AEBL + "minVersion"] = [min_version]
+    metadata[manifest[PF_AEBL + "targetApplication"][0]][PF_AEBL + "maxVersion"] = [max_version]
+    
     out_path = os.path.abspath(join("Installer","IDL.aeb"))
     if aeb_output is not None:
        out_path = os.path.abspath(aeb_output)
@@ -577,7 +588,6 @@ def main(args):
     options.add_option("--prep", dest="prep", action="store_true")
     options.add_option("-i", "--build-installer",
         dest="build_installer", action="store")
-    options.add_option("--sdk-version", dest="sdk_version", action="store")
     options.add_option("--aeb-output", dest="aeb_output", action="store")
     options.add_option("--concurrency", dest="concurrency", action="store")
     options.add_option("--build-doxygen", dest="build_doxygen", action="store_true")
@@ -601,7 +611,7 @@ def main(args):
     options.add_option("--new-version", dest="new_version",
         action="store", type="string")
     options.set_defaults(mode="release", clean=False,
-        build_extension=False, build_doxygen=False, sdk_version=None,
+        build_extension=False, build_doxygen=False,
         prep=False, concurrency=1, verbosity=1,
         update_version_scheme="none")
     options = options.parse_args(args[1:])[0]
@@ -688,7 +698,7 @@ def main(args):
                     else:
                         aeb_platforms.append(plat)
             build_installer(aeb_platforms, aeb_output,
-                opticks_depends, options.sdk_version, options.verbosity)
+                opticks_depends, options.verbosity, opticks_code_dir)
             if options.verbosity > 1:
                 print "Done building installer"
             return 0

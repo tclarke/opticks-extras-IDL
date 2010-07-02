@@ -10,9 +10,7 @@
    aebl:licenseURL "aeb:///license/lgpl-2.1.txt" ;
    aebl:iconURL "aeb:///icon/idl.png" ;
    aebl:targetApplication [
-      aebl:id "opticks@ballforge.net" ;
-      aebl:minVersion "4.3.0rc1" ;
-      aebl:maxVersion "4.3.*" ] ;
+      aebl:id "opticks@ballforge.net" ; ] ;
    opticks:helpEntry [
       opticks:name "IDL Command Help..." ;
       opticks:url "aeb:///Help/IDL/html/index.html" ] .
