@@ -542,11 +542,11 @@ View* IdlFunctions::getViewByWindowName(const std::string& windowName)
    SpatialDataWindow* pWindow = NULL;
    if (windowName.empty())
    {
-      pWindow = dynamic_cast<SpatialDataWindow*>(pDesktop->getWindow(windowName.c_str(), SPATIAL_DATA_WINDOW));
+      pWindow = dynamic_cast<SpatialDataWindow*>(pDesktop->getCurrentWorkspaceWindow());
    }
    else 
    {
-      pWindow = dynamic_cast<SpatialDataWindow*>(pDesktop->getCurrentWorkspaceWindow());
+      pWindow = dynamic_cast<SpatialDataWindow*>(pDesktop->getWindow(windowName.c_str(), SPATIAL_DATA_WINDOW));
    }
    if (pWindow == NULL)
    {
@@ -637,23 +637,6 @@ void IdlFunctions::cleanupWizardObjects()
       FactoryResource<WizardObject> pWizard(*iter);
    }
    spWizards.clear();
-}
-
-void IdlFunctions::copyLayer(RasterLayer* pLayer, const RasterLayer* pOrigLayer)
-{
-   if (pLayer != NULL && pOrigLayer != NULL)
-   {
-      pLayer->setAnimation(pOrigLayer->getAnimation());
-      pLayer->setXOffset(pOrigLayer->getXOffset());
-      pLayer->setYOffset(pOrigLayer->getYOffset());
-      pLayer->setXScaleFactor(pOrigLayer->getXScaleFactor());
-      pLayer->setYScaleFactor(pOrigLayer->getYScaleFactor());
-      pLayer->enableFilters(pOrigLayer->getEnabledFilterNames());
-      pLayer->setAlpha(pOrigLayer->getAlpha());
-      pLayer->setColorMap(pOrigLayer->getColorMapName(), pOrigLayer->getColorMap());
-      pLayer->setComplexComponent(pOrigLayer->getComplexComponent());
-      pLayer->enableGpuImage(pOrigLayer->isGpuImageEnabled());
-   }
 }
 
 RasterChannelType IdlFunctions::getRasterChannelType(const std::string& color)
