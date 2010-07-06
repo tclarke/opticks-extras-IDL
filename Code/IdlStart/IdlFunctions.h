@@ -326,7 +326,6 @@ namespace IdlFunctions
       }
    }
 
-   void copyLayer(RasterLayer* pLayer, const RasterLayer* pOrigLayer);
    RasterChannelType getRasterChannelType(const std::string& color);
 
    static std::vector<WizardObject*> spWizards;
