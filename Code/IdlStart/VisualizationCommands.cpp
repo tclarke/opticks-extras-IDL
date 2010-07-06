@@ -87,44 +87,25 @@ IDL_VPTR set_colormap(int argc, IDL_VPTR pArgv[], char* pArgk)
    //get the colormap filename passed as an input parameter
    mapName = IDL_VarGetString(pArgv[0]);
 
-   //get the view and layer
-   SpatialDataView* pView = dynamic_cast<SpatialDataView*>(IdlFunctions::getViewByWindowName(windowName));
-   if (pView != NULL)
+   //get the layer
+   RasterLayer* pLayer = dynamic_cast<RasterLayer*>(IdlFunctions::getLayerByName(windowName, layerName));
+   if (pLayer == NULL)
    {
-      RasterLayer* pLayer = dynamic_cast<RasterLayer*>(IdlFunctions::getLayerByName(windowName, layerName));
-      if (pLayer != NULL)
-      {
-         try
-         {
-            //the constructor of ColorMap throws an exception when the file doesn't exist
-            ColorMap pMap(mapName);
-            pLayer->setColorMap(mapName, pMap.getTable());
-         }
-         catch (...)
-         {
-            IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Color map filename is invalid.");
-            return IDL_StrToSTRING("failure");
-         }
-      }
-      else
-      {
-         RasterLayer* pCube = dynamic_cast<RasterLayer*>(IdlFunctions::getLayerByName(windowName, layerName));
-         if (pCube != NULL)
-         {
-            try
-            {
-               //the constructor of ColorMap throws an exception when the file doesn't exist
-               ColorMap pMap(mapName);
-               pCube->setColorMap(mapName, pMap.getTable());
-            }
-            catch (...)
-            {
-               IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Color map filename is invalid.");
-               return IDL_StrToSTRING("failure");
-            }
-         }
-      }
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "No raster layer available.");
+      return IDL_StrToSTRING("failure");
    }
+
+   try
+   {
+      //the constructor of ColorMap throws an exception when the file doesn't exist
+      pLayer->setColorMap(ColorMap(mapName));
+   }
+   catch (const std::exception&)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Color map filename is invalid.");
+      return IDL_StrToSTRING("failure");
+   }
+
    return IDL_StrToSTRING("success");
 }
 
