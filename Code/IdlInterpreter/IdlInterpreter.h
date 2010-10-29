@@ -12,8 +12,9 @@
 
 #include "ApplicationServices.h"
 #include "AttachmentPtr.h"
-#include "ExecutableShell.h"
-#include "InterpreterShell.h"
+#include "Interpreter.h"
+#include "InterpreterManagerShell.h"
+#include "SubjectImp.h"
 #include "WizardShell.h"
 
 #include <string>
@@ -21,38 +22,64 @@
 
 class PlugInManagerServices;
 
-class IdlProxy : public ExecutableShell
+class IdlProxy : public Interpreter, public SubjectImp
 {
 public:
    IdlProxy();
    virtual ~IdlProxy();
-   virtual bool getInputSpecification(PlugInArgList*& pArgList);
-   virtual bool getOutputSpecification(PlugInArgList*& pArgList);
-   virtual bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
-   bool processCommand(const std::string& command, std::string& returnText,
-      std::string& errorText, Progress* pProgress);
 
+   bool isIdlRunning() const;
+   bool startIdl();
+   std::string getStartupMessage() const;
+
+   virtual std::string getPrompt() const;
+   virtual bool executeCommand(const std::string& command);
+   virtual bool executeScopedCommand(const std::string& command, const Slot& output,
+      const Slot& error, Progress* pProgress);
+   virtual bool isGlobalOutputShown() const;
+   virtual void showGlobalOutput(bool newValue);
+
+   virtual const std::string& getObjectType() const;
+   virtual bool isKindOf(const std::string& className) const;
+
+   void sendOutput(const std::string& text);
+   void sendError(const std::string& text);
+
+   SUBJECTADAPTER_METHODS(SubjectImp)
 private:
-   bool startIdl(const char** pOutput = NULL, const char** pErrorOutput = NULL);
+   bool executeCommandInternal(const std::string& command, Progress* pProgress);
+   SIGNAL_METHOD(ScriptorExecutor, ScopedOutputText);
+   SIGNAL_METHOD(ScriptorExecutor, ScopedErrorText);
+
    void applicationClosed(Subject& subject, const std::string& signal, const boost::any& data);
 
    AttachmentPtr<ApplicationServices> mpAppServices;
    bool mIdlRunning;
+   bool mRunningScopedCommand;
    std::vector<DynamicModule*> mModules;
+   bool mGlobalOutputShown;
+   std::string mStartupMessage;
 };
 
-class IdlInterpreter : public InterpreterShell
+class IdlInterpreterManager : public InterpreterManagerShell, public SubjectImp
 {
 public:
-   IdlInterpreter();
-   virtual ~IdlInterpreter();
-   virtual bool getInputSpecification(PlugInArgList*& pArgList);
-   virtual bool getOutputSpecification(PlugInArgList*& pArgList);
+   IdlInterpreterManager();
+   virtual ~IdlInterpreterManager();
+
    virtual bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
-   virtual void getKeywordList(std::vector<std::string>& list) const;
-   virtual bool getKeywordDescription(const std::string& keyword, std::string& description) const;
-   virtual void getUserDefinedTypes(std::vector<std::string>& list) const ;
-   virtual bool getTypeDescription(const std::string& type, std::string& description) const ;
+
+   virtual bool isStarted() const;
+   virtual bool start();
+   virtual std::string getStartupMessage() const;
+   virtual Interpreter* getInterpreter() const;
+
+   virtual const std::string& getObjectType() const;
+   virtual bool isKindOf(const std::string& className) const;
+
+   SUBJECTADAPTER_METHODS(SubjectImp)
+private:
+   std::auto_ptr<IdlProxy> mpInterpreter;
 };
 
 class IdlInterpreterWizardItem : public WizardShell

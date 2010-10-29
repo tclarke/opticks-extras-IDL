@@ -14,134 +14,78 @@
 #include "IdlVersion.h"
 #include "IdlInterpreter.h"
 #include "IdlInterpreterOptions.h"
+#include "InterpreterUtilities.h"
 #include "PlugInArgList.h"
 #include "PlugInManagerServices.h"
 #include "PlugInRegistration.h"
 #include "ProgressTracker.h"
 
+#include <boost/tokenizer.hpp>
 #include <QtCore/QString>
 
-REGISTER_PLUGIN_BASIC(Idl, IdlProxy);
-REGISTER_PLUGIN_BASIC(Idl, IdlInterpreter);
+REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterManager);
 REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterWizardItem);
 
-IdlProxy::IdlProxy() :
-      mIdlRunning(false),
-      mpAppServices(Service<ApplicationServices>().get(), SIGNAL_NAME(ApplicationServices, ApplicationClosed),
-         Slot(this, &IdlProxy::applicationClosed))
+typedef void (*output_callback_t)(char* pBuf, int num_chars, int error, int addNewline);
+
+namespace
 {
-   setName("IdlProxy");
-   setDescription("Proxies commands from Opticks to IDL.");
-   setDescriptorId("{60fd1d3c-ebed-4268-aaa2-6adeb528b9e6}");
-   setCopyright(IDL_COPYRIGHT);
-   setVersion(IDL_VERSION_NUMBER);
-   setProductionStatus(IDL_IS_PRODUCTION_RELEASE);
-   setType("Manager");
-   executeOnStartup(true);
-   destroyAfterExecute(false);
-   allowMultipleInstances(false);
-   setWizardSupported(false);
+   IdlProxy* spProxyHandle = NULL;
+   void handleOutput(char* pBuf, int num_chars, int error, int addNewline)
+   {
+      if (spProxyHandle == NULL)
+      {
+         return;
+      }
+      std::string output = std::string(pBuf, num_chars);
+      if (addNewline)
+      {
+         output += "\n";
+      }
+      if (error)
+      {
+         spProxyHandle->sendError(output);
+      }
+      else
+      {
+         spProxyHandle->sendOutput(output);
+      }
+   }
+};
+
+IdlProxy::IdlProxy() :
+   mIdlRunning(false),
+   mpAppServices(Service<ApplicationServices>().get(), SIGNAL_NAME(ApplicationServices, ApplicationClosed),
+      Slot(this, &IdlProxy::applicationClosed)),
+   mGlobalOutputShown(false),
+   mRunningScopedCommand(false)
+{
+   spProxyHandle = this;
 }
 
 IdlProxy::~IdlProxy()
 {
+   spProxyHandle = NULL;
 }
 
-bool IdlProxy::getInputSpecification(PlugInArgList*& pArgList)
+bool IdlProxy::isIdlRunning() const
 {
-   pArgList = NULL;
-   return true;
+   return mIdlRunning;
 }
 
-bool IdlProxy::getOutputSpecification(PlugInArgList*& pArgList)
+std::string IdlProxy::getStartupMessage() const
 {
-   pArgList = NULL;
-   return true;
+   return mStartupMessage;
 }
 
-bool IdlProxy::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
+bool IdlProxy::startIdl()
 {
-   return true;
-}
-
-bool IdlProxy::processCommand(const std::string& command,
-                              std::string& returnText,
-                              std::string& errorText,
-                              Progress* pProgress)
-{
-   const char* pOutput = NULL;
-   const char* pErrorOutput = NULL;
-   if (!mIdlRunning && !startIdl(&pOutput, &pErrorOutput))
+   if (mIdlRunning)
    {
-      returnText =
-         "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
-      if (pErrorOutput != NULL)
-      {
-         returnText += "\n";
-         returnText += pErrorOutput;
-      }
-      return false;
+      return true;
    }
-   if (mModules.empty())
-   {
-      returnText =
-         "Unable to start the IDL interpreter. Make sure you have located your IDL installation in the options.";
-      if (pErrorOutput != NULL)
-      {
-         returnText += "\n";
-         returnText += pErrorOutput;
-      }
-      return false;
-   }
-   if (pOutput != NULL)
-   {
-      returnText += pOutput;
-      returnText += "\n";
-      pOutput = NULL;
-   }
-   if (pErrorOutput != NULL)
-   {
-      errorText += pErrorOutput;
-      errorText += "\n";
-      pErrorOutput = NULL;
-   }
+   mStartupMessage.clear();
 
-   /***
-    * We only need to run one of the dlls.  All the dlls 'execute_idl'
-    * command call the same IDL dll which has one list of commands
-    * registered by all the .ds.  The last dll is used because it was
-    * the last one to push an output function into IDL's output function
-    * stack. IDL will only run the last output function so we need to
-    * run the dll with that output function.
-    *
-    * P.S. This is a hack and we need to find a better way so there is
-    * only one 'execute_idl' and one output function for all dlls.
-    */
-   DynamicModule* pMod = mModules.back();
-   VERIFY(pMod != NULL);
-
-   //get the location of the function that will call the IDL
-   void (*execute_idl)(const char*, const char**, const char**, Progress*) =
-      reinterpret_cast<void (*)(const char*, const char**, const char**, Progress*)>(
-            *pMod->getProcedureAddress("execute_idl"));
-   VERIFY(execute_idl);
-
-   //execute the function and capture the output
-   execute_idl(command.c_str(), &pOutput, &pErrorOutput, pProgress);
-   if (pOutput != NULL)
-   {
-      returnText += pOutput;
-   }
-   if (pErrorOutput != NULL)
-   {
-      errorText += pErrorOutput;
-   }
-
-   return true;
-}
-
-bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
-{
    // figure out which version of IDL to use
    std::string idlDll;
 
@@ -172,6 +116,7 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
 #endif
    std::vector<Filename*> idlModules = IdlInterpreterOptions::getSettingModules();
 
+   const char* pOutput = NULL;
    for (std::vector<Filename*>::size_type i = 0; i < idlModules.size(); ++i)
    {
       std::string startDll = idlModules[i]->getFullPathAndName();
@@ -181,10 +126,10 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
       if (pModule != NULL)
       {
          External* pExternal = ModuleManager::instance()->getService();
-         bool(*start_idl)(const char*, External*, const char**, const char**) =
-            reinterpret_cast<bool(*)(const char*, External*, const char**, const char**)>(
+         bool(*start_idl)(const char*, External*, const char**, output_callback_t) =
+            reinterpret_cast<bool(*)(const char*, External*, const char**, output_callback_t)>(
             pModule->getProcedureAddress("start_idl"));
-         if (start_idl != NULL && start_idl(idlDll.c_str(), pExternal, pOutput, pErrorOutput) != 0)
+         if (start_idl != NULL && start_idl(idlDll.c_str(), pExternal, &pOutput, &handleOutput) != 0)
          {
             mModules.push_back(pModule);
             mIdlRunning = true;
@@ -193,10 +138,168 @@ bool IdlProxy::startIdl(const char** pOutput, const char** pErrorOutput)
          {
             Service<PlugInManagerServices>()->destroyDynamicModule(pModule);
          }
+         if (pOutput != NULL)
+         {
+            mStartupMessage += pOutput;
+            mStartupMessage += "\n";
+         }
       }
    }
 
+   if (!mIdlRunning)
+   {
+      mStartupMessage = 
+         "Unable to start the IDL interpreter. Make sure you have located "
+         "your IDL installation in the options.\n" + mStartupMessage;
+      return false;
+   }
+
+   if (!IdlInterpreterOptions::getSettingInteractiveAvailable())
+   {
+      mStartupMessage = "The ability to type IDL commands into the Scripting Window "
+         "has been disabled by another extension.\n" + mStartupMessage;
+   }
+
    return mIdlRunning;
+}
+
+std::string IdlProxy::getPrompt() const
+{
+   return "> ";
+}
+
+bool IdlProxy::executeCommand(const std::string& command)
+{
+   mRunningScopedCommand = false;
+   bool retVal = executeCommandInternal(command, NULL);
+   mRunningScopedCommand = false;
+   return retVal;
+}
+
+bool IdlProxy::executeScopedCommand(const std::string& command, const Slot& output, const Slot& error, Progress* pProgress)
+{
+   mRunningScopedCommand = true;
+   attach(SIGNAL_NAME(IdlProxy, ScopedOutputText), output);
+   attach(SIGNAL_NAME(IdlProxy, ScopedErrorText), error);
+   bool retValue = executeCommandInternal(command, pProgress);
+   detach(SIGNAL_NAME(IdlProxy, ScopedErrorText), error);
+   detach(SIGNAL_NAME(IdlProxy, ScopedOutputText), output);
+   mRunningScopedCommand = false;
+   return retValue;
+}
+
+bool IdlProxy::executeCommandInternal(const std::string& command, Progress* pProgress)
+{
+   if (!mIdlRunning || mModules.empty())
+   {
+      return false;
+   }
+
+   /***
+    * We only need to run one of the dlls.  All the dlls 'execute_idl'
+    * command call the same IDL dll which has one list of commands
+    * registered by all the .dlls.  The last dll is used because it was
+    * the last one to push an output function into IDL's output function
+    * stack. IDL will only run the last output function so we need to
+    * run the dll with that output function.
+    *
+    * P.S. This is a hack and we need to find a better way so there is
+    * only one 'execute_idl' and one output function for all dlls.
+    */
+   DynamicModule* pMod = mModules.back();
+   VERIFY(pMod != NULL);
+
+   //get the location of the function that will call the IDL
+   int (*execute_idl)(int, char**, int, Progress*) =
+      reinterpret_cast<int (*)(int, char**, int, Progress*)>(
+            *pMod->getProcedureAddress("execute_idl"));
+   VERIFY(execute_idl);
+
+   std::vector<std::string> lines;
+   typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+   boost::char_separator<char> newlineSep("\n", "", boost::keep_empty_tokens);
+   tokenizer tokens(command, newlineSep);
+   std::copy(tokens.begin(), tokens.end(), std::back_inserter(lines));
+
+   if (lines.empty())
+   {
+      return true;
+   }
+   char** pCommands = new (std::nothrow) char*[lines.size()];
+   if (pCommands == NULL)
+   {
+      sendError("Could not allocate memory to send commands to IDL");
+      return false;
+   }
+   for (std::vector<std::string>::size_type count = 0; count < lines.size(); ++count)
+   {
+      pCommands[count] = const_cast<char*>(lines[count].c_str());
+   }
+
+   //execute the function and capture the output
+   int retVal = execute_idl(lines.size(), pCommands, mRunningScopedCommand, pProgress);
+   delete [] pCommands;
+   pCommands = NULL;
+
+   return (retVal == 0);
+}
+
+bool IdlProxy::isGlobalOutputShown() const
+{
+   return mGlobalOutputShown;
+}
+
+void IdlProxy::showGlobalOutput(bool newValue)
+{
+   mGlobalOutputShown = newValue;
+}
+
+const std::string& IdlProxy::getObjectType() const
+{
+   static std::string sType("IdlProxy");
+   return sType;
+}
+
+bool IdlProxy::isKindOf(const std::string& className) const
+{
+   if (className == getObjectType())
+   {
+      return true;
+   }
+
+   return SubjectImp::isKindOf(className);
+}
+
+void IdlProxy::sendOutput(const std::string& text)
+{
+   if (text.empty())
+   {
+      return;
+   }
+   if (mRunningScopedCommand)
+   {
+      notify(SIGNAL_NAME(IdlProxy, ScopedOutputText), text);
+   }
+   if (!mRunningScopedCommand || mGlobalOutputShown)
+   {
+      notify(SIGNAL_NAME(Interpreter, OutputText), text);
+   } 
+}
+
+void IdlProxy::sendError(const std::string& text)
+{
+   if (text.empty())
+   {
+      return;
+   }
+   if (mRunningScopedCommand)
+   {
+      notify(SIGNAL_NAME(IdlProxy, ScopedErrorText), text);
+   }
+   if (!mRunningScopedCommand || mGlobalOutputShown)
+   {
+      notify(SIGNAL_NAME(Interpreter, ErrorText), text);
+   } 
 }
 
 void IdlProxy::applicationClosed(Subject& subject, const std::string& signal, const boost::any& data)
@@ -215,7 +318,8 @@ void IdlProxy::applicationClosed(Subject& subject, const std::string& signal, co
    }
 }
 
-IdlInterpreter::IdlInterpreter()
+IdlInterpreterManager::IdlInterpreterManager()
+   : mpInterpreter(new IdlProxy())
 {
    setName("IDL");
    setDescription("Provides command line utilities to execute IDL commands.");
@@ -225,105 +329,69 @@ IdlInterpreter::IdlInterpreter()
    setProductionStatus(IDL_IS_PRODUCTION_RELEASE);
    allowMultipleInstances(false);
    setWizardSupported(false);
+   setInteractiveEnabled(IdlInterpreterOptions::getSettingInteractiveAvailable());
 }
 
-IdlInterpreter::~IdlInterpreter()
+IdlInterpreterManager::~IdlInterpreterManager()
 {
 }
 
-bool IdlInterpreter::getInputSpecification(PlugInArgList*& pArgList)
+bool IdlInterpreterManager::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
 {
-   VERIFY((pArgList = Service<PlugInManagerServices>()->getPlugInArgList()) != NULL);
-   VERIFY(pArgList->addArg<Progress>(ProgressArg(), NULL));
-   VERIFY(pArgList->addArg<std::string>(CommandArg(), std::string()));
-
+   mpInterpreter->startIdl();
    return true;
 }
 
-bool IdlInterpreter::getOutputSpecification(PlugInArgList*& pArgList)
+bool IdlInterpreterManager::isStarted() const
 {
-   VERIFY((pArgList = Service<PlugInManagerServices>()->getPlugInArgList()) != NULL);
-   VERIFY(pArgList->addArg<std::string>(OutputTextArg()));
-   VERIFY(pArgList->addArg<std::string>(ReturnTypeArg()));
-
-   return true;
+   return mpInterpreter->isIdlRunning();
 }
 
-bool IdlInterpreter::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
+bool IdlInterpreterManager::start()
 {
-   VERIFY(pInArgList != NULL && pOutArgList != NULL);
-   if (!IdlInterpreterOptions::getSettingInteractiveAvailable())
+   bool alreadyStarted = mpInterpreter->isIdlRunning();
+   bool started = mpInterpreter->startIdl();
+   if (!alreadyStarted && started)
    {
-      std::string returnType("Error");
-      std::string returnText = "Interactive interpreter has been disabled.";
-      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &returnText));
+      notify(SIGNAL_NAME(InterpreterManager, InterpreterStarted));
+   }
+   return started;
+}
+
+std::string IdlInterpreterManager::getStartupMessage() const
+{
+   return mpInterpreter->getStartupMessage();
+}
+
+Interpreter* IdlInterpreterManager::getInterpreter() const
+{
+   if (mpInterpreter->isIdlRunning())
+   {
+      return mpInterpreter.get();
+   }
+   return NULL;
+}
+const std::string& IdlInterpreterManager::getObjectType() const
+{
+   static std::string sType("IdlInterpreterManager");
+   return sType;
+}
+
+bool IdlInterpreterManager::isKindOf(const std::string& className) const
+{
+   if (className == getObjectType())
+   {
       return true;
    }
-   
-   std::string command;
-   if (!pInArgList->getPlugInArgValue(CommandArg(), command))
-   {
-      return false;
-   }
-   Progress* pProgress = pInArgList->getPlugInArgValue<Progress>(ProgressArg());
-   std::vector<PlugIn*> plugins = Service<PlugInManagerServices>()->getPlugInInstances("IdlProxy");
-   if (plugins.size() != 1)
-   {
-      return false;
-   }
-   IdlProxy* pProxy = dynamic_cast<IdlProxy*>(plugins.front());
-   VERIFY(pProxy != NULL);
 
-   std::string returnText;
-   std::string errorText;
-   if (!pProxy->processCommand(command, returnText, errorText, pProgress))
-   {
-      std::string returnType("Error");
-      returnText += "\n" + errorText;
-      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &returnText));
-      return true;
-   }
-   // Populate the output arg list
-   if (errorText.empty())
-   {
-      std::string returnType("Output");
-      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &returnText));
-   }
-   else
-   {
-      std::string returnType("Error");
-      VERIFY(pOutArgList->setPlugInArgValue(ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(OutputTextArg(), &errorText));
-   }
-
-   return true;
-}
-
-void IdlInterpreter::getKeywordList(std::vector<std::string>& list) const
-{
-}
-
-bool IdlInterpreter::getKeywordDescription(const std::string& keyword, std::string& description) const
-{
-   return false;
-}
-
-void IdlInterpreter::getUserDefinedTypes(std::vector<std::string>&) const 
-{
-}
-
-bool IdlInterpreter::getTypeDescription(const std::string&, std::string&) const 
-{
-   return false;
+   return SubjectImp::isKindOf(className);
 }
 
 IdlInterpreterWizardItem::IdlInterpreterWizardItem()
 {
    setName("IDL Interpreter");
-   setDescription("Allow execution of IDL code from within a wizard.");
+   setDescription("Allow execution of IDL code from within a wizard. "
+      "This is DEPRECATED, please use the RunInterpreterCommands wizard item.");
    setDescriptorId("{006e0f34-b7b1-4b50-aa6f-24abbc205b91}");
    setCopyright(IDL_COPYRIGHT);
    setVersion(IDL_VERSION_NUMBER);
@@ -338,7 +406,7 @@ bool IdlInterpreterWizardItem::getInputSpecification(PlugInArgList*& pArgList)
 {
    VERIFY((pArgList = Service<PlugInManagerServices>()->getPlugInArgList()) != NULL);
    VERIFY(pArgList->addArg<Progress>(ProgressArg(), NULL));
-   VERIFY(pArgList->addArg<std::string>(IdlInterpreter::CommandArg(), std::string()));
+   VERIFY(pArgList->addArg<std::string>("Command", std::string()));
 
    return true;
 }
@@ -346,8 +414,8 @@ bool IdlInterpreterWizardItem::getInputSpecification(PlugInArgList*& pArgList)
 bool IdlInterpreterWizardItem::getOutputSpecification(PlugInArgList*& pArgList)
 {
    VERIFY((pArgList = Service<PlugInManagerServices>()->getPlugInArgList()) != NULL);
-   VERIFY(pArgList->addArg<std::string>(IdlInterpreter::OutputTextArg()));
-   VERIFY(pArgList->addArg<std::string>(IdlInterpreter::ReturnTypeArg()));
+   VERIFY(pArgList->addArg<std::string>("Output Text"));
+   VERIFY(pArgList->addArg<std::string>("Return Type"));
 
    return true;
 }
@@ -355,51 +423,48 @@ bool IdlInterpreterWizardItem::getOutputSpecification(PlugInArgList*& pArgList)
 bool IdlInterpreterWizardItem::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
 {
    VERIFY(pInArgList != NULL && pOutArgList != NULL);
-   
-   std::string command;
-   if (!pInArgList->getPlugInArgValue(IdlInterpreter::CommandArg(), command))
-   {
-      return false;
-   }
+
    ProgressTracker progress(pInArgList->getPlugInArgValue<Progress>(ProgressArg()),
       "Execute IDL command.", "extras", "{592287e7-abbf-4581-9389-93b3bd5d8070}");
 
-   std::vector<PlugIn*> plugins = Service<PlugInManagerServices>()->getPlugInInstances("IdlProxy");
+   progress.report("This wizard item is DEPRECATED, please use the RunInterpreterCommands wizard item.",
+      0, WARNING, true);
+
+   std::string command;
+   if (!pInArgList->getPlugInArgValue("Command", command))
+   {
+      return false;
+   }
+
+   std::vector<PlugIn*> plugins = Service<PlugInManagerServices>()->getPlugInInstances("IDL");
    if (plugins.size() != 1)
    {
       progress.report("Unable to locate an IDL interpreter.", 0, ERRORS, true);
       return false;
    }
-   IdlProxy* pProxy = dynamic_cast<IdlProxy*>(plugins.front());
-   VERIFY(pProxy != NULL);
-
-   progress.report("Executing IDL command.", 1, NORMAL);
-   std::string returnText;
-   std::string errorText;
-   if (!pProxy->processCommand(command, returnText, errorText, progress.getCurrentProgress()))
+   IdlInterpreterManager* pMgr = dynamic_cast<IdlInterpreterManager*>(plugins.front());
+   VERIFY(pMgr != NULL);
+   pMgr->start();
+   Interpreter* pInterpreter = pMgr->getInterpreter();
+   if (pInterpreter == NULL)
    {
-      progress.report("Error executing IDL command.", 0, ERRORS, true);
-      std::string returnType("Error");
-      returnText += "\n" + errorText;
-      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &returnText));
+      progress.report("Unable to start IDL interpreter. " + pMgr->getStartupMessage(), 0, ERRORS, true);
       return false;
    }
-   // Populate the output arg list
-   if (errorText.empty())
-   {
-      std::string returnType("Output");
-      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &returnText));
-   }
-   else
-   {
-      std::string returnType("Error");
-      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::ReturnTypeArg(), &returnType));
-      VERIFY(pOutArgList->setPlugInArgValue(IdlInterpreter::OutputTextArg(), &errorText));
-   }
 
+   progress.report("Executing IDL command.", 1, NORMAL);
+   std::string outputAndErrorText;
+   bool hasErrorText = false;
+   bool retVal = InterpreterUtilities::executeScopedCommand("IDL", command, outputAndErrorText, hasErrorText,
+      progress.getCurrentProgress());
+   if (!retVal)
+   {
+      progress.report("Error executing IDL command.", 0, ERRORS, true);
+   }
+   std::string returnType = (hasErrorText ? "Error" : "Output");
+   VERIFY(pOutArgList->setPlugInArgValue("Return Type", &returnType));
+   VERIFY(pOutArgList->setPlugInArgValue("Output Text", &outputAndErrorText));
    progress.report("Executing IDL command.", 100, NORMAL);
    progress.upALevel();
-   return true;
+   return retVal;
 }

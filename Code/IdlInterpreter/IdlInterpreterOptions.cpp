@@ -12,8 +12,10 @@
 #include "FileBrowser.h"
 #include "Filename.h"
 #include "IdlInterpreterOptions.h"
+#include "InterpreterManager.h"
 #include "LabeledSection.h"
 #include "OptionQWidgetWrapper.h"
+#include "PlugInManagerServices.h"
 #include "PlugInRegistration.h"
 #include <QtGui/QComboBox>
 #include <QtGui/QGridLayout>
@@ -91,4 +93,13 @@ void IdlInterpreterOptions::applyChanges()
    pTmpDll->setFullPathAndName(mpDll->getFilename().toStdString());
    IdlInterpreterOptions::setSettingDLL(pTmpDll.get());
    IdlInterpreterOptions::setSettingVersion(mpVersion->currentText().toStdString());
+
+   Service<PlugInManagerServices> pPlugInMgr;
+   std::vector<PlugIn*> plugins = pPlugInMgr->getPlugInInstances("IDL");
+   if (!plugins.empty())
+   {
+      InterpreterManager* pInterMgr = dynamic_cast<InterpreterManager*>(plugins.front());
+      pInterMgr->start();
+      VERIFYNR(plugins.size() == 1);
+   }
 }

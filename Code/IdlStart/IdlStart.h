@@ -15,10 +15,12 @@
 class External;
 class Progress;
 
+typedef void (*output_callback_t)(char* pBuf, int num_chars, int error, int addNewline);
+
 extern "C" LINKAGE int start_idl(
-             const char* pLocation, External* pServices, const char** pOutput, const char** pErrorOutput);
-extern "C" LINKAGE void execute_idl(
-             const char* pCommand, const char** pOutput, const char** pErrorOutput, Progress* pProgress);
+             const char* pLocation, External* pServices, const char** pOutput, output_callback_t pReportOutput);
+extern "C" LINKAGE int execute_idl(
+             int commandCount, char** pCommands, int scope, Progress* pProgress);
 extern "C" LINKAGE int close_idl();
 
 extern Progress* spProgress;
