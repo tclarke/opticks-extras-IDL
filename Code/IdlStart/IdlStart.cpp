@@ -32,31 +32,37 @@ Progress* spProgress = NULL;
 
 namespace
 {
-   std::string output;
-   std::string errorOutput;
-   bool execSuccess = true;
+   std::string startupOutput;
+   output_callback_t spSendOutput = NULL;
 
-   void OutFunc(int flags, char* pBuf, int n)
+   void PassthroughOutFunc(int flags, char* pBuf, int n)
    {
-      std::string& out = (flags & IDL_TOUT_F_STDERR) ? errorOutput : output;
+      if (n == 0 || spSendOutput == NULL)
+      {
+         return;
+      }
+      spSendOutput(pBuf, n, (flags & IDL_TOUT_F_STDERR), (flags & IDL_TOUT_F_NLPOST));
+   }
+
+   void StartupOutFunc(int flags, char* pBuf, int n)
+   {
       // If there is a message, save it
       if (n != 0)
       {
-         if (out.size() < out.max_size() && execSuccess)
+         if (startupOutput.size() < startupOutput.max_size())
          {
             try
             {
-               out += std::string(pBuf, n);
+               startupOutput += std::string(pBuf, n);
                if (flags & IDL_TOUT_F_NLPOST)
                {
-                  out += "\n";
+                  startupOutput += "\n";
                }
             }
             catch(...)
             {
-               errorOutput.clear();
-               errorOutput = "could not generate output\n";
-               execSuccess = false;
+               startupOutput.clear();
+               startupOutput = "could not generate output\n";
             }
          }
       }
@@ -66,7 +72,7 @@ namespace
 extern "C" LINKAGE int start_idl(const char* pLocation,
                                  External* pExternal,
                                  const char** pOutput,
-                                 const char** pErrorOutput)
+                                 output_callback_t pReportOutput)
 {
    VERIFYRV(pExternal != NULL, 0);
    ModuleManager::instance()->setService(pExternal);
@@ -85,7 +91,11 @@ extern "C" LINKAGE int start_idl(const char* pLocation,
    }
 #endif
    // Register our output function
-   IDL_ToutPush(OutFunc);
+   startupOutput.clear();
+   IDL_ToutPush(StartupOutFunc);
+   // IDL seems to push the "welcome" banner to stderr so
+   // we need to do this in order to see the banner and the
+   // output of the first command
 
 #if IDL_VERSION_MAJOR == 6 && IDL_VERSION_MINOR <= 1
 # if defined(WIN_API)
@@ -121,52 +131,46 @@ extern "C" LINKAGE int start_idl(const char* pLocation,
    if (!success)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "Error adding system routines.");
-      if (pErrorOutput != NULL)
-      {
-         *pErrorOutput = errorOutput.c_str();
-      }
    }
-   // IDL seems to push the "welcome" banner to stderr so
-   // we need to do this in order to see the banner and the
-   // output of the first command
    if (pOutput != NULL)
    {
-      output = errorOutput + "\n" + output;
-      *pOutput = output.c_str();
+      *pOutput = startupOutput.c_str();
    }
-   else if (pErrorOutput != NULL)
+   IDL_ToutPop();
+
+   if (success)
    {
-      *pErrorOutput = errorOutput.c_str();
+      spSendOutput = pReportOutput;
+      IDL_ToutPush(PassthroughOutFunc);
    }
- 
+
    return success ? 1 : 0;
 }
 
-extern "C" LINKAGE void execute_idl(const char* pCommand,
-                                    const char** pOutput,
-                                    const char** pErrorOutput,
-                                    Progress* pProgress)
+extern "C" LINKAGE int execute_idl(int commandCount,
+                                   char** pCommands,
+                                   int scope,
+                                   Progress* pProgress)
 {
    spProgress = pProgress;
-   execSuccess = true;
-   output.clear();
-   errorOutput.clear();
+   if (scope != 0)
+   {
+      IDL_ExecuteStr("MESSAGE, /RESET");
+   }
    //the idl command to execute the contents of the passed in std::string
-   IDL_ExecuteStr(const_cast<char*>(pCommand));
+   int retVal = IDL_Execute(commandCount, pCommands);
+   if (scope != 0)
+   {
+      IDL_ExecuteStr("MESSAGE, /RESET");
+   }
    spProgress = NULL;
-   if (pOutput != NULL)
-   {
-      *pOutput = output.c_str();
-   }
-   if (pErrorOutput != NULL)
-   {
-      *pErrorOutput = errorOutput.c_str();
-   }
+   return retVal;
 }
 
 extern "C" LINKAGE int close_idl()
 {
    IdlFunctions::cleanupWizardObjects();
+   spSendOutput = NULL;
    IDL_ToutPop();
    IDL_Cleanup(IDL_TRUE);
    return 1;
