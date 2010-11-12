@@ -329,6 +329,7 @@ IdlInterpreterManager::IdlInterpreterManager()
    setProductionStatus(IDL_IS_PRODUCTION_RELEASE);
    allowMultipleInstances(false);
    setWizardSupported(false);
+   setFileExtensions("IDL Scripts (*.pro)");
    setInteractiveEnabled(IdlInterpreterOptions::getSettingInteractiveAvailable());
 }
 
