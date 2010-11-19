@@ -13,7 +13,7 @@
 #define IDL_NAME "IDL"
 #define IDL_NAME_LONG "IDL interpreter extension."
 #define IDL_COPYRIGHT "Copyright © 2009, Ball Aerospace & Technologies Corp."
-#define IDL_VERSION_NUMBER "1.2.0rc2"
+#define IDL_VERSION_NUMBER "1.2.0Unofficial"
 #define IDL_IS_PRODUCTION_RELEASE false
 
 #endif
