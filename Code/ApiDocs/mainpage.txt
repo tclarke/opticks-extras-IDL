@@ -8,7 +8,7 @@ Additionally, the IDL Interface provides functions to view and modify metadata, 
 The interface is accessed through the scripting window in Opticks, which accepts IDL commands and displays IDL output in the same manner as the command line interface in the IDL Developer's Environment.
 The IDL Interface also supports batch processing through the Opticks Wizard functionality.
 This capability allows users to run Opticks plug-ins from IDL and run IDL scripts from Opticks.
-IDL commands can be run from a wizard by adding the <tt>IDL Interpreter</tt> desktop wizard item to a wizard and passing the IDL code as a string.
+IDL commands can be run from a wizard by adding the <tt>Run Interpreter Commands</tt> desktop wizard item to a wizard and passing "IDL" as the interpreter name and the IDL code as a string.
 
 The IDL Interface is designed to provide a mechanism for rapidly prototyping new algorithms in IDL while leveraging Opticks functionality.
 This interface supports seamlessly executing proven R&D IDL algorithms via Opticks while awaiting formal software implementation.

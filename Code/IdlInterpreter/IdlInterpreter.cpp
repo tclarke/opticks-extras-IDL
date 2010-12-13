@@ -24,7 +24,6 @@
 #include <QtCore/QString>
 
 REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterManager);
-REGISTER_PLUGIN_BASIC(Idl, IdlInterpreterWizardItem);
 
 typedef void (*output_callback_t)(char* pBuf, int num_chars, int error, int addNewline);
 
@@ -386,86 +385,4 @@ bool IdlInterpreterManager::isKindOf(const std::string& className) const
    }
 
    return SubjectImp::isKindOf(className);
-}
-
-IdlInterpreterWizardItem::IdlInterpreterWizardItem()
-{
-   setName("IDL Interpreter");
-   setDescription("Allow execution of IDL code from within a wizard. "
-      "This is DEPRECATED, please use the RunInterpreterCommands wizard item.");
-   setDescriptorId("{006e0f34-b7b1-4b50-aa6f-24abbc205b91}");
-   setCopyright(IDL_COPYRIGHT);
-   setVersion(IDL_VERSION_NUMBER);
-   setProductionStatus(IDL_IS_PRODUCTION_RELEASE);
-}
-
-IdlInterpreterWizardItem::~IdlInterpreterWizardItem()
-{
-}
-
-bool IdlInterpreterWizardItem::getInputSpecification(PlugInArgList*& pArgList)
-{
-   VERIFY((pArgList = Service<PlugInManagerServices>()->getPlugInArgList()) != NULL);
-   VERIFY(pArgList->addArg<Progress>(ProgressArg(), NULL));
-   VERIFY(pArgList->addArg<std::string>("Command", std::string()));
-
-   return true;
-}
-
-bool IdlInterpreterWizardItem::getOutputSpecification(PlugInArgList*& pArgList)
-{
-   VERIFY((pArgList = Service<PlugInManagerServices>()->getPlugInArgList()) != NULL);
-   VERIFY(pArgList->addArg<std::string>("Output Text"));
-   VERIFY(pArgList->addArg<std::string>("Return Type"));
-
-   return true;
-}
-
-bool IdlInterpreterWizardItem::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
-{
-   VERIFY(pInArgList != NULL && pOutArgList != NULL);
-
-   ProgressTracker progress(pInArgList->getPlugInArgValue<Progress>(ProgressArg()),
-      "Execute IDL command.", "extras", "{592287e7-abbf-4581-9389-93b3bd5d8070}");
-
-   progress.report("This wizard item is DEPRECATED, please use the RunInterpreterCommands wizard item.",
-      0, WARNING, true);
-
-   std::string command;
-   if (!pInArgList->getPlugInArgValue("Command", command))
-   {
-      return false;
-   }
-
-   std::vector<PlugIn*> plugins = Service<PlugInManagerServices>()->getPlugInInstances("IDL");
-   if (plugins.size() != 1)
-   {
-      progress.report("Unable to locate an IDL interpreter.", 0, ERRORS, true);
-      return false;
-   }
-   IdlInterpreterManager* pMgr = dynamic_cast<IdlInterpreterManager*>(plugins.front());
-   VERIFY(pMgr != NULL);
-   pMgr->start();
-   Interpreter* pInterpreter = pMgr->getInterpreter();
-   if (pInterpreter == NULL)
-   {
-      progress.report("Unable to start IDL interpreter. " + pMgr->getStartupMessage(), 0, ERRORS, true);
-      return false;
-   }
-
-   progress.report("Executing IDL command.", 1, NORMAL);
-   std::string outputAndErrorText;
-   bool hasErrorText = false;
-   bool retVal = InterpreterUtilities::executeScopedCommand("IDL", command, outputAndErrorText, hasErrorText,
-      progress.getCurrentProgress());
-   if (!retVal)
-   {
-      progress.report("Error executing IDL command.", 0, ERRORS, true);
-   }
-   std::string returnType = (hasErrorText ? "Error" : "Output");
-   VERIFY(pOutArgList->setPlugInArgValue("Return Type", &returnType));
-   VERIFY(pOutArgList->setPlugInArgValue("Output Text", &outputAndErrorText));
-   progress.report("Executing IDL command.", 100, NORMAL);
-   progress.upALevel();
-   return retVal;
 }
