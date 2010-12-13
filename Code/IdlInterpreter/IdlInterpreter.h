@@ -82,14 +82,4 @@ private:
    std::auto_ptr<IdlProxy> mpInterpreter;
 };
 
-class IdlInterpreterWizardItem : public WizardShell
-{
-public:
-   IdlInterpreterWizardItem();
-   virtual ~IdlInterpreterWizardItem();
-   virtual bool getInputSpecification(PlugInArgList*& pArgList);
-   virtual bool getOutputSpecification(PlugInArgList*& pArgList);
-   virtual bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
-};
-
 #endif
