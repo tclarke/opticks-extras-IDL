@@ -1,21 +1,21 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IDLMgr", "IDLMgr.vcproj", "{88D4F41E-75F4-4AE0-AAB5-BE29BD9CDE9C}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IDLMgr", "IDLMgr.vcxproj", "{88D4F41E-75F4-4AE0-AAB5-BE29BD9CDE9C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart64", "IdlStart\IdlStart64.vcproj", "{7CA6AAFD-CCA3-40C1-8E9D-37CE87CE54CA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart64", "IdlStart\IdlStart64.vcxproj", "{7CA6AAFD-CCA3-40C1-8E9D-37CE87CE54CA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlInterpreter", "IdlInterpreter\IdlInterpreter.vcproj", "{7EEEFB55-3F81-4113-9A52-887068CDF961}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlInterpreter", "IdlInterpreter\IdlInterpreter.vcxproj", "{7EEEFB55-3F81-4113-9A52-887068CDF961}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApiDocs", "ApiDocs\ApiDocs.vcproj", "{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApiDocs", "ApiDocs\ApiDocs.vcxproj", "{9CBD8E2A-E31A-484A-AF58-E1FB31E57F71}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart61", "IdlStart\IdlStart61.vcproj", "{3FE37D78-6C7C-40F2-96FF-2469DAB39F4C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart61", "IdlStart\IdlStart61.vcxproj", "{3FE37D78-6C7C-40F2-96FF-2469DAB39F4C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart63", "IdlStart\IdlStart63.vcproj", "{28376087-6087-4872-8916-5B1FDAA87361}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart63", "IdlStart\IdlStart63.vcxproj", "{28376087-6087-4872-8916-5B1FDAA87361}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart71", "IdlStart\IdlStart71.vcproj", "{6336C74B-F29B-4D3A-98A4-E1B448EB94FA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart71", "IdlStart\IdlStart71.vcxproj", "{6336C74B-F29B-4D3A-98A4-E1B448EB94FA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart70", "IdlStart\IdlStart70.vcproj", "{1BCB6A7C-4E0A-45CE-A77C-BEC0513D9458}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IdlStart70", "IdlStart\IdlStart70.vcxproj", "{1BCB6A7C-4E0A-45CE-A77C-BEC0513D9458}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

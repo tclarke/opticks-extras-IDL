@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{4115ef46-62ef-4929-93c6-9d9ac08d70b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Doxygen Configuration">
+      <UniqueIdentifier>{e01d33ee-d80d-4800-a083-8439ad3458e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generated Doxygen">
+      <UniqueIdentifier>{5f4093c1-c998-4f4b-a385-d2dd0c887c7c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="extension_modules.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="mainpage.txt">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="application.dox">
+      <Filter>Doxygen Configuration</Filter>
+    </None>
+    <None Include="trailer.html">
+      <Filter>Doxygen Configuration</Filter>
+    </None>
+    <None Include="$(BUILDDIR)\DoxygenOutput\html\index.html">
+      <Filter>Generated Doxygen</Filter>
+    </None>
+  </ItemGroup>
+</Project>

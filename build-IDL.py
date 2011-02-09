@@ -7,6 +7,7 @@ from os.path import join
 import optparse
 import traceback
 import shutil
+import string
 import zipfile
 import re
 import datetime
@@ -15,10 +16,10 @@ if sys.platform == "sunos5":
    print "ERROR: Solaris builds are currently non-functional."
    sys.exit(1)
 
-aeb_platform_mappings = {'win32':'win32-x86-msvc8.1-release',
-                         'win32-debug':'win32-x86-msvc8.1-debug',
-                         'win64':'win64-x86-msvc8.1-release',
-                         'win64-debug':'win64-x86-msvc8.1-debug'}
+aeb_platform_mappings = {'win32':'win32-x86-msvc10.0-release',
+                         'win32-debug':'win32-x86-msvc10.0-debug',
+                         'win64':'win64-x86-msvc10.0-release',
+                         'win64-debug':'win64-x86-msvc10.0-debug'}
 
 def execute_process(args, bufsize=0, executable=None, preexec_fn=None,
       close_fds=None, shell=False, cwd=None, env=None,
@@ -171,7 +172,7 @@ class Builder:
         if self.verbosity > 1:
             print "Building IDL plug-ins..."
         buildenv = os.environ
-        buildenv["OPTICKSDEPENDENCIES"] = self.depend_path
+        buildenv["IDLDEPENDENCIES"] = self.depend_path
         buildenv["OPTICKS_CODE_DIR"] = self.opticks_code_dir
 
         if self.verbosity >= 1:
@@ -240,9 +241,16 @@ class Builder:
         env["SOURCE"] = os.path.abspath("Code")
         env["OUTPUT_DIR"] = doc_path
         env["CONFIG_DIR"] = config_dir
+        if is_windows():
+            dot_exe = "dot.exe"
+        else:
+            dot_exe = "dot"
         graphviz_dir = os.path.abspath(join(self.depend_path,
-            "graphviz", "app"))
-        env["DOT_DIR"] = join(graphviz_dir, "bin")
+            "64", "tools", "graphviz", "bin"))
+        if not(os.path.exists(join(graphviz_dir, dot_exe))):
+            graphviz_dir = os.path.abspath(join(self.depend_path,
+                "32", "tools", "graphviz", "bin"))
+        env["DOT_DIR"] = graphviz_dir
         retcode = execute_process(args, env=env)
         if retcode != 0:
             raise ScriptException("Unable to run doxygen generation script")
@@ -267,16 +275,16 @@ class Builder:
 
 class WindowsBuilder(Builder):
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
-                 opticks_build_dir, visualstudio, verbosity):
+                 opticks_build_dir, msbuild, verbosity):
         Builder.__init__(self, dependencies, opticks_code_dir, build_in_debug,
             opticks_build_dir, verbosity)
-        self.vs_path = visualstudio
+        self.msbuild_path = msbuild 
 
     def compile_code(self, env, clean, concurrency):
         solution_file = os.path.abspath("Code/IDL.sln")
-        self.build_in_visual_studio(solution_file,
+        self.build_in_msbuild(solution_file,
             self.build_debug_mode, self.is_64_bit, concurrency,
-            self.vs_path, env, clean)
+            self.msbuild_path, env, clean)
 
     def get_opticks_plugin_dir(self):
         return os.path.abspath(join(self.opticks_build_dir,
@@ -288,31 +296,34 @@ class WindowsBuilder(Builder):
             "Binaries-%s-%s" % (self.platform, self.mode)))
     
     def get_doxygen_path(self):
-        return join(self.depend_path, "doxygen", "bin", "doxygen.exe")
+        doxygen_path = join(self.depend_path, "32", "bin", "doxygen.exe")
+        if os.path.exists(doxygen_path):
+            return doxygen_path
+        doxygen_path = join(self.depend_path, "64", "bin", "doxygen.exe")
+        return doxygen_path
 
     def prep_to_run(self):
         self.prep_to_run_helper([".dll", ".exe"])
 
-    def build_in_visual_studio(self, solutionfile, debug,
-                               build_64_bit, concurrency, vspath,
-                               environ, clean):
-        if debug and not build_64_bit:
-            mode = "Debug|Win32"
-        if not debug and not build_64_bit:
-            mode = "Release|Win32"
-        if debug and build_64_bit:
-            mode = "Debug|x64"
-        if not debug and build_64_bit:
-            mode = "Release|x64"
+    def build_in_msbuild(self, solutionfile, debug,
+                         build_64_bit, concurrency, msbuildpath,
+                         environ, clean):
+        if debug:
+            config = "Debug"
+        else:
+            config = "Release"
+        if build_64_bit:
+            platform = "x64"
+        else:
+            platform = "Win32"
 
-        msdev_exec = join(vspath, "vc", "vcpackages", "vcbuild.exe")
-        arguments = [msdev_exec, solutionfile]
+        msbuild_exec = join(msbuildpath, "msbuild.exe")
+        arguments = [msbuild_exec, solutionfile]
         if clean:
-            arguments.append("/clean")
-        arguments.append("/error:[ERROR]")
-        arguments.append("/warning:[WARNING]")
-        arguments.append("/M%s" % (concurrency))
-        arguments.append(mode)
+            arguments.append("/target:clean")
+        arguments.append("/m:%s" % concurrency)
+        arguments.append("/p:Platform=%s" % platform)
+        arguments.append("/p:Configuration=%s" % config)
         ret_code = execute_process(arguments,
                                  env=environ)
         if ret_code != 0:
@@ -321,17 +332,17 @@ class WindowsBuilder(Builder):
 class Windows32bitBuilder(WindowsBuilder):
     platform = "Win32"
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
-                 opticks_build_dir, visualstudio, verbosity):
+                 opticks_build_dir, msbuild, verbosity):
         WindowsBuilder.__init__(self, dependencies, opticks_code_dir, build_in_debug,
-            opticks_build_dir, visualstudio, verbosity)
+            opticks_build_dir, msbuild, verbosity)
         self.is_64_bit = False
 
 class Windows64bitBuilder(WindowsBuilder):
     platform = "x64"
     def __init__(self, dependencies, opticks_code_dir, build_in_debug,
-                 opticks_build_dir, visualstudio, verbosity):
+                 opticks_build_dir, msbuild, verbosity):
         WindowsBuilder.__init__(self, dependencies, opticks_code_dir, build_in_debug,
-            opticks_build_dir, visualstudio, verbosity)
+            opticks_build_dir, msbuild, verbosity)
         self.is_64_bit = True
 
 class SolarisBuilder(Builder):
@@ -342,7 +353,7 @@ class SolarisBuilder(Builder):
             opticks_build_dir, verbosity)
 
     def get_doxygen_path(self):
-        return join(self.depend_path, "doxygen", "bin", "doxygen")
+        return join(self.depend_path, "64", "bin", "doxygen")
 
     def compile_code(self, env, clean, concurrency):
         #Build extension plugins
@@ -408,35 +419,25 @@ def update_version_h(fields_to_replace):
             version_file.write(vline)
     version_file.close()
 
-def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None,
+def build_installer(aeb_platforms=[], aeb_output=None,
                     verbosity=None, opticks_code_dir=None):
     if len(aeb_platforms) == 0:
         raise ScriptException("Invalid AEB platform specification. Valid values are: %s." % ", ".join(aeb_platform_mapping.keys()))
-    if sys.platform == "win32":
-       os.environ['PATH'] += os.pathsep + join(depend_path, "raptor", "Bin", "Win32")
-       os.environ['PATH'] += os.pathsep + join(depend_path, "expat", "Bin", "Win32")
-    try:
-        import raptor
-    except:
-        raise ScriptException("Unable to locate raptor. Make sure the raptor dependency is installed.")
     PF_AEBL = "urn:2008:03:aebl-syntax-ns#"
     PF_OPTICKS = "urn:2008:03:opticks-aebl-extension-ns#"
 
     if verbosity > 1:
         print "Loading metadata template..."
-    parser = raptor.RaptorParser()
-    parser.set_feature(raptor.RAPTOR_FEATURE_NO_NET)
-    installer_path = os.path.abspath("Installer")
-    parser.parse_file(join(installer_path, "install.n3"))
-    metadata = parser.statements()
-    parser.cleanup()
 
-    manifest = metadata["urn:aebl:install-manifest"]
+    manifest = dict()
     version_info = read_version_h()
-    manifest[PF_AEBL + "version"] = [version_info["IDL_VERSION_NUMBER"]]
-    manifest[PF_AEBL + "name"] = [version_info["IDL_NAME"]]
-    manifest[PF_AEBL + "description"] = [version_info["IDL_NAME_LONG"]]
-    manifest[PF_AEBL + "targetPlatform"] = aeb_platforms
+    manifest["version"] = version_info["IDL_VERSION_NUMBER"][1:-1]
+    manifest["name"] = version_info["IDL_NAME"][1:-1]
+    manifest["description"] = version_info["IDL_NAME_LONG"][1:-1]
+    aebl_platform_str = ""
+    for platform in aeb_platforms:
+        aebl_platform_str += "<aebl:targetPlatform>%s</aebl:targetPlatform>\n" % (platform)
+    manifest["target_platforms"] = aebl_platform_str
     opticks_version_info = read_version_h(os.path.abspath(join(opticks_code_dir, "application", "Interfaces", "OpticksVersion.h")))
     opticks_version = opticks_version_info["OPTICKS_VERSION"][1:-1]
     parts = opticks_version.split(".")
@@ -445,9 +446,16 @@ def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None,
     if len(parts) >= 2:
         if parts[1].isdigit() and len(parts) >= 3:
             max_version = ".".join(parts[:2]) + ".*"
-    metadata[manifest[PF_AEBL + "targetApplication"][0]][PF_AEBL + "minVersion"] = [min_version]
-    metadata[manifest[PF_AEBL + "targetApplication"][0]][PF_AEBL + "maxVersion"] = [max_version]
-    
+    manifest["opticks_min_version"] = min_version
+    manifest["opticks_max_version"] = max_version
+
+    rdf_path = join(os.path.abspath("Installer"), "install.rdf")
+    rdf_file = open(rdf_path, "r")
+    rdf_contents = rdf_file.read()
+    rdf_file.close()
+
+    install_rdf = string.Template(rdf_contents).substitute(manifest)
+
     out_path = os.path.abspath(join("Installer","IDL.aeb"))
     if aeb_output is not None:
        out_path = os.path.abspath(aeb_output)
@@ -456,10 +464,6 @@ def build_installer(aeb_platforms=[], aeb_output=None, depend_path=None,
        os.makedirs(out_dir)
     if verbosity > 1:
         print "Saving updated metadata to AEB %s..." % out_path
-    serializer = raptor.RaptorSerializer("rdfxml-abbrev")
-    serializer.statements(metadata)
-    install_rdf = serializer.serialize_to_string()
-    serializer.cleanup()
 
     if verbosity > 1:
         print "Building installation tree..."
@@ -572,14 +576,12 @@ def main(args):
     options.add_option("--opticks-code-dir",
         dest="opticks_code_dir", action="store", type="string")
     if is_windows():
-        vs_path = "C:\\Program Files (x86)\\Microsoft Visual Studio 8"
-        if not os.path.exists(vs_path):
-            vs_path = "C:\\Program Files\\Microsoft Visual Studio 8"
-        options.add_option("--visualstudio", dest="visualstudio",
+        msbuild_path = "C:\\Windows\\Microsoft.NET\Framework\\v4.0.30319"
+        options.add_option("--msbuild", dest="msbuild",
             action="store", type="string")
         options.add_option("--arch", dest="arch", action="store",
             type="choice", choices=["32","64"])
-        options.set_defaults(visualstudio=vs_path, arch="64")
+        options.set_defaults(msbuild=msbuild_path, arch="64")
     options.add_option("-m", "--mode", dest="mode",
         action="store", type="choice", choices=["debug", "release"])
     options.add_option("--clean", dest="clean", action="store_true")
@@ -618,7 +620,7 @@ def main(args):
 
     builder = None
     try:
-        opticks_depends = os.environ.get("OPTICKSDEPENDENCIES", None)
+        opticks_depends = os.environ.get("IDLDEPENDENCIES", None)
         if options.dependencies:
             #allow the -d command-line option to override
             #environment variable
@@ -654,17 +656,17 @@ def main(args):
             builder = SolarisBuilder(opticks_depends, opticks_code_dir, build_in_debug,
                 opticks_build_dir, options.verbosity)
         else:
-            if not os.path.exists(options.visualstudio):
-                raise ScriptException("Visual Studio path is invalid")
+            if not os.path.exists(options.msbuild):
+                raise ScriptException("MS Build path is invalid")
 
             if options.arch == "32":
                 builder = Windows32bitBuilder(opticks_depends, opticks_code_dir,
                     build_in_debug, opticks_build_dir,
-                    options.visualstudio, options.verbosity)
+                    options.msbuild, options.verbosity)
             if options.arch == "64":
                 builder = Windows64bitBuilder(opticks_depends, opticks_code_dir,
                     build_in_debug, opticks_build_dir,
-                    options.visualstudio, options.verbosity)
+                    options.msbuild, options.verbosity)
 
         builder.update_version_number(options.update_version_scheme,
             options.new_version)
@@ -698,7 +700,7 @@ def main(args):
                     else:
                         aeb_platforms.append(plat)
             build_installer(aeb_platforms, aeb_output,
-                opticks_depends, options.verbosity, opticks_code_dir)
+                options.verbosity, opticks_code_dir)
             if options.verbosity > 1:
                 print "Done building installer"
             return 0
