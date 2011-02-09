@@ -338,7 +338,14 @@ IdlInterpreterManager::~IdlInterpreterManager()
 
 bool IdlInterpreterManager::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
 {
-   mpInterpreter->startIdl();
+   // Starting the interpreter here would cause an IDL license
+   // to be consumed during application start-up.
+   // This can lock an IDL floating license even though the 
+   // user is not using the IDL Scripting Tab and they
+   // are not executing a wizard with IDL code
+   // Therefore, we are intentionally delaying start of the
+   // IDL interpreter until the application requests
+   // it be started.
    return true;
 }
 
