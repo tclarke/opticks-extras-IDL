@@ -37,9 +37,6 @@
  */
 IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
 {
-   IDL_VPTR idlPtr1 = IDL_StrToSTRING("success");
-   IDL_VPTR idlPtr2 = IDL_StrToSTRING("failure");
-   IDL_VPTR* idlPtr = &idlPtr2;
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "A wizard needs to be specified.");
@@ -101,9 +98,9 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
    if (bSuccess)
    {
-      idlPtr = &idlPtr1;
+      return IDL_StrToSTRING("success");
    }
-   return *idlPtr;
+   return IDL_StrToSTRING("failure");
 }
 
 /**
