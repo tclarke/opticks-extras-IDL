@@ -167,6 +167,7 @@ RasterElement* IdlFunctions::createRasterElement(char* pData,
                                                  EncodingType datatype, 
                                                  bool inMemory,
                                                  InterleaveFormatType iType,
+                                                 const std::string& unit, 
                                                  unsigned int rows,
                                                  unsigned int cols,
                                                  unsigned int bands)
@@ -280,6 +281,23 @@ RasterElement* IdlFunctions::createRasterElement(char* pData,
          IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "error in copying array values to Opticks.");
          return false;
       }
+   }
+   //set the units
+   Units* pScale = pDesc->getUnits();
+   if (pScale != NULL)
+   {
+      bool bError = false;
+      UnitType uType = StringUtilities::fromDisplayString<UnitType>(unit, &bError);
+      if (bError)
+      {
+         pScale->setUnitType(CUSTOM_UNIT);
+      }
+      else
+      {
+         pScale->setUnitType(uType);
+      }
+      pScale->setUnitName(unit);
+      pDesc->setUnits(pScale);
    }
    return pRaster.release();
 }

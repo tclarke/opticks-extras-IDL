@@ -72,7 +72,7 @@ namespace IdlFunctions
 
    RasterElement* createRasterElement(char* pData, const std::string& datasetName,
       const std::string& newName, EncodingType datatype, bool inMemory, InterleaveFormatType iType,
-      unsigned int rows, unsigned int cols, unsigned int bands);
+      const std::string& unit, unsigned int rows, unsigned int cols, unsigned int bands);
    bool changeRasterElement(RasterElement* pRasterElement, char* pData,
       EncodingType datatype, InterleaveFormatType iType, unsigned int startRow,
       unsigned int rows, unsigned int startCol, unsigned int cols,
@@ -209,9 +209,21 @@ namespace IdlFunctions
          }
       }
       Units* pScale = pParam->getUnits();
-      pScale->setUnitType(CUSTOM_UNIT);
-      pScale->setUnitName(unit);
-      pParam->setUnits(pScale);
+      if (pScale != NULL)
+      {
+         bool bError = false;
+         UnitType uType = StringUtilities::fromDisplayString<UnitType>(unit, &bError);
+         if (bError)
+	      {
+            pScale->setUnitType(CUSTOM_UNIT);
+	      }
+         else
+         {
+            pScale->setUnitType(uType);
+         }
+         pScale->setUnitName(unit);
+         pParam->setUnits(pScale);
+      }
       pRasterRes.release();
       //the matrix is now created, so we should add it to the current view
       if (pView != NULL)

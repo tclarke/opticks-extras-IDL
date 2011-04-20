@@ -615,7 +615,7 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
    {
       //user wants to create a new RasterElement and window
       RasterElement* pRaster = IdlFunctions::createRasterElement(pRawData, datasetName,
-         newDataName, encoding, inMemory, iType, height, width, bands);
+         newDataName, encoding, inMemory, iType, unitName, height, width, bands);
       if (pRaster != NULL)
       {
          //----- Now create the spatial data window to display the data
