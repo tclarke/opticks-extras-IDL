@@ -197,8 +197,11 @@ IDL_VPTR array_to_idl(int argc, IDL_VPTR pArgv[], char* pArgk)
             row = heightEnd - heightStart+1;
             band = bandEnd - bandStart+1;
             //copy the subcube, determine the type
-            pRawData = reinterpret_cast<unsigned char*>(
-                  malloc(column*row*band*bytesPerElement));
+            uint64_t totalToAllocate = static_cast<uint64_t>(column)*row*band*bytesPerElement;
+            if (totalToAllocate <= std::numeric_limits<size_t>::max())
+            {
+               pRawData = reinterpret_cast<unsigned char*>(malloc(static_cast<size_t>(totalToAllocate)));
+            }
             if (pRawData == NULL)
             {
                std::string msg = "Not enough memory to allocate array";
@@ -510,7 +513,8 @@ IDL_VPTR array_to_opticks(int argc, IDL_VPTR pArgv[], char* pArgk)
          return IDL_StrToSTRING("failure");
       }
    }
-   if (total != height*width*bands)
+   uint64_t dimensionTotal = static_cast<uint64_t>(height)*width*bands;
+   if (total != dimensionTotal)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET,
          "ARRAY_TO_OPTICKS error.  Passed in array size does not match size keywords.");
