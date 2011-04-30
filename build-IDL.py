@@ -420,7 +420,7 @@ def update_version_h(fields_to_replace):
     version_file.close()
 
 def build_installer(aeb_platforms=[], aeb_output=None,
-                    verbosity=None, opticks_code_dir=None):
+                    verbosity=None, dependencies_dir=None, opticks_code_dir=None):
     if len(aeb_platforms) == 0:
         raise ScriptException("Invalid AEB platform specification. Valid values are: %s." % ", ".join(aeb_platform_mapping.keys()))
     PF_AEBL = "urn:2008:03:aebl-syntax-ns#"
@@ -499,6 +499,12 @@ def build_installer(aeb_platforms=[], aeb_output=None,
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart64.dll", zfile)
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart70.dll", zfile)
             copy_file_to_zip(extension_plugin_path, target_plugin_path, "IdlStart71.dll", zfile)
+
+            idl_patch_dir = join(dependencies_dir, "64", "bin", "idl-patches6.4") 
+            target_idl_patch_dir = join("platform", plat, "SupportFiles", "idl-patches")
+            copy_file_to_zip(idl_patch_dir, target_idl_patch_dir, "MesaGL6_2.dll", zfile)
+            copy_file_to_zip(idl_patch_dir, target_idl_patch_dir, "MesaGLU6_2.dll", zfile)
+            copy_file_to_zip(idl_patch_dir, target_idl_patch_dir, "osmesa6_2.dll", zfile)
         elif plat_parts[0] == 'solaris':
             bin_dir = os.path.join(os.path.abspath("Code"), "Build", "Binaries-%s-%s" % (SolarisBuilder.platform, plat_parts[-1]))
             extension_plugin_path = join(bin_dir, "PlugIns")
@@ -700,7 +706,7 @@ def main(args):
                     else:
                         aeb_platforms.append(plat)
             build_installer(aeb_platforms, aeb_output,
-                options.verbosity, opticks_code_dir)
+                options.verbosity, opticks_depends, opticks_code_dir)
             if options.verbosity > 1:
                 print "Done building installer"
             return 0

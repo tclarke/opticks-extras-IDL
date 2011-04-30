@@ -24,6 +24,36 @@ The <tt>IDL Version</tt> selection allows the user to select the version of IDL 
 In addition to these options, a configuration file only option is available for plug-in developers wishing to install additional IDL method files.
 See \ref extension_modules for further information.
 
+\subsection win64setup Setting up Windows 64-bit
+If you are using an IDL 6.3, 6.4, 7.0, 7.1 installation on Windows 64-bit you will need to patch your IDL installation before this scripting extension will work.
+You will need to copy the patched "MesaGL6_2.dll", "MesaGLU6_2.dll" and "osmesa6_2.dll" DLLs found in the "SupportFiles\\idl-patches\\" directory of your Opticks install into the "bin\\bin.x86_64" directory of the IDL installation you have configured this extension to use.
+This step only needs to be performed once per IDL installation and system.
+
+The patched DLLs are different from the original DLLs distributed with IDL in that they have the proper manifest entry embedded into the DLL. 
+If you are uncomfortable using the provided DLLs in the Opticks install folder, you can manually patch the DLLs using the following procedure.
+
+<ol>
+<li>Create a file containing the following content called manifestcontents.txt:
+\verbatim
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" name="Microsoft.VC80.CRT" version="8.0.50727.762" processorArchitecture="amd64" publicKeyToken="1fc8b3b9a1e18e3b"></assemblyIdentity>
+    </dependentAssembly>
+  </dependency>
+</assembly>
+\endverbatim
+</li>
+<li>Install the Windows SDK, specifically mt.exe (http://msdn.microsoft.com/en-us/library/aa375649) is required.</li>
+<li>Run mt.exe as shown below to embed the manifest.
+You will need to run the command three times, once for each of the problematic DLLs listed earlier. 
+\verbatim
+mt.exe -manifest "[Path To]\manifestcontents.txt" -updateresource:"[Path To DLL];#2" 
+\endverbatim
+</li>
+<li>The above steps have now ensured that those DLLs are able to load the Microsoft Visual C++ runtime that they were built against.</li>
+</ol>
+
 \section conventions Documentation Conventions
 This documentation is broken into modules which group the functionality of various IDL functions.
 Parameter names for functions will be either the name of a keyword parameter or will indicate the number of the positional parameter starting with 1.
