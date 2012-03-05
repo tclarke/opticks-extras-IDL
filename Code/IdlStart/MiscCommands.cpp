@@ -79,7 +79,7 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
       bSuccess = true;
 
       //create the Wizard Executor plugin
-      ExecutableResource pExecutor("Wizard Executor", "", NULL, batch == 0 ? false : true);
+      ExecutableResource pExecutor("Wizard Executor", "", spProgress, batch == 0 ? false : true);
       if (pExecutor.get() == NULL)
       {
          bSuccess = false;
@@ -88,6 +88,7 @@ IDL_VPTR execute_wizard(int argc, IDL_VPTR pArgv[], char* pArgk)
       {
          PlugInArgList& pArgList = pExecutor->getInArgList();
          pArgList.setPlugInArgValue("Wizard", pWizard);
+         pExecutor->createProgressDialog(true);
          //execute the plugin
          bSuccess &= pExecutor->execute();
       }
