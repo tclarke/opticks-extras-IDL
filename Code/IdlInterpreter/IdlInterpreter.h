@@ -55,6 +55,7 @@ private:
 
    AttachmentPtr<ApplicationServices> mpAppServices;
    bool mIdlRunning;
+   bool mIdlExecuting;
    bool mRunningScopedCommand;
    std::vector<DynamicModule*> mModules;
    bool mGlobalOutputShown;

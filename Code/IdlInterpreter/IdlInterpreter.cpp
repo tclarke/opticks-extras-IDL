@@ -54,6 +54,7 @@ namespace
 
 IdlProxy::IdlProxy() :
    mIdlRunning(false),
+   mIdlExecuting(false),
    mpAppServices(Service<ApplicationServices>().get(), SIGNAL_NAME(ApplicationServices, ApplicationClosed),
       Slot(this, &IdlProxy::applicationClosed)),
    mGlobalOutputShown(false),
@@ -194,6 +195,14 @@ bool IdlProxy::executeCommandInternal(const std::string& command, Progress* pPro
       return false;
    }
 
+   if (mIdlExecuting)
+   {
+      sendError("Unable to run multiple IDL commands simultaneously\n"
+         "If you are trying to execute a wizard from the Scripting Window, "
+         "try using the Wizard Builder instead.");
+      return false;
+   }
+
    /***
     * We only need to run one of the dlls.  All the dlls 'execute_idl'
     * command call the same IDL dll which has one list of commands
@@ -236,7 +245,9 @@ bool IdlProxy::executeCommandInternal(const std::string& command, Progress* pPro
    }
 
    //execute the function and capture the output
+   mIdlExecuting = true;
    int retVal = execute_idl(lines.size(), pCommands, mRunningScopedCommand, pProgress);
+   mIdlExecuting = false;
    delete [] pCommands;
    pCommands = NULL;
 
