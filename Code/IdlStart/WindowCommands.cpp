@@ -227,6 +227,12 @@ IDL_VPTR set_window_label(int argc, IDL_VPTR pArgv[], char* pArgk)
 
    IDL_VPTR idlPtr;
    bool bSuccess = false;
+   if (argc < 1)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "set_window_label takes a new window name as a parameter with a "
+         "window type and name as optional keywords to specify a non current window.");
+      return IDL_StrToSTRING("failure");
+   }
    //retrieve the label passed in as a parameter
    label = IDL_VarGetString(pArgv[0]);
 

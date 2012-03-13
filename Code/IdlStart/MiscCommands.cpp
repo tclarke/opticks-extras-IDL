@@ -207,6 +207,12 @@ void report_progress(int argc, IDL_VPTR pArgv[], char* pArgk)
  */
 IDL_VPTR get_configuration_setting(int argc, IDL_VPTR pArgv[])
 {
+   if (argc < 1)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "get_configuration_setting takes a setting name as a parameter");
+      return IDL_StrToSTRING("failure");
+   }
+
    IDL_VPTR idlPtr;
 
    //the element

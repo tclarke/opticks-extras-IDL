@@ -173,7 +173,10 @@ IDL_VPTR get_data_name(int argc, IDL_VPTR pArgv[], char* pArgk)
    }
 
    //retrieve the layer name passed in as a parameter
-   layerName = IDL_VarGetString(pArgv[0]);
+   if (argc >= 1)
+   {
+      layerName = IDL_VarGetString(pArgv[0]);
+   }
    //get the layer
    bool datasets = false;
    if (kw->datasetExists)
@@ -493,7 +496,7 @@ IDL_VPTR get_layer_position(int argc, IDL_VPTR pArgv[], char* pArgk)
    if (argc < 1)
    {
       IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "get_layer_position takes a layer name as a parameter with a "
-         "window as an optional keyword to specifiy a non current window.");
+         "window as an optional keyword to specify a non current window.");
    }
    else
    {

@@ -595,6 +595,13 @@ IDL_VPTR set_animation_state(int argc, IDL_VPTR pArgv[], char* pArgk)
    IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    bool bSuccess = false;
+
+   if (argc < 1)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "set_animation_state takes an animation state as a parameter with an "
+         "animation controller name as an optional keyword to specify a controller.");
+      return IDL_StrToSTRING("failure");
+   }
    //the element
    char* pValue = IDL_VarGetString(pArgv[0]);
 
@@ -733,6 +740,12 @@ IDL_VPTR set_animation_cycle(int argc, IDL_VPTR pArgv[], char* pArgk)
    IdlFunctions::IdlKwResource<KW_RESULT> kw(argc, pArgv, pArgk, kw_pars, 0, 1);
 
    bool bSuccess = false;
+   if (argc < 1)
+   {
+      IDL_Message(IDL_M_GENERIC, IDL_MSG_RET, "set_animation_cycle takes an animation cycle as a parameter with an "
+         "animation controller name as an optional keyword to specify a controller.");
+      return IDL_StrToSTRING("failure");
+   }
    //the element
    char* pValue = IDL_VarGetString(pArgv[0]);
 
