@@ -341,6 +341,10 @@ IdlInterpreterManager::IdlInterpreterManager()
    setWizardSupported(false);
    setFileExtensions("IDL Scripts (*.pro)");
    setInteractiveEnabled(IdlInterpreterOptions::getSettingInteractiveAvailable());
+   addDependencyCopyright("IDL", "<pre>Copyright 2012 Exelis Visual Information Systems, Inc.\n"
+      "* The user is permitted to use this software only together with Opticks, and for the sole purpose of calling a "
+      "fully-licensed copy of IDL(R) software. Any other use is expressly prohibited.\n"
+      "* The user shall not disassemble, decompile or reverse engineer this software.</pre>");
 }
 
 IdlInterpreterManager::~IdlInterpreterManager()
