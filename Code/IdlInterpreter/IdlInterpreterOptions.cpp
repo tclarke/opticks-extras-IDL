@@ -9,17 +9,21 @@
 
 #include "AppConfig.h"
 #include "AppVerify.h"
+#include "AppVersion.h"
 #include "FileBrowser.h"
 #include "Filename.h"
 #include "IdlInterpreterOptions.h"
 #include "InterpreterManager.h"
 #include "LabeledSection.h"
+#include "ObjectResource.h"
 #include "OptionQWidgetWrapper.h"
 #include "PlugInManagerServices.h"
 #include "PlugInRegistration.h"
+
 #include <QtGui/QComboBox>
 #include <QtGui/QGridLayout>
 #include <QtGui/QLabel>
+#include <QtGui/QMessageBox>
 #include <QtGui/QWidget>
 
 REGISTER_PLUGIN(Idl, IdlInterpreterOptions, OptionQWidgetWrapper<IdlInterpreterOptions>());
@@ -27,7 +31,7 @@ REGISTER_PLUGIN(Idl, IdlInterpreterOptions, OptionQWidgetWrapper<IdlInterpreterO
 IdlInterpreterOptions::IdlInterpreterOptions()
 {
    QWidget* pIdlConfigWidget = new QWidget(this);
-   QLabel* pDllLabel = new QLabel("IDL Installation Location", pIdlConfigWidget);
+   QLabel* pDllLabel = new QLabel("IDL Installation Location:", pIdlConfigWidget);
    mpDll = new FileBrowser(pIdlConfigWidget);
    mpDll->setBrowseCaption("Locate the IDL installation");
    mpDll->setBrowseExistingFile(true);
@@ -37,7 +41,7 @@ IdlInterpreterOptions::IdlInterpreterOptions()
    mpDll->setBrowseFileFilters("IDL (libidl*.so)");
 #endif
    
-   QLabel* pVersionLabel = new QLabel("IDL Version", pIdlConfigWidget);
+   QLabel* pVersionLabel = new QLabel("IDL Version:", pIdlConfigWidget);
    mpVersion = new QComboBox(pIdlConfigWidget);
 #pragma message(__FILE__ "(" STRING(__LINE__) ") : warning : This should scan for available "\
                   "IdlStart dll's and add valid items appropriately (tclarke)")
@@ -47,10 +51,12 @@ IdlInterpreterOptions::IdlInterpreterOptions()
    mpVersion->setInsertPolicy(QComboBox::InsertAlphabetically);
 
    QGridLayout* pIdlConfigLayout = new QGridLayout(pIdlConfigWidget);
+   pIdlConfigLayout->setMargin(0);
+   pIdlConfigLayout->setSpacing(5);
    pIdlConfigLayout->addWidget(pDllLabel, 0, 0);
    pIdlConfigLayout->addWidget(mpDll, 0, 1);
    pIdlConfigLayout->addWidget(pVersionLabel, 1, 0);
-   pIdlConfigLayout->addWidget(mpVersion, 1, 1);
+   pIdlConfigLayout->addWidget(mpVersion, 1, 1, Qt::AlignLeft);
    pIdlConfigLayout->setColumnStretch(1, 10);
    pIdlConfigLayout->setRowStretch(2, 10);
 
@@ -65,8 +71,7 @@ IdlInterpreterOptions::IdlInterpreterOptions()
 }
 
 IdlInterpreterOptions::~IdlInterpreterOptions()
-{
-}
+{}
 
 void IdlInterpreterOptions::setDll(const Filename* pDll)
 {
@@ -94,12 +99,16 @@ void IdlInterpreterOptions::applyChanges()
    IdlInterpreterOptions::setSettingDLL(pTmpDll.get());
    IdlInterpreterOptions::setSettingVersion(mpVersion->currentText().toStdString());
 
-   Service<PlugInManagerServices> pPlugInMgr;
-   std::vector<PlugIn*> plugins = pPlugInMgr->getPlugInInstances("IDL");
-   if (!plugins.empty())
+   std::vector<PlugIn*> plugIns = Service<PlugInManagerServices>()->getPlugInInstances("IDL");
+   if (plugIns.empty() == false)
    {
-      InterpreterManager* pInterMgr = dynamic_cast<InterpreterManager*>(plugins.front());
-      pInterMgr->start();
-      VERIFYNR(plugins.size() == 1);
+      VERIFYNR(plugIns.size() == 1);
+
+      InterpreterManager* pInterpreter = dynamic_cast<InterpreterManager*>(plugIns.front());
+      if ((pInterpreter != NULL) && (pInterpreter->isStarted() == true))
+      {
+         QMessageBox::warning(this, APP_NAME, "The IDL interpreter is already running so changes to the IDL "
+            "installation location or version will not take effect until the application is restarted.");
+      }
    }
 }
