@@ -9,7 +9,7 @@
 
 #include "AppConfig.h"
 #include "AppVerify.h"
-#include "AppVersion.h"
+#include "ConfigurationSettings.h"
 #include "FileBrowser.h"
 #include "Filename.h"
 #include "IdlInterpreterOptions.h"
@@ -107,7 +107,8 @@ void IdlInterpreterOptions::applyChanges()
       InterpreterManager* pInterpreter = dynamic_cast<InterpreterManager*>(plugIns.front());
       if ((pInterpreter != NULL) && (pInterpreter->isStarted() == true))
       {
-         QMessageBox::warning(this, APP_NAME, "The IDL interpreter is already running so changes to the IDL "
+         QString appName = QString::fromStdString(Service<ConfigurationSettings>()->getProduct());
+         QMessageBox::warning(this, appName, "The IDL interpreter is already running so changes to the IDL "
             "installation location or version will not take effect until the application is restarted.");
       }
    }
