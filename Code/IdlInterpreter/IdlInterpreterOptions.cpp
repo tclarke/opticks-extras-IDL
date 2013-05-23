@@ -94,10 +94,27 @@ void IdlInterpreterOptions::setVersion(const QString& version)
 
 void IdlInterpreterOptions::applyChanges()
 {
+   std::string newFilename = mpDll->getFilename().toStdString();
+   std::string currentFilename;
+
+   const Filename* pCurrentFilename = IdlInterpreterOptions::getSettingDLL();
+   if (pCurrentFilename != NULL)
+   {
+      currentFilename = pCurrentFilename->getFullPathAndName();
+   }
+
+   std::string newVersion = mpVersion->currentText().toStdString();
+   std::string currentVersion = IdlInterpreterOptions::getSettingVersion();
+
+   if ((newFilename == currentFilename) && (newVersion == currentVersion))
+   {
+      return;
+   }
+
    FactoryResource<Filename> pTmpDll;
-   pTmpDll->setFullPathAndName(mpDll->getFilename().toStdString());
+   pTmpDll->setFullPathAndName(newFilename);
    IdlInterpreterOptions::setSettingDLL(pTmpDll.get());
-   IdlInterpreterOptions::setSettingVersion(mpVersion->currentText().toStdString());
+   IdlInterpreterOptions::setSettingVersion(newVersion);
 
    std::vector<PlugIn*> plugIns = Service<PlugInManagerServices>()->getPlugInInstances("IDL");
    if (plugIns.empty() == false)
